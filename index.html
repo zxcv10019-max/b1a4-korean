@@ -656,6 +656,33 @@ textarea {
   font-weight: 900;
 }
 
+
+.questions-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+}
+@media (max-width: 900px){
+  .questions-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+
+.mode-btn{
+  border:none;
+  padding:10px 16px;
+  border-radius:14px;
+  background:#eef5df;
+  color:#47622b;
+  font-weight:700;
+  cursor:pointer;
+}
+.mode-btn.active{
+  background:#9bc95d;
+  color:white;
+}
+
 </style>
 </head>
 <body>
@@ -850,7 +877,14 @@ textarea {
         <div class="study-shell">
           <div class="card study-main">
             <div class="topbar" style="margin-top:0"><h2>請寫出對應答案</h2><button class="primary" onclick="makeTest()">產生題目</button></div>
-            <div id="questions"></div>
+            
+<div class="test-mode-select" style="margin-bottom:18px;display:flex;gap:10px;flex-wrap:wrap;">
+  <button class="mode-btn active" id="modeMixedBtn" onclick="setTestMode('mixed')">🔀 混合模式</button>
+  <button class="mode-btn" id="modeKoBtn" onclick="setTestMode('ko')">🇰🇷 韓文→中文</button>
+  <button class="mode-btn" id="modeZhBtn" onclick="setTestMode('zh')">🇹🇼 中文→韓文</button>
+</div>
+
+<div id="questions"></div>
             <div class="btns">
               <button class="primary" onclick="checkAnswers()">批改</button>
               <button class="ghost" onclick="clearAnswers()">清空答案</button>
@@ -937,6 +971,7 @@ let cloudSaveTimer = null;
 let isLoadingCloud = false;
 let firebaseAuth = null;
 let firebaseDb = null;
+let currentTestMode = 'mixed';
 
 function isFirebaseConfigured() {
   return firebaseConfig.apiKey && !String(firebaseConfig.apiKey).includes("請填入");
@@ -1352,35 +1387,68 @@ document.addEventListener("keydown", function(e) {
   else if (e.key === " ") { e.preventDefault(); flipCard(); }
 });
 
+
+function setTestMode(mode){
+  currentTestMode = mode;
+
+  document.querySelectorAll('.mode-btn').forEach(btn=>{
+    btn.classList.remove('active');
+  });
+
+  if(mode==='mixed'){
+    document.getElementById('modeMixedBtn')?.classList.add('active');
+  }else if(mode==='ko'){
+    document.getElementById('modeKoBtn')?.classList.add('active');
+  }else{
+    document.getElementById('modeZhBtn')?.classList.add('active');
+  }
+
+  makeTest();
+}
+
+
 function makeTest() {
   const cards = getCards();
   if (!cards.length) { alert("請先選擇有內容的題庫"); return; }
 
-  // 筆試題目改為「韓文翻中文」＋「中文翻韓文」混合
-  // 每個單字會出 2 題，所以 15 個單字 = 30 題
-  testCards = shuffle([
-    ...cards.map(c => ({
-      ...c,
-      mode: "koToZh",
-      prompt: c.term,
-      answer: c.definition,
-      label: "韓文翻中文"
-    })),
-    ...cards.map(c => ({
-      ...c,
-      mode: "zhToKo",
-      prompt: c.definition,
-      answer: c.term,
-      label: "中文翻韓文"
-    }))
-  ]);
+  const koQuestions = shuffle(cards.map(c => ({
+    ...c,
+    mode: "koToZh",
+    prompt: c.term,
+    answer: c.definition,
+    label: "韓文翻中文"
+  })));
+
+  const zhQuestions = shuffle(cards.map(c => ({
+    ...c,
+    mode: "zhToKo",
+    prompt: c.definition,
+    answer: c.term,
+    label: "中文翻韓文"
+  })));
+
+  if(currentTestMode === "ko"){
+    testCards = koQuestions;
+  }else if(currentTestMode === "zh"){
+    testCards = zhQuestions;
+  }else{
+    testCards = [];
+    const maxLen = Math.max(koQuestions.length, zhQuestions.length);
+
+    for(let i=0;i<maxLen;i++){
+      if(koQuestions[i]) testCards.push(koQuestions[i]);
+      if(zhQuestions[i]) testCards.push(zhQuestions[i]);
+    }
+  }
 
   addPractice();
 
   const q = document.getElementById("questions");
-  q.innerHTML = "";
+  q.innerHTML = '<div class="questions-grid" id="questionsGrid"></div>';
+  const grid = document.getElementById("questionsGrid");
+
   testCards.forEach((c,i) => {
-    q.innerHTML += `<div class="q">
+    grid.innerHTML += `<div class="q">
       <div>${i+1}. ${c.label}</div>
       <div class="prompt-box">${esc(c.prompt)}</div>
       <input id="ans-${i}" placeholder="請輸入答案...">
@@ -1391,66 +1459,6 @@ function makeTest() {
   document.getElementById("score").textContent = "";
   document.getElementById("testProgress").innerHTML = testCards.map((_,i)=>`<div class="bubble">${i+1}</div>`).join("");
 }
-
-function normalizeAnswerText(s) {
-  return String(s || "")
-    .toLowerCase()
-    .replace(/[　\s]/g, "")
-    .replace(/[()（）【】［］\[\]{}「」『』,，.。!！?？:：;；、\/\\\-－—_]/g, "");
-}
-
-function splitAcceptableAnswers(answer) {
-  return String(answer || "")
-    .split(/[、,，;；\/／|｜\n]/)
-    .map(x => x.trim())
-    .filter(Boolean);
-}
-
-function levenshteinDistance(a, b) {
-  a = normalizeAnswerText(a);
-  b = normalizeAnswerText(b);
-  const dp = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
-  for (let i = 0; i <= a.length; i++) dp[i][0] = i;
-  for (let j = 0; j <= b.length; j++) dp[0][j] = j;
-  for (let i = 1; i <= a.length; i++) {
-    for (let j = 1; j <= b.length; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      dp[i][j] = Math.min(
-        dp[i - 1][j] + 1,
-        dp[i][j - 1] + 1,
-        dp[i - 1][j - 1] + cost
-      );
-    }
-  }
-  return dp[a.length][b.length];
-}
-
-function isFuzzyCorrect(userAnswer, correctAnswer) {
-  const user = normalizeAnswerText(userAnswer);
-  if (!user) return false;
-
-  const answers = splitAcceptableAnswers(correctAnswer);
-  return answers.some(ans => {
-    const target = normalizeAnswerText(ans);
-    if (!target) return false;
-
-    // 完全一致
-    if (user === target) return true;
-
-    // 中文答案：允許包含其中一個主要意思，例如「星期四」可接受「星期四木曜日」
-    if (user.includes(target) || target.includes(user)) {
-      const minLen = Math.min(user.length, target.length);
-      if (minLen >= 2) return true;
-    }
-
-    // 小錯字模糊判定：短答案允許 1 字差，長答案允許約 20% 差異
-    const dist = levenshteinDistance(user, target);
-    const maxLen = Math.max(user.length, target.length);
-    const allowed = maxLen <= 4 ? 1 : Math.ceil(maxLen * 0.2);
-    return dist <= allowed;
-  });
-}
-
 function checkAnswers() {
   if(!testCards.length) return;
   let s = 0;
