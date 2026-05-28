@@ -1355,26 +1355,56 @@ document.addEventListener("keydown", function(e) {
 function makeTest() {
   const cards = getCards();
   if (!cards.length) { alert("請先選擇有內容的題庫"); return; }
-  testCards = shuffle(cards);
+
+  // 筆試題目改為「韓文翻中文」＋「中文翻韓文」混合
+  // 每個單字會出 2 題，所以 15 個單字 = 30 題
+  testCards = shuffle([
+    ...cards.map(c => ({
+      ...c,
+      mode: "koToZh",
+      prompt: c.term,
+      answer: c.definition,
+      label: "韓文翻中文"
+    })),
+    ...cards.map(c => ({
+      ...c,
+      mode: "zhToKo",
+      prompt: c.definition,
+      answer: c.term,
+      label: "中文翻韓文"
+    }))
+  ]);
+
   addPractice();
-  const dir = folders[current].direction || "termToDefinition", q = document.getElementById("questions");
+
+  const q = document.getElementById("questions");
   q.innerHTML = "";
   testCards.forEach((c,i) => {
-    const p = dir === "termToDefinition" ? c.term : c.definition;
-    q.innerHTML += `<div class="q"><div>${i+1}. 請寫出對應答案</div><div class="prompt-box">${esc(p)}</div><input id="ans-${i}" placeholder="請輸入答案..."><div id="res-${i}"></div></div>`;
+    q.innerHTML += `<div class="q">
+      <div>${i+1}. ${c.label}</div>
+      <div class="prompt-box">${esc(c.prompt)}</div>
+      <input id="ans-${i}" placeholder="請輸入答案...">
+      <div id="res-${i}"></div>
+    </div>`;
   });
+
+  document.getElementById("score").textContent = "";
   document.getElementById("testProgress").innerHTML = testCards.map((_,i)=>`<div class="bubble">${i+1}</div>`).join("");
 }
 function checkAnswers() {
   if(!testCards.length) return;
-  let s = 0, dir = folders[current].direction || "termToDefinition";
+  let s = 0;
+
   testCards.forEach((c,i) => {
-    const ans = dir === "termToDefinition" ? c.definition : c.term;
+    const ans = c.answer || c.definition;
     const u = document.getElementById("ans-"+i).value;
     const ok = norm(u) === norm(ans);
     if(ok) s++;
-    document.getElementById("res-"+i).innerHTML = ok ? `<div class="result-ok">✔ 正確</div>` : `<div class="result-bad">✘ 錯誤</div><div class="answer">正確答案：${esc(ans)}</div>`;
+    document.getElementById("res-"+i).innerHTML = ok
+      ? `<div class="result-ok">✔ 正確</div>`
+      : `<div class="result-bad">✘ 錯誤</div><div class="answer">正確答案：${esc(ans)}</div>`;
   });
+
   document.getElementById("score").textContent = s + " / " + testCards.length;
   document.getElementById("testProgress").innerHTML = testCards.map((_,i)=>`<div class="bubble done">${i+1}</div>`).join("");
 }
