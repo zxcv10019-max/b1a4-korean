@@ -878,7 +878,42 @@ textarea {
   </main>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js">
+function showFinishedMessageIfNeeded() {
+    try {
+        const totalWords = vocabularyData ? vocabularyData.length : 0;
+        const learnedWords = learnedWordIds ? learnedWordIds.length : 0;
+
+        let finishMsg = document.getElementById("finishMessage");
+
+        if (!finishMsg) {
+            finishMsg = document.createElement("div");
+            finishMsg.id = "finishMessage";
+            finishMsg.style.marginTop = "12px";
+            finishMsg.style.padding = "14px";
+            finishMsg.style.borderRadius = "16px";
+            finishMsg.style.background = "#f4ffe9";
+            finishMsg.style.color = "#3b6b1d";
+            finishMsg.style.fontWeight = "700";
+            finishMsg.style.textAlign = "center";
+            finishMsg.style.fontSize = "18px";
+
+            const statsCard = document.querySelector(".stats-grid") || document.body;
+            statsCard.parentNode.insertBefore(finishMsg, statsCard.nextSibling);
+        }
+
+        if (totalWords > 0 && learnedWords >= totalWords) {
+            finishMsg.innerHTML = "🎉 已學完！你真的好棒棒！ 💚";
+            finishMsg.style.display = "block";
+        } else {
+            finishMsg.style.display = "none";
+        }
+    } catch (e) {
+        console.log(e);
+    }
+}
+
+</script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script>
@@ -936,7 +971,9 @@ function initFirebaseSync() {
       cloudDocRef = firebaseDb.collection(CLOUD_COLLECTION).doc(user.uid);
       updateSyncUI("已登入：" + (user.email || user.displayName || "Google 帳號") + "，正在同步題庫…", "同步中", true);
       await loadCloudData();
-    });
+    
+showFinishedMessageIfNeeded();
+});
   } catch (err) {
     updateSyncUI("Firebase 初始化失敗，請確認設定是否正確。", "設定錯誤", false);
     console.error(err);
