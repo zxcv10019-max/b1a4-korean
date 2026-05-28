@@ -1391,6 +1391,66 @@ function makeTest() {
   document.getElementById("score").textContent = "";
   document.getElementById("testProgress").innerHTML = testCards.map((_,i)=>`<div class="bubble">${i+1}</div>`).join("");
 }
+
+function normalizeAnswerText(s) {
+  return String(s || "")
+    .toLowerCase()
+    .replace(/[　\s]/g, "")
+    .replace(/[()（）【】［］\[\]{}「」『』,，.。!！?？:：;；、\/\\\-－—_]/g, "");
+}
+
+function splitAcceptableAnswers(answer) {
+  return String(answer || "")
+    .split(/[、,，;；\/／|｜\n]/)
+    .map(x => x.trim())
+    .filter(Boolean);
+}
+
+function levenshteinDistance(a, b) {
+  a = normalizeAnswerText(a);
+  b = normalizeAnswerText(b);
+  const dp = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
+  for (let i = 0; i <= a.length; i++) dp[i][0] = i;
+  for (let j = 0; j <= b.length; j++) dp[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + cost
+      );
+    }
+  }
+  return dp[a.length][b.length];
+}
+
+function isFuzzyCorrect(userAnswer, correctAnswer) {
+  const user = normalizeAnswerText(userAnswer);
+  if (!user) return false;
+
+  const answers = splitAcceptableAnswers(correctAnswer);
+  return answers.some(ans => {
+    const target = normalizeAnswerText(ans);
+    if (!target) return false;
+
+    // 完全一致
+    if (user === target) return true;
+
+    // 中文答案：允許包含其中一個主要意思，例如「星期四」可接受「星期四木曜日」
+    if (user.includes(target) || target.includes(user)) {
+      const minLen = Math.min(user.length, target.length);
+      if (minLen >= 2) return true;
+    }
+
+    // 小錯字模糊判定：短答案允許 1 字差，長答案允許約 20% 差異
+    const dist = levenshteinDistance(user, target);
+    const maxLen = Math.max(user.length, target.length);
+    const allowed = maxLen <= 4 ? 1 : Math.ceil(maxLen * 0.2);
+    return dist <= allowed;
+  });
+}
+
 function checkAnswers() {
   if(!testCards.length) return;
   let s = 0;
@@ -1398,7 +1458,7 @@ function checkAnswers() {
   testCards.forEach((c,i) => {
     const ans = c.answer || c.definition;
     const u = document.getElementById("ans-"+i).value;
-    const ok = norm(u) === norm(ans);
+    const ok = isFuzzyCorrect(u, ans);
     if(ok) s++;
     document.getElementById("res-"+i).innerHTML = ok
       ? `<div class="result-ok">✔ 正確</div>`
