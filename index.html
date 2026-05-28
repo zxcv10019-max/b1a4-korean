@@ -683,6 +683,86 @@ textarea {
   color:white;
 }
 
+
+.test-summary{
+  margin:16px 0 20px;
+  padding:16px 18px;
+  border-radius:18px;
+  background:#f4ffe9;
+  border:1px solid #cfe6b9;
+  color:#315321;
+  font-weight:900;
+  display:none;
+}
+.test-summary .ok-count{ color:#4e8f24; }
+.test-summary .bad-count{ color:#d84b6a; margin-left:14px; }
+
+
+.match-item.wrong{
+  background:#ffe8ef !important;
+  border-color:#ff9ab5 !important;
+  color:#b3264b !important;
+}
+
+
+@keyframes matchFadeOut {
+  0% { opacity:1; transform:scale(1) translateY(0); }
+  45% { opacity:1; transform:scale(1.06) translateY(-4px); }
+  100% { opacity:0; transform:scale(.82) translateY(14px); }
+}
+
+@keyframes matchPopIn {
+  0% { opacity:0; transform:scale(.9) translateY(16px); }
+  100% { opacity:1; transform:scale(1) translateY(0); }
+}
+
+@keyframes matchShake {
+  0%,100% { transform:translateX(0); }
+  20% { transform:translateX(-6px); }
+  40% { transform:translateX(6px); }
+  60% { transform:translateX(-4px); }
+  80% { transform:translateX(4px); }
+}
+
+@keyframes finishBounce {
+  0% { opacity:0; transform:scale(.85) translateY(12px); }
+  60% { opacity:1; transform:scale(1.06) translateY(-4px); }
+  100% { opacity:1; transform:scale(1) translateY(0); }
+}
+
+.match-item{
+  animation: matchPopIn .28s ease both;
+  transition: transform .18s ease, box-shadow .18s ease, background .18s ease, opacity .18s ease;
+}
+
+.match-item:hover{
+  transform:translateY(-3px);
+  box-shadow:0 10px 22px rgba(95,130,55,.16);
+}
+
+.match-item.selected{
+  transform:scale(1.03);
+  box-shadow:0 10px 24px rgba(95,130,55,.22);
+}
+
+.match-item.matched-out{
+  animation: matchFadeOut .36s ease forwards;
+  pointer-events:none;
+}
+
+.match-item.wrong{
+  animation: matchShake .32s ease;
+}
+
+.match-complete{
+  animation: finishBounce .48s ease both;
+  padding:28px;
+  border-radius:24px;
+  background:#f4ffe9;
+  border:1px solid #cfe6b9;
+  text-align:center;
+}
+
 </style>
 </head>
 <body>
@@ -876,7 +956,7 @@ textarea {
         </div>
         <div class="study-shell">
           <div class="card study-main">
-            <div class="topbar" style="margin-top:0"><h2>請寫出對應答案</h2><button class="primary" onclick="makeTest()">產生題目</button></div>
+            <div class="topbar" style="margin-top:0"><h2>請寫出對應答案</h2><button type="button" class="primary" onclick="makeTest()">產生題目</button></div>
             
 <div class="test-mode-select" style="margin-bottom:18px;display:flex;gap:10px;flex-wrap:wrap;">
   <button class="mode-btn active" id="modeMixedBtn" onclick="setTestMode('mixed')">🔀 混合模式</button>
@@ -884,10 +964,11 @@ textarea {
   <button class="mode-btn" id="modeZhBtn" onclick="setTestMode('zh')">🇹🇼 中文→韓文</button>
 </div>
 
-<div id="questions"></div>
+<div id="testSummary" class="test-summary"></div>
+            <div id="questions"></div>
             <div class="btns">
-              <button class="primary" onclick="checkAnswers()">批改</button>
-              <button class="ghost" onclick="clearAnswers()">清空答案</button>
+              <button type="button" class="primary" onclick="checkAnswers()">批改</button>
+              <button type="button" class="ghost" onclick="clearAnswers()">清空答案</button>
             </div>
           </div>
           <div class="card side-panel">
@@ -1388,6 +1469,60 @@ document.addEventListener("keydown", function(e) {
 });
 
 
+
+function normalizeAnswerText(s) {
+  return String(s || "")
+    .toLowerCase()
+    .replace(/[　\s]/g, "")
+    .replace(/[()（）【】［］\[\]{}「」『』,，.。!！?？:：;；、\/\\\-－—_]/g, "");
+}
+
+function splitAcceptableAnswers(answer) {
+  return String(answer || "")
+    .split(/[、,，;；\/／|｜\n]/)
+    .map(x => x.trim())
+    .filter(Boolean);
+}
+
+function levenshteinDistance(a, b) {
+  a = normalizeAnswerText(a);
+  b = normalizeAnswerText(b);
+  const dp = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
+  for (let i = 0; i <= a.length; i++) dp[i][0] = i;
+  for (let j = 0; j <= b.length; j++) dp[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + cost
+      );
+    }
+  }
+  return dp[a.length][b.length];
+}
+
+function isFuzzyCorrect(userAnswer, correctAnswer) {
+  const user = normalizeAnswerText(userAnswer);
+  if (!user) return false;
+
+  const answers = splitAcceptableAnswers(correctAnswer);
+  return answers.some(ans => {
+    const target = normalizeAnswerText(ans);
+    if (!target) return false;
+    if (user === target) return true;
+    if (user.includes(target) || target.includes(user)) {
+      const minLen = Math.min(user.length, target.length);
+      if (minLen >= 2) return true;
+    }
+    const dist = levenshteinDistance(user, target);
+    const maxLen = Math.max(user.length, target.length);
+    const allowed = maxLen <= 4 ? 1 : Math.ceil(maxLen * 0.2);
+    return dist <= allowed;
+  });
+}
+
 function setTestMode(mode){
   currentTestMode = mode;
 
@@ -1443,6 +1578,13 @@ function makeTest() {
 
   addPractice();
 
+  const summary = document.getElementById("testSummary");
+  if(summary){
+    summary.innerHTML = "";
+    summary.style.display = "none";
+  }
+
+
   const q = document.getElementById("questions");
   q.innerHTML = '<div class="questions-grid" id="questionsGrid"></div>';
   const grid = document.getElementById("questionsGrid");
@@ -1460,30 +1602,100 @@ function makeTest() {
   document.getElementById("testProgress").innerHTML = testCards.map((_,i)=>`<div class="bubble">${i+1}</div>`).join("");
 }
 function checkAnswers() {
-  if(!testCards.length) return;
-  let s = 0;
+  if (!testCards || !testCards.length) {
+    alert("請先產生題目");
+    return;
+  }
 
-  testCards.forEach((c,i) => {
-    const ans = c.answer || c.definition;
-    const u = document.getElementById("ans-"+i).value;
-    const ok = isFuzzyCorrect(u, ans);
-    if(ok) s++;
-    document.getElementById("res-"+i).innerHTML = ok
-      ? `<div class="result-ok">✔ 正確</div>`
-      : `<div class="result-bad">✘ 錯誤</div><div class="answer">正確答案：${esc(ans)}</div>`;
+  let correctCount = 0;
+  const wrongItems = [];
+
+  testCards.forEach((c, i) => {
+    const ans = c.answer || c.definition || "";
+    const inputEl = document.getElementById("ans-" + i);
+    const userAnswer = inputEl ? inputEl.value : "";
+    const ok = isFuzzyCorrect(userAnswer, ans);
+
+    if (ok) {
+      correctCount++;
+    } else {
+      wrongItems.push({
+        index: i + 1,
+        label: c.label || "題目",
+        prompt: c.prompt || "",
+        userAnswer: userAnswer || "未填寫",
+        answer: ans
+      });
+    }
   });
 
-  document.getElementById("score").textContent = s + " / " + testCards.length;
-  document.getElementById("testProgress").innerHTML = testCards.map((_,i)=>`<div class="bubble done">${i+1}</div>`).join("");
+  const wrongCount = wrongItems.length;
+  const scoreEl = document.getElementById("score");
+  if (scoreEl) scoreEl.textContent = "正確：" + correctCount + " 題　錯誤：" + wrongCount + " 題";
+
+  let summary = document.getElementById("testSummary");
+  if (!summary) {
+    summary = document.createElement("div");
+    summary.id = "testSummary";
+    summary.className = "test-summary";
+    const q = document.getElementById("questions");
+    q.parentNode.insertBefore(summary, q);
+  }
+  summary.innerHTML = '<span class="ok-count">正確：' + correctCount + ' 題</span><span class="bad-count">錯誤：' + wrongCount + ' 題</span>';
+  summary.style.display = "block";
+
+  const q = document.getElementById("questions");
+  if (!q) return;
+
+  if (wrongCount === 0) {
+    q.innerHTML = '<div class="q"><div class="result-ok" style="font-size:20px;">🎉 全部答對！你真的好棒棒！💚</div></div>';
+  } else {
+    q.innerHTML = '<div class="questions-grid" id="questionsGrid"></div>';
+    const grid = document.getElementById("questionsGrid");
+
+    wrongItems.forEach((item, idx) => {
+      grid.innerHTML += '<div class="q">' +
+        '<div>' + (idx + 1) + '. ' + esc(item.label) + '</div>' +
+        '<div class="prompt-box">' + esc(item.prompt) + '</div>' +
+        '<div class="result-bad">✘ 錯誤</div>' +
+        '<div class="answer">你的答案：' + esc(item.userAnswer) + '</div>' +
+        '<div class="answer">正確答案：' + esc(item.answer) + '</div>' +
+      '</div>';
+    });
+  }
+
+  const progress = document.getElementById("testProgress");
+  if (progress) {
+    progress.innerHTML = testCards.map((_, i) => '<div class="bubble done">' + (i + 1) + '</div>').join("");
+  }
 }
 function clearAnswers() {
-  testCards.forEach((_,i) => {
-    const a = document.getElementById("ans-"+i), r = document.getElementById("res-"+i);
-    if(a) a.value = "";
-    if(r) r.innerHTML = "";
-  });
+  const summary = document.getElementById("testSummary");
+  if(summary){
+    summary.innerHTML = "";
+    summary.style.display = "none";
+  }
+
   document.getElementById("score").textContent = "";
+
+  if(testCards.length){
+    const q = document.getElementById("questions");
+    q.innerHTML = '<div class="questions-grid" id="questionsGrid"></div>';
+    const grid = document.getElementById("questionsGrid");
+
+    testCards.forEach((c,i) => {
+      grid.innerHTML += `<div class="q">
+        <div>${i+1}. ${c.label}</div>
+        <div class="prompt-box">${esc(c.prompt)}</div>
+        <input id="ans-${i}" placeholder="請輸入答案...">
+        <div id="res-${i}"></div>
+      </div>`;
+    });
+
+    document.getElementById("testProgress").innerHTML = testCards.map((_,i)=>`<div class="bubble">${i+1}</div>`).join("");
+  }
 }
+
 
 function startMatch() {
   const cards = getCards();
@@ -1491,15 +1703,49 @@ function startMatch() {
     document.getElementById("matchBoard").innerHTML = "<div class='empty'>請先選擇有內容的題庫</div>";
     return;
   }
+
   addPractice();
-  matchCards = shuffle(cards).slice(0,Math.min(5,cards.length)).map((c,i)=>({...c,id:i}));
-  matchDone = 0; leftSel = null; rightSel = null;
+
+  // 配對改成「一次顯示 5 組，配對成功就消失，並補下一組」
+  // 例如 15 個單字：畫面一次只出 5 組，配完一組就補第 6 組，直到 15 組都完成。
+  matchCards = shuffle(cards).map((c,i)=>({...c,id:i}));
+  matchQueue = [...matchCards];
+  matchActive = [];
+  matchDone = 0;
+  leftSel = null;
+  rightSel = null;
+
   document.getElementById("matchScore").textContent = "0 / " + matchCards.length;
-  const left = shuffle(matchCards), right = shuffle(matchCards);
   document.getElementById("matchBoard").innerHTML = `<div class="match-col" id="leftCol"></div><div class="match-col" id="rightCol"></div>`;
+
+  fillMatchActive();
+  renderMatchBoard();
+}
+
+function fillMatchActive() {
+  while(matchActive.length < 5 && matchQueue.length > 0) {
+    matchActive.push(matchQueue.shift());
+  }
+}
+
+function renderMatchBoard() {
+  const board = document.getElementById("matchBoard");
+
+  if(matchDone >= matchCards.length) {
+    board.innerHTML = `<div class="empty match-complete" style="grid-column:1/-1;font-size:20px;font-weight:900;color:#4e8f24;">🎉 配對完成！你真的好棒棒！💚</div>`;
+    document.getElementById("matchScore").textContent = matchDone + " / " + matchCards.length;
+    return;
+  }
+
+  board.innerHTML = `<div class="match-col" id="leftCol"></div><div class="match-col" id="rightCol"></div>`;
+
+  const left = shuffle([...matchActive]);
+  const right = shuffle([...matchActive]);
+
   left.forEach(c=>addMatch("leftCol",c,"left",c.term));
   right.forEach(c=>addMatch("rightCol",c,"right",c.definition));
 }
+
 function addMatch(col,c,side,text) {
   const d = document.createElement("div");
   d.className = "match-item " + side;
@@ -1509,23 +1755,50 @@ function addMatch(col,c,side,text) {
   d.onclick = () => selectMatch(d);
   document.getElementById(col).appendChild(d);
 }
+
 function selectMatch(el) {
   if(el.classList.contains("done")) return;
+
   document.querySelectorAll(`.match-item[data-side="${el.dataset.side}"]`).forEach(x=>x.classList.remove("selected"));
   el.classList.add("selected");
+
   if(el.dataset.side === "left") leftSel = el; else rightSel = el;
+
   if(leftSel && rightSel) {
     if(leftSel.dataset.id === rightSel.dataset.id) {
-      leftSel.classList.add("done");
-      rightSel.classList.add("done");
-      matchDone++;
-      document.getElementById("matchScore").textContent = matchDone + " / " + matchCards.length;
+      const doneId = Number(leftSel.dataset.id);
+
+      // 正確配對：先播放消失動畫，再補下一組
+      leftSel.classList.add("matched-out");
+      rightSel.classList.add("matched-out");
+
+      setTimeout(() => {
+        matchActive = matchActive.filter(c => c.id !== doneId);
+        matchDone++;
+
+        document.getElementById("matchScore").textContent = matchDone + " / " + matchCards.length;
+
+        leftSel = null;
+        rightSel = null;
+
+        fillMatchActive();
+        renderMatchBoard();
+      }, 360);
     } else {
-      leftSel.classList.remove("selected");
-      rightSel.classList.remove("selected");
+      // 錯誤配對：閃一下後取消選取
+      const a = leftSel;
+      const b = rightSel;
+      a.classList.add("wrong");
+      b.classList.add("wrong");
+
+      setTimeout(() => {
+        a.classList.remove("selected", "wrong");
+        b.classList.remove("selected", "wrong");
+      }, 350);
+
+      leftSel = null;
+      rightSel = null;
     }
-    leftSel = null;
-    rightSel = null;
   }
 }
 
