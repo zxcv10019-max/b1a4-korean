@@ -623,6 +623,39 @@ textarea {
   flex-wrap: wrap;
 }
 
+/* ===== 帳號登入與雲端同步 ===== */
+.account-box {
+  margin-top: 26px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #f8fff0;
+  box-shadow: 0 10px 24px rgba(85,120,55,.08);
+}
+.account-title { font-weight: 1000; color: #4e8f24; margin-bottom: 8px; }
+.account-status { font-size: 12px; line-height: 1.5; color: var(--muted); word-break: break-all; }
+.account-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.account-actions button {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+.account-actions .login-btn { background: #e3f0d2; color: #4e8f24; }
+.account-actions .logout-btn { background: white; color: #6b7b60; border: 1px solid var(--line); }
+.sync-pill {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: white;
+  color: #4e8f24;
+  border: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 900;
+}
+
 </style>
 </head>
 <body>
@@ -637,6 +670,16 @@ textarea {
         <button onclick="goPage('test')">✎ 筆試</button>
         <button onclick="goPage('match')">⌘ 配對</button>
       </nav>
+
+      <div class="account-box">
+        <div class="account-title">帳號同步</div>
+        <div id="syncStatus" class="account-status">未登入，目前題庫只儲存在這台裝置。</div>
+        <span id="syncBadge" class="sync-pill">本機模式</span>
+        <div class="account-actions">
+          <button id="loginBtn" class="login-btn" onclick="loginWithGoogle()">Google 登入同步</button>
+          <button id="logoutBtn" class="logout-btn" onclick="logoutAccount()" style="display:none">登出</button>
+        </div>
+      </div>
     </div>
     <div class="bear animals"><span>🧸</span><span>🐥</span><span>🦖</span></div>
   </aside>
@@ -835,7 +878,138 @@ textarea {
   </main>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script>
+// ===== Firebase 雲端同步設定 =====
+// 使用前請到 Firebase 建立 Web App，並把下方值換成自己的設定。
+// Authentication 請啟用 Google 登入；Firestore 請建立資料庫。
+const firebaseConfig = {
+  apiKey: "AIzaSyCX897x7c1-va19xeQajWr97gK_eY4w_ys",
+  authDomain: "b1a4-cc0af.firebaseapp.com",
+  projectId: "b1a4-cc0af",
+  storageBucket: "b1a4-cc0af.firebasestorage.app",
+  messagingSenderId: "1010872861745",
+  appId: "1:1010872861745:web:9bb41e47d8ef06921d0110",
+  measurementId: "G-01H07Z4RGW"
+};
+const CLOUD_COLLECTION = "b1a4StudyData";
+let cloudReady = false;
+let cloudUser = null;
+let cloudDocRef = null;
+let cloudSaveTimer = null;
+let isLoadingCloud = false;
+let firebaseAuth = null;
+let firebaseDb = null;
+
+function isFirebaseConfigured() {
+  return firebaseConfig.apiKey && !String(firebaseConfig.apiKey).includes("請填入");
+}
+function updateSyncUI(text, badge, loggedIn) {
+  const status = document.getElementById("syncStatus");
+  const syncBadge = document.getElementById("syncBadge");
+  const loginBtn = document.getElementById("loginBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (status) status.textContent = text;
+  if (syncBadge) syncBadge.textContent = badge;
+  if (loginBtn) loginBtn.style.display = loggedIn ? "none" : "block";
+  if (logoutBtn) logoutBtn.style.display = loggedIn ? "block" : "none";
+}
+function initFirebaseSync() {
+  if (!isFirebaseConfigured()) {
+    updateSyncUI("尚未填入 Firebase 設定，目前題庫只會存在這台裝置。", "待設定", false);
+    return;
+  }
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    firebaseAuth = firebase.auth();
+    firebaseDb = firebase.firestore();
+    cloudReady = true;
+    firebaseAuth.onAuthStateChanged(async user => {
+      cloudUser = user || null;
+      if (!user) {
+        cloudDocRef = null;
+        updateSyncUI("未登入，目前題庫只儲存在這台裝置。", "本機模式", false);
+        return;
+      }
+      cloudDocRef = firebaseDb.collection(CLOUD_COLLECTION).doc(user.uid);
+      updateSyncUI("已登入：" + (user.email || user.displayName || "Google 帳號") + "，正在同步題庫…", "同步中", true);
+      await loadCloudData();
+    });
+  } catch (err) {
+    updateSyncUI("Firebase 初始化失敗，請確認設定是否正確。", "設定錯誤", false);
+    console.error(err);
+  }
+}
+async function loginWithGoogle() {
+  if (!cloudReady) {
+    alert("請先把 Firebase 設定填入 HTML 裡，才能啟用 Google 登入同步。");
+    return;
+  }
+  const provider = new firebase.auth.GoogleAuthProvider();
+  await firebaseAuth.signInWithPopup(provider).catch(err => alert("登入失敗：" + err.message));
+}
+async function logoutAccount() {
+  if (firebaseAuth) await firebaseAuth.signOut();
+}
+function getCloudPayload() {
+  return {
+    folders, groups, stats, collapsedGroups,
+    updatedAt: new Date().toISOString()
+  };
+}
+async function loadCloudData() {
+  if (!cloudDocRef) return;
+  try {
+    const snap = await cloudDocRef.get();
+    const hasLocalData = (folders && folders.length) || (groups && groups.length) || ((stats && stats.practice) || 0) > 0;
+    if (snap.exists) {
+      const data = snap.data() || {};
+      isLoadingCloud = true;
+      folders = Array.isArray(data.folders) ? data.folders : [];
+      groups = Array.isArray(data.groups) ? data.groups : [];
+      stats = data.stats || { practice:0 };
+      collapsedGroups = Array.isArray(data.collapsedGroups) ? data.collapsedGroups : [];
+      current = folders.length ? 0 : null;
+      writeLocalOnly();
+      renderFolders();
+      if (current !== null) loadFolder(current); else renderDashboard();
+      isLoadingCloud = false;
+      updateSyncUI("已登入：" + (cloudUser.email || cloudUser.displayName || "Google 帳號") + "，題庫已同步。", "已同步", true);
+    } else {
+      if (hasLocalData) await uploadCloudNow();
+      updateSyncUI("已登入：" + (cloudUser.email || cloudUser.displayName || "Google 帳號") + "，本機題庫已上傳同步。", "已同步", true);
+    }
+  } catch (err) {
+    isLoadingCloud = false;
+    updateSyncUI("同步失敗，請確認 Firestore 權限設定。", "同步失敗", true);
+    console.error(err);
+  }
+}
+function writeLocalOnly() {
+  localStorage.setItem("b1a4_green_study_empty_v3", JSON.stringify(folders));
+  localStorage.setItem("b1a4_green_study_stats_v3", JSON.stringify(stats));
+  localStorage.setItem("b1a4_groups_v1", JSON.stringify(groups));
+  localStorage.setItem("b1a4_collapsed_groups", JSON.stringify(collapsedGroups));
+}
+function scheduleCloudSave() {
+  if (!cloudDocRef || isLoadingCloud) return;
+  clearTimeout(cloudSaveTimer);
+  cloudSaveTimer = setTimeout(uploadCloudNow, 650);
+}
+async function uploadCloudNow() {
+  if (!cloudDocRef) return;
+  try {
+    updateSyncUI("已登入：" + (cloudUser.email || cloudUser.displayName || "Google 帳號") + "，正在儲存到雲端…", "同步中", true);
+    await cloudDocRef.set(getCloudPayload(), { merge:true });
+    updateSyncUI("已登入：" + (cloudUser.email || cloudUser.displayName || "Google 帳號") + "，題庫已同步。", "已同步", true);
+  } catch (err) {
+    updateSyncUI("雲端儲存失敗，請檢查 Firestore 規則或網路。", "同步失敗", true);
+    console.error(err);
+  }
+}
+
 let folders = JSON.parse(localStorage.getItem("b1a4_green_study_empty_v3") || "[]");
 let groups = JSON.parse(localStorage.getItem("b1a4_groups_v1") || "[]");
 let stats = JSON.parse(localStorage.getItem("b1a4_green_study_stats_v3") || "{\"practice\":0}");
@@ -846,10 +1020,8 @@ let flashCards = [], flashIndex = 0, testCards = [], matchCards = [];
 let leftSel = null, rightSel = null, matchDone = 0;
 
 function saveStorage() {
-  localStorage.setItem("b1a4_green_study_empty_v3", JSON.stringify(folders));
-  localStorage.setItem("b1a4_green_study_stats_v3", JSON.stringify(stats));
-  localStorage.setItem("b1a4_groups_v1", JSON.stringify(groups));
-  localStorage.setItem("b1a4_collapsed_groups", JSON.stringify(collapsedGroups));
+  writeLocalOnly();
+  scheduleCloudSave();
 }
 function parseCards(t) {
   return String(t || "").split(/\n+/).map(x => x.trim()).filter(Boolean).map(line => {
@@ -1270,6 +1442,7 @@ function syncGroupSelector() {
     groups.map(g => `<option value="${g.id}" ${curVal === g.id ? "selected" : ""}>${esc(g.name)}</option>`).join("");
 }
 
+initFirebaseSync();
 renderFolders();
 if (current !== null) loadFolder(current);
 else renderDashboard();
