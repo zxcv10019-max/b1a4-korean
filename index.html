@@ -542,6 +542,87 @@ textarea {
   .folder-grid,.match-board { grid-template-columns:1fr; }
   .flash-word { font-size:36px; }
 }
+
+/* ===== 資料夾分組樣式 ===== */
+.group-section {
+  margin-bottom: 28px;
+}
+.group-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  background: var(--green-soft);
+  border-radius: 18px;
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 14px;
+  border: 1.5px solid var(--line);
+  transition: background 0.2s;
+}
+.group-header:hover { background: #dff0c5; }
+.group-header .group-toggle {
+  font-size: 18px;
+  transition: transform 0.25s;
+  display: inline-block;
+  width: 22px;
+}
+.group-header.collapsed .group-toggle { transform: rotate(-90deg); }
+.group-header .group-name {
+  font-weight: 1000;
+  font-size: 17px;
+  flex: 1;
+}
+.group-header .group-count {
+  font-size: 13px;
+  color: var(--muted);
+  background: white;
+  padding: 4px 12px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+}
+.group-header .group-actions {
+  display: flex;
+  gap: 6px;
+}
+.group-header .group-actions button {
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 10px;
+  background: white;
+  border: 1px solid var(--line);
+  color: #4e8f24;
+  font-weight: 900;
+}
+.group-header .group-actions button:hover { background: #f0f8e8; }
+.group-body {
+  padding-left: 8px;
+  transition: all 0.25s;
+}
+.group-body.collapsed { display: none; }
+.group-ungrouped .group-header {
+  background: #f4f6f0;
+  border-style: dashed;
+}
+.group-selector {
+  margin-top: 10px;
+}
+.group-selector select {
+  width: 100%;
+  border: 1px solid #d4e1c3;
+  border-radius: 14px;
+  padding: 10px 14px;
+  font-size: 14px;
+  background: white;
+}
+.group-manage-bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
 </style>
 </head>
 <body>
@@ -604,7 +685,10 @@ textarea {
         <div class="card folder-area">
           <div class="topbar">
             <h2>我的題庫</h2>
-            <button class="soft" onclick="newFolder()">＋ 建立題庫</button>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button class="soft" onclick="newGroup()">📁 新增分組</button>
+              <button class="soft" onclick="newFolder()">＋ 建立題庫</button>
+            </div>
           </div>
           <div id="folderGrid" class="folder-grid"></div>
         </div>
@@ -644,6 +728,12 @@ textarea {
           <div class="card editor">
             <label>題庫名稱</label>
             <input id="folderName" placeholder="例如：初級單字">
+            <label>所屬分組</label>
+            <div class="group-selector">
+              <select id="folderGroup">
+                <option value="">── 未分組 ──</option>
+              </select>
+            </div>
             <label>預設方向</label>
             <select id="direction">
               <option value="termToDefinition">韓文 ➜ 中文</option>
@@ -747,8 +837,10 @@ textarea {
 
 <script>
 let folders = JSON.parse(localStorage.getItem("b1a4_green_study_empty_v3") || "[]");
+let groups = JSON.parse(localStorage.getItem("b1a4_groups_v1") || "[]");
 let stats = JSON.parse(localStorage.getItem("b1a4_green_study_stats_v3") || "{\"practice\":0}");
 let current = folders.length ? 0 : null;
+let collapsedGroups = JSON.parse(localStorage.getItem("b1a4_collapsed_groups") || "[]");
 let currentColor = "#c6e09c";
 let flashCards = [], flashIndex = 0, testCards = [], matchCards = [];
 let leftSel = null, rightSel = null, matchDone = 0;
@@ -756,6 +848,8 @@ let leftSel = null, rightSel = null, matchDone = 0;
 function saveStorage() {
   localStorage.setItem("b1a4_green_study_empty_v3", JSON.stringify(folders));
   localStorage.setItem("b1a4_green_study_stats_v3", JSON.stringify(stats));
+  localStorage.setItem("b1a4_groups_v1", JSON.stringify(groups));
+  localStorage.setItem("b1a4_collapsed_groups", JSON.stringify(collapsedGroups));
 }
 function parseCards(t) {
   return String(t || "").split(/\n+/).map(x => x.trim()).filter(Boolean).map(line => {
@@ -793,21 +887,92 @@ function openFolderManager() {
   document.getElementById("editor").scrollIntoView({behavior:"smooth"});
 }
 
+function makeFolderCard(f, i) {
+  const d = document.createElement("div");
+  d.className = "folder card " + (current === i ? "active" : "");
+  d.style.setProperty("--tab", f.color || "#c6e09c");
+  d.innerHTML = `<div class="folder-inner"><div class="folder-title">${esc(f.name)}</div><div class="folder-meta">${parseCards(f.content).length} 張單字<br>${f.updated || today()}</div></div>`;
+  d.onclick = () => { loadFolder(i); document.getElementById("editor").scrollIntoView({behavior:"smooth"}); };
+  return d;
+}
+
 function renderFolders() {
   const g = document.getElementById("folderGrid");
   g.innerHTML = "";
-  if (!folders.length) {
+  if (!folders.length && !groups.length) {
     g.innerHTML = `<div class="empty" style="grid-column:1/-1">目前沒有題庫。<br>按右上角「＋ 建立題庫」開始建立。</div>`;
-  } else {
-    folders.forEach((f,i) => {
-      const d = document.createElement("div");
-      d.className = "folder card " + (current === i ? "active" : "");
-      d.style.setProperty("--tab", f.color || "#c6e09c");
-      d.innerHTML = `<div class="folder-inner"><div class="folder-title">${esc(f.name)}</div><div class="folder-meta">${parseCards(f.content).length} 張單字<br>${f.updated || today()}</div></div>`;
-      d.onclick = () => { loadFolder(i); document.getElementById("editor").scrollIntoView({behavior:"smooth"}); };
-      g.appendChild(d);
-    });
+    renderDashboard(); syncDropdowns(); return;
   }
+
+  // Render each named group
+  groups.forEach(grp => {
+    const grpFolders = folders.map((f,i) => ({f,i})).filter(({f}) => f.groupId === grp.id);
+    const isCollapsed = collapsedGroups.includes(grp.id);
+
+    const section = document.createElement("div");
+    section.className = "group-section";
+
+    const header = document.createElement("div");
+    header.className = "group-header" + (isCollapsed ? " collapsed" : "");
+    header.innerHTML = `
+      <span class="group-toggle">▾</span>
+      <span class="group-name">📁 ${esc(grp.name)}</span>
+      <span class="group-count">${grpFolders.length} 個題庫</span>
+      <div class="group-actions">
+        <button onclick="event.stopPropagation();renameGroup('${grp.id}')">✏️ 改名</button>
+        <button onclick="event.stopPropagation();deleteGroup('${grp.id}')">🗑</button>
+      </div>`;
+    header.onclick = () => toggleGroup(grp.id, header);
+
+    const body = document.createElement("div");
+    body.className = "group-body" + (isCollapsed ? " collapsed" : "");
+    body.id = "grpbody_" + grp.id;
+
+    if (grpFolders.length) {
+      const grid = document.createElement("div");
+      grid.className = "folder-grid";
+      grpFolders.forEach(({f,i}) => grid.appendChild(makeFolderCard(f,i)));
+      body.appendChild(grid);
+    } else {
+      body.innerHTML = `<div class="empty" style="padding:18px 10px;font-size:14px">此分組尚無題庫</div>`;
+    }
+
+    section.appendChild(header);
+    section.appendChild(body);
+    g.appendChild(section);
+  });
+
+  // Render ungrouped folders
+  const ungrouped = folders.map((f,i) => ({f,i})).filter(({f}) => !f.groupId || !groups.find(grp => grp.id === f.groupId));
+  if (ungrouped.length || !groups.length) {
+    const section = document.createElement("div");
+    section.className = "group-section group-ungrouped";
+    if (groups.length) {
+      const grpId = "ungrouped";
+      const isCollapsed = collapsedGroups.includes(grpId);
+      const header = document.createElement("div");
+      header.className = "group-header" + (isCollapsed ? " collapsed" : "");
+      header.innerHTML = `<span class="group-toggle">▾</span><span class="group-name">📂 未分組</span><span class="group-count">${ungrouped.length} 個題庫</span>`;
+      header.onclick = () => toggleGroup(grpId, header);
+      const body = document.createElement("div");
+      body.className = "group-body" + (isCollapsed ? " collapsed" : "");
+      body.id = "grpbody_ungrouped";
+      const grid = document.createElement("div");
+      grid.className = "folder-grid";
+      ungrouped.forEach(({f,i}) => grid.appendChild(makeFolderCard(f,i)));
+      body.appendChild(grid);
+      section.appendChild(header);
+      section.appendChild(body);
+    } else {
+      const grid = document.createElement("div");
+      grid.className = "folder-grid";
+      ungrouped.forEach(({f,i}) => grid.appendChild(makeFolderCard(f,i)));
+      section.appendChild(grid);
+    }
+    g.appendChild(section);
+  }
+
+  syncGroupSelector();
   renderDashboard();
   syncDropdowns();
 }
@@ -865,6 +1030,7 @@ function loadFolder(i) {
   document.getElementById("raw").value = f.content || "";
   document.getElementById("previewFolder").style.setProperty("--tab", currentColor);
   document.getElementById("countBadge").textContent = parseCards(f.content).length + " 張單字";
+  document.getElementById("editorWrap").style.display = "block";
   renderFolders();
   resetViews();
 }
@@ -880,6 +1046,7 @@ function saveFolder() {
   folders[current].color = currentColor;
   folders[current].updated = today();
   folders[current].practice = folders[current].practice || 0;
+  folders[current].groupId = document.getElementById("folderGroup").value || "";
   saveStorage();
   loadFolder(current);
   alert("已儲存！");
@@ -1053,6 +1220,54 @@ function selectMatch(el) {
     leftSel = null;
     rightSel = null;
   }
+}
+
+// ===== 分組管理函式 =====
+function newGroup() {
+  const name = prompt("請輸入新分組名稱：");
+  if (!name || !name.trim()) return;
+  const id = "grp_" + Date.now();
+  groups.push({ id, name: name.trim() });
+  saveStorage();
+  renderFolders();
+}
+
+function renameGroup(id) {
+  const grp = groups.find(g => g.id === id);
+  if (!grp) return;
+  const name = prompt("重新命名分組：", grp.name);
+  if (!name || !name.trim()) return;
+  grp.name = name.trim();
+  saveStorage();
+  renderFolders();
+}
+
+function deleteGroup(id) {
+  if (!confirm("刪除此分組？（題庫不會被刪除，只會移到未分組）")) return;
+  groups = groups.filter(g => g.id !== id);
+  folders.forEach(f => { if (f.groupId === id) f.groupId = ""; });
+  saveStorage();
+  renderFolders();
+}
+
+function toggleGroup(id, headerEl) {
+  headerEl.classList.toggle("collapsed");
+  const body = document.getElementById("grpbody_" + id);
+  if (body) body.classList.toggle("collapsed");
+  if (collapsedGroups.includes(id)) {
+    collapsedGroups = collapsedGroups.filter(x => x !== id);
+  } else {
+    collapsedGroups.push(id);
+  }
+  saveStorage();
+}
+
+function syncGroupSelector() {
+  const sel = document.getElementById("folderGroup");
+  if (!sel) return;
+  const curVal = current !== null && folders[current] ? (folders[current].groupId || "") : "";
+  sel.innerHTML = `<option value="">── 未分組 ──</option>` +
+    groups.map(g => `<option value="${g.id}" ${curVal === g.id ? "selected" : ""}>${esc(g.name)}</option>`).join("");
 }
 
 renderFolders();
