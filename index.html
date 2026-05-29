@@ -3888,5 +3888,224 @@ else renderDashboard();
 })();
 </script>
 
+
+<script>
+/* ===== 完成後才統計進度：修正版 =====
+   - 單字卡：按「已學會」才累計 learnedCount/totalCards
+   - 筆試：按檢查答案完成結算後才算完成
+   - 配對：全部配對成功後才算完成
+   - 聽力：題庫本輪全部答過後才算完成
+*/
+(function(){
+  function getCurrentFolderId(){
+    try{
+      if(typeof current !== "undefined" && current !== null && current !== "") return current;
+      if(typeof currentFolder !== "undefined" && currentFolder !== null && currentFolder !== "") return currentFolder;
+    }catch(e){}
+    return null;
+  }
+
+  function getCardsForFolder(folderId){
+    try{
+      if(typeof folders !== "undefined" && folders){
+        var f = folders[folderId];
+        if(!f && !isNaN(Number(folderId))) f = folders[Number(folderId)];
+        if(f){
+          if(Array.isArray(f.cards)) return f.cards;
+          if(Array.isArray(f.words)) return f.words;
+          if(Array.isArray(f.items)) return f.items;
+        }
+      }
+    }catch(e){}
+    try{
+      if(folderId === getCurrentFolderId() && typeof getCards === "function"){
+        var cards = getCards();
+        if(Array.isArray(cards)) return cards;
+      }
+    }catch(e){}
+    try{
+      if(typeof flashCards !== "undefined" && Array.isArray(flashCards) && flashCards.length) return flashCards;
+    }catch(e){}
+    return [];
+  }
+
+  function ensureStats(folderId){
+    if(!folderId && folderId !== 0) folderId = getCurrentFolderId();
+    if(folderId === null || folderId === undefined || folderId === "") return null;
+    try{
+      if(typeof folderPracticeStats === "undefined" || !folderPracticeStats) window.folderPracticeStats = {};
+      if(!folderPracticeStats[folderId]) folderPracticeStats[folderId] = {};
+      var s = folderPracticeStats[folderId];
+      if(typeof s.flashcard !== "number") s.flashcard = Number(s.flashcard) || 0;
+      if(typeof s.test !== "number") s.test = Number(s.test) || 0;
+      if(typeof s.match !== "number") s.match = Number(s.match) || 0;
+      if(typeof s.listen !== "number") s.listen = Number(s.listen) || 0;
+      if(typeof s.testCompleted === "undefined") s.testCompleted = false;
+      if(typeof s.matchCompleted === "undefined") s.matchCompleted = false;
+      if(typeof s.listenCompleted === "undefined") s.listenCompleted = false;
+      return s;
+    }catch(e){ return null; }
+  }
+
+  function saveStats(){
+    try{ localStorage.setItem("b1a4FolderPracticeStats", JSON.stringify(folderPracticeStats || {})); }catch(e){}
+    try{ if(typeof saveStorage === "function") saveStorage(); }catch(e){}
+    try{ if(typeof saveCloudData === "function" && typeof cloudUser !== "undefined" && cloudUser) saveCloudData(); }catch(e){}
+    try{ if(typeof renderFolderStatsPanel === "function") renderFolderStatsPanel(); }catch(e){}
+  }
+
+  function learnedCount(folderId){
+    var cards = getCardsForFolder(folderId);
+    var total = cards.length;
+    var count = 0;
+
+    try{
+      if(typeof learnedSet === "function"){
+        var set = learnedSet(folderId);
+        if(set && typeof set.has === "function"){
+          cards.forEach(function(card, idx){
+            var key = (typeof getStableCardKeyForStats === "function")
+              ? getStableCardKeyForStats(card, idx)
+              : ((typeof getCardKey === "function") ? getCardKey(card, idx) : String(idx));
+            if(set.has(key)) count++;
+          });
+          return Math.min(count, total);
+        }
+      }
+    }catch(e){}
+
+    try{
+      if(typeof graduationData !== "undefined" && graduationData && graduationData[folderId] && Array.isArray(graduationData[folderId].learned)){
+        var arr = graduationData[folderId].learned;
+        cards.forEach(function(card, idx){
+          var key = (typeof getCardKey === "function") ? getCardKey(card, idx) : String(idx);
+          if(arr.indexOf(key) >= 0) count++;
+        });
+        return Math.min(count, total);
+      }
+    }catch(e){}
+
+    try{
+      var s = ensureStats(folderId) || {};
+      return Math.min(Number(s.flashcard) || 0, total);
+    }catch(e){}
+
+    return 0;
+  }
+
+  function markCompleted(type){
+    var fid = getCurrentFolderId();
+    var s = ensureStats(fid);
+    if(!s) return;
+
+    if(type === "test"){
+      s.testCompleted = true;
+      s.test = 1;
+    }else if(type === "match"){
+      s.matchCompleted = true;
+      s.match = 1;
+    }else if(type === "listen"){
+      s.listenCompleted = true;
+      s.listen = 1;
+    }
+
+    s.lastStudy = new Date().toISOString();
+    s.lastType = type;
+    s.total = (learnedCount(fid) || 0) + (s.testCompleted ? 1 : 0) + (s.matchCompleted ? 1 : 0) + (s.listenCompleted ? 1 : 0);
+    saveStats();
+  }
+
+  // 阻止「一進入筆試/配對/聽力」就被算完成。
+  window.recordFolderPractice = function(type, forceComplete){
+    var fid = getCurrentFolderId();
+    var s = ensureStats(fid);
+    if(!s) return;
+
+    if(type === "flashcard"){
+      // 單字卡統計由「已學會」按鈕/learnedSet 負責，這裡只更新最後學習資訊。
+      s.flashcard = learnedCount(fid);
+      s.lastStudy = new Date().toISOString();
+      s.lastType = "flashcard";
+      saveStats();
+      return;
+    }
+
+    if(forceComplete === true){
+      markCompleted(type);
+      return;
+    }
+
+    // 非完成狀態，不做任何進度統計。
+  };
+
+  window.getFolderDetailProgress = function(folderId){
+    var cards = getCardsForFolder(folderId);
+    var totalCards = cards.length;
+    var learned = learnedCount(folderId);
+    var s = ensureStats(folderId) || {};
+    s.flashcard = learned;
+
+    var flashDone = totalCards > 0 && learned >= totalCards;
+    var testDone = !!s.testCompleted;
+    var matchDone = !!s.matchCompleted;
+    var listenDone = !!s.listenCompleted;
+    var completion = (flashDone ? 25 : 0) + (testDone ? 25 : 0) + (matchDone ? 25 : 0) + (listenDone ? 25 : 0);
+
+    return {
+      totalCards: totalCards,
+      learnedCount: learned,
+      flashDone: flashDone,
+      testDone: testDone,
+      matchDone: matchDone,
+      listenDone: listenDone,
+      completion: completion
+    };
+  };
+
+  // 筆試：檢查答案/結算後才完成
+  var oldCheckAnswers = window.checkAnswers;
+  if(typeof oldCheckAnswers === "function"){
+    window.checkAnswers = function(){
+      var result = oldCheckAnswers.apply(this, arguments);
+      try{
+        if(typeof testCards !== "undefined" && Array.isArray(testCards) && testCards.length){
+          markCompleted("test");
+        }
+      }catch(e){}
+      return result;
+    };
+  }
+
+  // 配對：全部完成後才完成
+  var oldRecordMatchCompleted = window.recordMatchCompleted;
+  window.recordMatchCompleted = function(){
+    try{ if(typeof oldRecordMatchCompleted === "function") oldRecordMatchCompleted.apply(this, arguments); }catch(e){}
+    markCompleted("match");
+  };
+
+  // 聽力：本輪題庫全部答過才完成
+  var oldAnswerListening = window.answerListening;
+  if(typeof oldAnswerListening === "function"){
+    window.answerListening = function(){
+      var result = oldAnswerListening.apply(this, arguments);
+      try{
+        var cards = (typeof getCards === "function") ? getCards() : [];
+        var total = Array.isArray(cards) ? cards.length : 0;
+        if(total > 0 && typeof listeningTotal !== "undefined" && Number(listeningTotal) >= total){
+          markCompleted("listen");
+        }
+      }catch(e){}
+      return result;
+    };
+  }
+
+  // 開始新測驗時不清除已完成紀錄，只是不提早加進度。
+  setTimeout(function(){
+    try{ if(typeof renderFolderStatsPanel === "function") renderFolderStatsPanel(); }catch(e){}
+    try{ if(typeof updateFlashcardLearningButtons === "function") updateFlashcardLearningButtons(); }catch(e){}
+  }, 100);
+})();
+</script>
+
 </body>
 </html>
