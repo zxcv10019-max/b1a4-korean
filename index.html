@@ -763,6 +763,23 @@ textarea {
   text-align:center;
 }
 
+
+/* ===== 題庫畢業系統 ===== */
+.graduation-panel{margin-top:18px;padding:18px;border-radius:22px;background:linear-gradient(135deg,#fffdf3,#f2ffe4);border:1px solid #d9ecc4;box-shadow:0 10px 26px rgba(104,132,65,.10)}
+.graduation-panel.graduated{background:linear-gradient(135deg,#fff7c7,#f5ffe6);border-color:#f2c94c;box-shadow:0 12px 30px rgba(215,174,35,.22)}
+.graduation-title{font-size:20px;font-weight:900;color:#315321;margin-bottom:10px}
+.graduation-row{display:grid;grid-template-columns:86px 1fr 58px;gap:10px;align-items:center;margin:10px 0;font-weight:800}
+.graduation-bar{height:12px;border-radius:999px;background:#e7efd9;overflow:hidden}
+.graduation-fill{height:100%;width:0%;border-radius:999px;background:#83b842;transition:width .35s ease}
+.graduation-fill.gold{background:linear-gradient(90deg,#f2c94c,#ffdf6d)}
+.graduation-badge{margin-top:14px;padding:16px;border-radius:18px;background:#ffffffcc;color:#315321;text-align:center;font-size:20px;font-weight:900;display:none}
+.graduation-badge.show{display:block;animation:gradPop .52s ease both}
+.folder-card.graduated-folder{border-color:#f2c94c!important;box-shadow:0 12px 30px rgba(215,174,35,.20)}
+.star-rating{letter-spacing:2px;color:#d9a400;font-weight:900}
+@keyframes gradPop{0%{opacity:0;transform:scale(.86) translateY(10px)}65%{opacity:1;transform:scale(1.06) translateY(-4px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+.confetti-piece{position:fixed;top:-12px;z-index:9999;font-size:18px;pointer-events:none;animation:confettiFall 1.9s linear forwards}
+@keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+
 </style>
 </head>
 <body>
@@ -804,6 +821,7 @@ textarea {
 
     <div class="content">
       <section id="home" class="page active">
+        <div id="graduationPanel" class="graduation-panel"></div>
         <div class="dashboard">
           <div class="card panel">
             <h2>快速開始</h2>
@@ -1028,6 +1046,9 @@ function showFinishedMessageIfNeeded() {
     }
 }
 
+
+// 題庫畢業系統初始化
+setTimeout(()=>{ renderGraduationPanel(); updateFolderGraduationBadges(); }, 500);
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
@@ -1170,11 +1191,14 @@ let current = folders.length ? 0 : null;
 let collapsedGroups = JSON.parse(localStorage.getItem("b1a4_collapsed_groups") || "[]");
 let currentColor = "#c6e09c";
 let flashCards = [], flashIndex = 0, testCards = [], matchCards = [];
+let graduationData = {};
+let graduationConfettiShown = {};
 let leftSel = null, rightSel = null, matchDone = 0;
 
 function saveStorage() {
   writeLocalOnly();
   scheduleCloudSave();
+  localStorage.setItem("b1a4GraduationData", JSON.stringify(graduationData || {}));
 }
 function parseCards(t) {
   return String(t || "").split(/\n+/).map(x => x.trim()).filter(Boolean).map(line => {
@@ -1200,6 +1224,8 @@ function goPage(id) {
   syncDropdowns();
   if (id === "flash") startFlash(false);
   if (id === "match" && !document.getElementById("matchBoard").innerHTML) startMatch();
+  renderGraduationPanel();
+  updateFolderGraduationBadges();
 }
 
 function openFolderManager() {
@@ -1300,6 +1326,8 @@ function renderFolders() {
   syncGroupSelector();
   renderDashboard();
   syncDropdowns();
+  renderGraduationPanel();
+  updateFolderGraduationBadges();
 }
 function renderDashboard() {
   const totalCards = folders.reduce((sum,f) => sum + parseCards(f.content).length, 0);
@@ -1338,6 +1366,8 @@ function syncDropdowns() {
 }
 function selectFromDropdown(v) {
   if (folders.length) loadFolder(Number(v));
+  renderGraduationPanel();
+  updateFolderGraduationBadges();
 }
 function newFolder() {
   folders.push({ name:"新增題庫", direction:"termToDefinition", color:"#c6e09c", content:"", updated:today(), practice:0 });
@@ -1441,6 +1471,7 @@ function renderFlash() {
   const right = side === "auto" ? "18px" : "auto";
   const el = document.getElementById("flashMascot");
   if (el) { el.textContent = emoji; el.style.left = side; el.style.right = right; }
+  markFlashcardViewed(flashIndex);
 }
 function flipCard() { document.getElementById("flashCard").classList.toggle("flipped"); }
 function nextCard() { if(!flashCards.length)return; flashIndex=(flashIndex+1)%flashCards.length; renderFlash(); }
@@ -1542,6 +1573,116 @@ function setTestMode(mode){
 }
 
 
+
+function ensureGraduationRecord(folderId) {
+  if(!folderId) return null;
+  if(!graduationData) graduationData = {};
+  if(!graduationData[folderId]) graduationData[folderId] = { viewed: [], bestTestPercent: 0, bestTestScore: 0, bestTestTotal: 0, matchCompleted: false };
+  if(!Array.isArray(graduationData[folderId].viewed)) graduationData[folderId].viewed = [];
+  return graduationData[folderId];
+}
+function getCardKey(card, index) {
+  return String((card && (card.id || card.term || card.definition)) || index);
+}
+function getGraduationCards(folderId) {
+  if(folderId && folders && folders[folderId]) return folders[folderId].cards || [];
+  return getCards ? getCards() : [];
+}
+function getGraduationStats(folderId) {
+  const fid = folderId || current;
+  const cards = getGraduationCards(fid);
+  const total = cards.length || 0;
+  const rec = ensureGraduationRecord(fid);
+  const viewedCount = total ? cards.filter((c,i)=>rec.viewed.includes(getCardKey(c,i))).length : 0;
+  const flashPercent = total ? Math.round((viewedCount / total) * 100) : 0;
+  const testPercent = Math.round(rec.bestTestPercent || 0);
+  const matchPercent = rec.matchCompleted ? 100 : 0;
+  const graduated = total > 0 && flashPercent >= 100 && testPercent >= 80 && rec.matchCompleted;
+  return { total, viewedCount, flashPercent, testPercent, matchPercent, graduated, rec };
+}
+function getStarRating(percent) {
+  percent = Number(percent || 0);
+  if(percent >= 95) return "⭐⭐⭐";
+  if(percent >= 80) return "⭐⭐";
+  if(percent >= 60) return "⭐";
+  return "";
+}
+function launchGraduationConfetti() {
+  const icons = ["💚","🌱","🎉","✨","🏆","⭐"];
+  for(let i=0;i<36;i++){
+    const p = document.createElement("div");
+    p.className = "confetti-piece";
+    p.textContent = icons[Math.floor(Math.random()*icons.length)];
+    p.style.left = Math.random()*100 + "vw";
+    p.style.animationDelay = (Math.random()*0.45) + "s";
+    p.style.fontSize = (14 + Math.random()*12) + "px";
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(), 2400);
+  }
+}
+function renderGraduationPanel() {
+  const box = document.getElementById("graduationPanel");
+  if(!box || !current || !folders || !folders[current]) return;
+  const stats = getGraduationStats(current);
+  const stars = getStarRating(stats.testPercent);
+  box.classList.toggle("graduated", stats.graduated);
+  box.innerHTML = `
+    <div class="graduation-title">🏆 題庫畢業進度</div>
+    <div class="graduation-row"><div>單字卡</div><div class="graduation-bar"><div class="graduation-fill ${stats.flashPercent>=100 ? "gold" : ""}" style="width:${stats.flashPercent}%"></div></div><div>${stats.flashPercent}%</div></div>
+    <div class="graduation-row"><div>筆試</div><div class="graduation-bar"><div class="graduation-fill ${stats.testPercent>=80 ? "gold" : ""}" style="width:${Math.min(stats.testPercent,100)}%"></div></div><div>${stats.testPercent}%</div></div>
+    <div class="graduation-row"><div>配對</div><div class="graduation-bar"><div class="graduation-fill ${stats.matchPercent>=100 ? "gold" : ""}" style="width:${stats.matchPercent}%"></div></div><div>${stats.matchPercent}%</div></div>
+    <div style="margin-top:10px;font-weight:800;color:#74816c;">筆試通關標準：80%　${stars ? `<span class="star-rating">${stars}</span>` : ""}</div>
+    <div class="graduation-badge ${stats.graduated ? "show" : ""}">🏆 題庫畢業<br>🎉 已學完！你真的好棒棒！💚<br><span style="font-size:15px;">BANA 認證韓文高手 💚</span></div>`;
+  if(stats.graduated && !graduationConfettiShown[current]) {
+    graduationConfettiShown[current] = true;
+    launchGraduationConfetti();
+  }
+}
+function updateFolderGraduationBadges() {
+  try {
+    document.querySelectorAll(".folder-card").forEach(card=>{
+      const fid = card.dataset.folderId || card.getAttribute("data-folder-id");
+      if(!fid) return;
+      card.classList.toggle("graduated-folder", getGraduationStats(fid).graduated);
+    });
+  } catch(e) {}
+}
+function markFlashcardViewed(index) {
+  if(!current || !folders || !folders[current]) return;
+  const cards = getCards();
+  const card = cards[index];
+  if(!card) return;
+  const rec = ensureGraduationRecord(current);
+  const key = getCardKey(card, index);
+  if(!rec.viewed.includes(key)) {
+    rec.viewed.push(key);
+    saveStorage();
+  }
+  renderGraduationPanel();
+  updateFolderGraduationBadges();
+}
+function recordTestResult(correctCount, totalCount) {
+  if(!current || !folders || !folders[current] || !totalCount) return;
+  const rec = ensureGraduationRecord(current);
+  const percent = Math.round((correctCount / totalCount) * 100);
+  if(percent > (rec.bestTestPercent || 0)) {
+    rec.bestTestPercent = percent;
+    rec.bestTestScore = correctCount;
+    rec.bestTestTotal = totalCount;
+    saveStorage();
+  }
+  renderGraduationPanel();
+  updateFolderGraduationBadges();
+}
+function recordMatchCompleted() {
+  if(!current || !folders || !folders[current]) return;
+  const rec = ensureGraduationRecord(current);
+  rec.matchCompleted = true;
+  saveStorage();
+  renderGraduationPanel();
+  updateFolderGraduationBadges();
+}
+
 function makeTest() {
   const cards = getCards();
   if (!cards.length) { alert("請先選擇有內容的題庫"); return; }
@@ -1630,6 +1771,7 @@ function checkAnswers() {
   });
 
   const wrongCount = wrongItems.length;
+  recordTestResult(correctCount, testCards.length);
   const scoreEl = document.getElementById("score");
   if (scoreEl) scoreEl.textContent = "正確：" + correctCount + " 題　錯誤：" + wrongCount + " 題";
 
@@ -1734,7 +1876,8 @@ function renderMatchBoard() {
   if(matchDone >= matchCards.length) {
     board.innerHTML = `<div class="empty match-complete" style="grid-column:1/-1;font-size:20px;font-weight:900;color:#4e8f24;">🎉 配對完成！你真的好棒棒！💚</div>`;
     document.getElementById("matchScore").textContent = matchDone + " / " + matchCards.length;
-    return;
+    
+    recordMatchCompleted();return;
   }
 
   board.innerHTML = `<div class="match-col" id="leftCol"></div><div class="match-col" id="rightCol"></div>`;
