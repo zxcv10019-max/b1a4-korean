@@ -780,6 +780,215 @@ textarea {
 .confetti-piece{position:fixed;top:-12px;z-index:9999;font-size:18px;pointer-events:none;animation:confettiFall 1.9s linear forwards}
 @keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
 
+
+/* ===== 錯題本 / 熟練度 / 發音功能 ===== */
+.study-upgrade-panel{
+  margin-top:18px;
+  padding:18px;
+  border-radius:22px;
+  background:#ffffffdd;
+  border:1px solid #d9ecc4;
+  box-shadow:0 10px 24px rgba(104,132,65,.08);
+}
+.study-upgrade-title{
+  font-size:20px;
+  font-weight:900;
+  color:#315321;
+  margin-bottom:12px;
+}
+.upgrade-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+}
+.upgrade-card{
+  border:1px solid #d9ecc4;
+  border-radius:18px;
+  padding:14px;
+  background:#fbfff6;
+  font-weight:800;
+}
+.upgrade-num{
+  font-size:26px;
+  font-weight:900;
+  color:#4e8f24;
+  margin-top:6px;
+}
+.wrongbook-list{
+  display:grid;
+  gap:10px;
+  margin-top:12px;
+}
+.wrongbook-item{
+  padding:12px 14px;
+  border-radius:16px;
+  border:1px solid #f2c7d3;
+  background:#fff3f7;
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:8px;
+  align-items:center;
+}
+.mastery-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding:4px 9px;
+  border-radius:999px;
+  background:#eef8df;
+  color:#4e8f24;
+  font-size:12px;
+  font-weight:900;
+}
+.speak-btn{
+  border:0;
+  border-radius:999px;
+  padding:6px 9px;
+  background:#eef8df;
+  color:#4e8f24;
+  font-weight:900;
+  cursor:pointer;
+  margin-left:8px;
+}
+.speak-btn:hover{
+  background:#dff0c9;
+}
+.quick-test-btn{
+  border:0;
+  padding:9px 12px;
+  border-radius:14px;
+  background:#83b842;
+  color:white;
+  font-weight:900;
+  cursor:pointer;
+}
+@media (max-width:900px){
+  .upgrade-grid{grid-template-columns:1fr;}
+}
+
+
+/* ===== 題庫個別練習統計 ===== */
+.folder-stats-panel{
+  margin-top:18px;
+  padding:18px;
+  border-radius:22px;
+  background:#ffffffdd;
+  border:1px solid #d9ecc4;
+  box-shadow:0 10px 24px rgba(104,132,65,.08);
+}
+.folder-stats-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.folder-stats-title{
+  font-size:20px;
+  font-weight:900;
+  color:#315321;
+}
+.folder-stats-toggle{
+  border:0;
+  border-radius:14px;
+  padding:10px 14px;
+  background:#83b842;
+  color:white;
+  font-weight:900;
+  cursor:pointer;
+}
+.folder-stats-summary{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin-top:14px;
+}
+.folder-stat-card{
+  padding:14px;
+  border-radius:18px;
+  border:1px solid #d9ecc4;
+  background:#fbfff6;
+  font-weight:800;
+}
+.folder-stat-num{
+  font-size:26px;
+  color:#4e8f24;
+  font-weight:900;
+  margin-top:6px;
+}
+.folder-stats-detail{
+  display:none;
+  margin-top:16px;
+  gap:12px;
+}
+.folder-stats-detail.show{
+  display:grid;
+}
+.folder-stat-row{
+  padding:14px;
+  border-radius:18px;
+  border:1px solid #e0edcf;
+  background:#fffef9;
+}
+.folder-stat-row-title{
+  font-weight:900;
+  color:#315321;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.folder-stat-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  margin-top:10px;
+}
+.folder-stat-mini{
+  border-radius:14px;
+  background:#f4faed;
+  padding:10px;
+  font-weight:800;
+  text-align:center;
+}
+.folder-stat-mini b{
+  display:block;
+  color:#4e8f24;
+  font-size:18px;
+  margin-top:4px;
+}
+.folder-progress-line{
+  margin-top:12px;
+}
+.folder-progress-label{
+  display:flex;
+  justify-content:space-between;
+  font-size:12px;
+  color:#74816c;
+  font-weight:900;
+}
+.folder-progress-track{
+  height:10px;
+  border-radius:999px;
+  background:#e7efd9;
+  overflow:hidden;
+  margin-top:5px;
+}
+.folder-progress-fill{
+  height:100%;
+  width:0%;
+  border-radius:999px;
+  background:#83b842;
+}
+.folder-progress-fill.gold{
+  background:linear-gradient(90deg,#f2c94c,#ffdf6d);
+}
+@media (max-width:900px){
+  .folder-stats-summary{grid-template-columns:1fr;}
+  .folder-stat-grid{grid-template-columns:repeat(2,1fr);}
+}
+
 </style>
 </head>
 <body>
@@ -822,6 +1031,22 @@ textarea {
     <div class="content">
       <section id="home" class="page active">
         <div id="graduationPanel" class="graduation-panel"></div>
+
+        <div id="studyUpgradePanel" class="study-upgrade-panel">
+          <div class="study-upgrade-title">🌱 學習加強</div>
+          <div id="upgradeSummary" class="upgrade-grid"></div>
+          <div id="wrongBookPreview" class="wrongbook-list"></div>
+        
+        <div id="folderStatsPanel" class="folder-stats-panel">
+          <div class="folder-stats-head">
+            <div class="folder-stats-title">📊 題庫學習紀錄</div>
+            <button class="folder-stats-toggle" onclick="toggleFolderStats()">查看詳細紀錄</button>
+          </div>
+          <div id="folderStatsSummary" class="folder-stats-summary"></div>
+          <div id="folderStatsDetail" class="folder-stats-detail"></div>
+        </div>
+</div>
+
         <div class="dashboard">
           <div class="card panel">
             <h2>快速開始</h2>
@@ -1049,6 +1274,12 @@ function showFinishedMessageIfNeeded() {
 
 // 題庫畢業系統初始化
 setTimeout(()=>{ renderGraduationPanel(); updateFolderGraduationBadges(); }, 500);
+
+// 學習加強初始化
+setTimeout(()=>{ renderStudyUpgradePanel(); decorateMasteryBadges(); }, 700);
+
+// 題庫個別練習統計初始化
+setTimeout(()=>{ renderFolderStatsPanel(); }, 800);
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
@@ -1192,6 +1423,9 @@ let collapsedGroups = JSON.parse(localStorage.getItem("b1a4_collapsed_groups") |
 let currentColor = "#c6e09c";
 let flashCards = [], flashIndex = 0, testCards = [], matchCards = [];
 let graduationData = {};
+let wrongBookData = {};
+let masteryData = {};
+let folderPracticeStats = {};
 let graduationConfettiShown = {};
 let leftSel = null, rightSel = null, matchDone = 0;
 
@@ -1199,6 +1433,9 @@ function saveStorage() {
   writeLocalOnly();
   scheduleCloudSave();
   localStorage.setItem("b1a4GraduationData", JSON.stringify(graduationData || {}));
+  localStorage.setItem("b1a4WrongBookData", JSON.stringify(wrongBookData || {}));
+  localStorage.setItem("b1a4MasteryData", JSON.stringify(masteryData || {}));
+  localStorage.setItem("b1a4FolderPracticeStats", JSON.stringify(folderPracticeStats || {}));
 }
 function parseCards(t) {
   return String(t || "").split(/\n+/).map(x => x.trim()).filter(Boolean).map(line => {
@@ -1226,6 +1463,9 @@ function goPage(id) {
   if (id === "match" && !document.getElementById("matchBoard").innerHTML) startMatch();
   renderGraduationPanel();
   updateFolderGraduationBadges();
+  renderStudyUpgradePanel();
+  decorateMasteryBadges();
+  renderFolderStatsPanel();
 }
 
 function openFolderManager() {
@@ -1328,6 +1568,9 @@ function renderFolders() {
   syncDropdowns();
   renderGraduationPanel();
   updateFolderGraduationBadges();
+  renderStudyUpgradePanel();
+  decorateMasteryBadges();
+  renderFolderStatsPanel();
 }
 function renderDashboard() {
   const totalCards = folders.reduce((sum,f) => sum + parseCards(f.content).length, 0);
@@ -1368,6 +1611,9 @@ function selectFromDropdown(v) {
   if (folders.length) loadFolder(Number(v));
   renderGraduationPanel();
   updateFolderGraduationBadges();
+  renderStudyUpgradePanel();
+  decorateMasteryBadges();
+  renderFolderStatsPanel();
 }
 function newFolder() {
   folders.push({ name:"新增題庫", direction:"termToDefinition", color:"#c6e09c", content:"", updated:today(), practice:0 });
@@ -1656,6 +1902,7 @@ function markFlashcardViewed(index) {
   const key = getCardKey(card, index);
   if(!rec.viewed.includes(key)) {
     rec.viewed.push(key);
+    recordFolderPractice("flashcard");
     saveStorage();
   }
   renderGraduationPanel();
@@ -1681,6 +1928,309 @@ function recordMatchCompleted() {
   saveStorage();
   renderGraduationPanel();
   updateFolderGraduationBadges();
+}
+
+
+function normalizeCardKeyValue(card, index) {
+  return String((card && (card.id || card.term || card.definition)) || index);
+}
+
+function ensureFolderPracticeStats(folderId) {
+  if(!folderId) return null;
+  if(!folderPracticeStats) folderPracticeStats = {};
+  if(!folderPracticeStats[folderId]) {
+    folderPracticeStats[folderId] = {
+      flashcard: 0,
+      test: 0,
+      match: 0,
+      total: 0,
+      lastStudy: "",
+      lastType: ""
+    };
+  }
+  return folderPracticeStats[folderId];
+}
+function formatStudyDate(iso) {
+  if(!iso) return "尚未學習";
+  const d = new Date(iso);
+  if(isNaN(d.getTime())) return "尚未學習";
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  const hh = String(d.getHours()).padStart(2,"0");
+  const mm = String(d.getMinutes()).padStart(2,"0");
+  return `${y}/${m}/${day} ${hh}:${mm}`;
+}
+function recordFolderPractice(type) {
+  if(!current || !folders || !folders[current]) return;
+  const s = ensureFolderPracticeStats(current);
+  if(!s) return;
+
+  if(type === "flashcard") s.flashcard = (s.flashcard || 0) + 1;
+  else if(type === "test") s.test = (s.test || 0) + 1;
+  else if(type === "match") s.match = (s.match || 0) + 1;
+
+  s.total = (s.flashcard || 0) + (s.test || 0) + (s.match || 0);
+  s.lastStudy = new Date().toISOString();
+  s.lastType = type;
+
+  saveStorage();
+  renderFolderStatsPanel();
+}
+function getFolderCompletionPercent(folderId) {
+  try {
+    if(typeof getGraduationStats === "function") {
+      const g = getGraduationStats(folderId);
+      return Math.round(((g.flashPercent || 0) + (g.testPercent || 0) + (g.matchPercent || 0)) / 3);
+    }
+  } catch(e) {}
+  const s = ensureFolderPracticeStats(folderId);
+  if(!s) return 0;
+  return Math.min(100, Math.round(((s.flashcard || 0) + (s.test || 0) + (s.match || 0)) / 3 * 20));
+}
+function getLastTypeLabel(type) {
+  if(type === "flashcard") return "單字卡";
+  if(type === "test") return "筆試";
+  if(type === "match") return "配對";
+  return "尚未學習";
+}
+function toggleFolderStats() {
+  const box = document.getElementById("folderStatsDetail");
+  if(!box) return;
+  box.classList.toggle("show");
+  const btn = document.querySelector(".folder-stats-toggle");
+  if(btn) btn.textContent = box.classList.contains("show") ? "收合詳細紀錄" : "查看詳細紀錄";
+}
+function renderFolderStatsPanel() {
+  const summary = document.getElementById("folderStatsSummary");
+  const detail = document.getElementById("folderStatsDetail");
+  if(!summary || !detail || !folders) return;
+
+  const ids = Object.keys(folders || {});
+  let totalPractice = 0;
+  let totalWords = 0;
+  let activeFolder = "尚無紀錄";
+  let maxPractice = -1;
+
+  ids.forEach(id=>{
+    const cards = (folders[id] && folders[id].cards) ? folders[id].cards : [];
+    totalWords += cards.length;
+    const s = ensureFolderPracticeStats(id);
+    const total = (s.flashcard || 0) + (s.test || 0) + (s.match || 0);
+    totalPractice += total;
+    if(total > maxPractice) {
+      maxPractice = total;
+      activeFolder = folders[id].name || "未命名題庫";
+    }
+  });
+
+  summary.innerHTML = `
+    <div class="folder-stat-card">題庫數<div class="folder-stat-num">${ids.length}</div></div>
+    <div class="folder-stat-card">總單字<div class="folder-stat-num">${totalWords}</div></div>
+    <div class="folder-stat-card">總練習<div class="folder-stat-num">${totalPractice}</div><div style="font-size:12px;color:#74816c;">最常練：${esc(activeFolder)}</div></div>
+  `;
+
+  if(!ids.length) {
+    detail.innerHTML = `<div class="folder-stat-row">目前還沒有題庫</div>`;
+    return;
+  }
+
+  detail.innerHTML = ids.map(id=>{
+    const f = folders[id];
+    const s = ensureFolderPracticeStats(id);
+    const total = (s.flashcard || 0) + (s.test || 0) + (s.match || 0);
+    const completion = getFolderCompletionPercent(id);
+    const grad = completion >= 100 ? "🏆 已畢業" : completion >= 80 ? "🌟 即將畢業" : "🌱 學習中";
+
+    return `
+      <div class="folder-stat-row">
+        <div class="folder-stat-row-title">
+          <span>${esc(f.name || "未命名題庫")}</span>
+          <span>${grad}</span>
+        </div>
+        <div class="folder-stat-grid">
+          <div class="folder-stat-mini">單字卡<b>${s.flashcard || 0}</b></div>
+          <div class="folder-stat-mini">筆試<b>${s.test || 0}</b></div>
+          <div class="folder-stat-mini">配對<b>${s.match || 0}</b></div>
+          <div class="folder-stat-mini">總計<b>${total}</b></div>
+        </div>
+        <div class="folder-progress-line">
+          <div class="folder-progress-label"><span>完成度</span><span>${completion}%</span></div>
+          <div class="folder-progress-track"><div class="folder-progress-fill ${completion>=100 ? "gold" : ""}" style="width:${completion}%"></div></div>
+        </div>
+        <div style="margin-top:10px;color:#74816c;font-weight:800;font-size:13px;">
+          最後學習：${formatStudyDate(s.lastStudy)}　｜　最後模式：${getLastTypeLabel(s.lastType)}
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function ensureWrongRecord(folderId) {
+  if(!folderId) return {};
+  if(!wrongBookData) wrongBookData = {};
+  if(!wrongBookData[folderId]) wrongBookData[folderId] = {};
+  return wrongBookData[folderId];
+}
+function ensureMasteryRecord(folderId) {
+  if(!folderId) return {};
+  if(!masteryData) masteryData = {};
+  if(!masteryData[folderId]) masteryData[folderId] = {};
+  return masteryData[folderId];
+}
+function getMasteryLevelText(count) {
+  count = Number(count || 0);
+  if(count >= 10) return "⭐⭐⭐";
+  if(count >= 5) return "⭐⭐";
+  if(count >= 3) return "⭐";
+  return "🌱";
+}
+function speakKorean(text) {
+  if(!("speechSynthesis" in window)) {
+    alert("這個瀏覽器不支援發音功能");
+    return;
+  }
+  const u = new SpeechSynthesisUtterance(String(text || ""));
+  u.lang = "ko-KR";
+  u.rate = 0.85;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+function recordAnswerResult(card, index, ok) {
+  if(!current || !card) return;
+  const key = normalizeCardKeyValue(card, index);
+  const wrongRec = ensureWrongRecord(current);
+  const masteryRec = ensureMasteryRecord(current);
+
+  if(!masteryRec[key]) {
+    masteryRec[key] = { correct:0, wrong:0, term:card.term, definition:card.definition };
+  }
+  masteryRec[key].term = card.term;
+  masteryRec[key].definition = card.definition;
+
+  if(ok) {
+    masteryRec[key].correct = (masteryRec[key].correct || 0) + 1;
+  } else {
+    masteryRec[key].wrong = (masteryRec[key].wrong || 0) + 1;
+    wrongRec[key] = {
+      term: card.term,
+      definition: card.definition,
+      wrong: ((wrongRec[key] && wrongRec[key].wrong) || 0) + 1,
+      lastWrongAt: new Date().toISOString()
+    };
+  }
+}
+function clearWrongItem(key) {
+  if(!current) return;
+  const wrongRec = ensureWrongRecord(current);
+  delete wrongRec[key];
+  saveStorage();
+  renderStudyUpgradePanel();
+}
+function makeWrongBookTest() {
+  if(!current || !folders[current]) return;
+  const wrongRec = ensureWrongRecord(current);
+  const wrongCards = Object.keys(wrongRec).map(k => ({
+    id:k,
+    term:wrongRec[k].term,
+    definition:wrongRec[k].definition
+  }));
+  if(!wrongCards.length) {
+    alert("目前沒有錯題 🎉");
+    return;
+  }
+  window.__wrongBookTempCards = wrongCards;
+  goPage("test");
+  setTimeout(() => makeTestFromCards(wrongCards), 80);
+}
+function renderStudyUpgradePanel() {
+  const summary = document.getElementById("upgradeSummary");
+  const preview = document.getElementById("wrongBookPreview");
+  if(!summary || !preview || !current || !folders || !folders[current]) return;
+
+  const cards = getCards();
+  const wrongRec = ensureWrongRecord(current);
+  const masteryRec = ensureMasteryRecord(current);
+
+  const wrongItems = Object.entries(wrongRec).sort((a,b)=>(b[1].wrong||0)-(a[1].wrong||0));
+  const mastered = cards.filter((c,i)=>{
+    const key = normalizeCardKeyValue(c,i);
+    return ((masteryRec[key] && masteryRec[key].correct) || 0) >= 3;
+  }).length;
+
+  summary.innerHTML = `
+    <div class="upgrade-card">錯題本<div class="upgrade-num">${wrongItems.length}</div><div>需要複習</div></div>
+    <div class="upgrade-card">熟練單字<div class="upgrade-num">${mastered}/${cards.length}</div><div>答對 3 次以上</div></div>
+    <div class="upgrade-card">發音練習<div class="upgrade-num">🔊</div><div>點單字旁按鈕聽韓文</div></div>
+  `;
+
+  if(!wrongItems.length) {
+    preview.innerHTML = `<div class="upgrade-card">🎉 目前沒有錯題，超棒！</div>`;
+    return;
+  }
+
+  preview.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+      <b>錯題本 Top 5</b>
+      <button class="quick-test-btn" onclick="makeWrongBookTest()">錯題重新測驗</button>
+    </div>
+  ` + wrongItems.slice(0,5).map(([key,item])=>`
+    <div class="wrongbook-item">
+      <div>
+        <b>${esc(item.term)}</b>
+        <button class="speak-btn" onclick="speakKorean('${String(item.term).replace(/'/g,"\\'")}')">🔊</button>
+        <div>${esc(item.definition)}</div>
+        <small>錯誤 ${item.wrong || 0} 次</small>
+      </div>
+      <button class="ghost" onclick="clearWrongItem('${String(key).replace(/'/g,"\\'")}')">移除</button>
+    </div>
+  `).join("");
+}
+function decorateMasteryBadges() {
+  try {
+    if(!current) return;
+    const masteryRec = ensureMasteryRecord(current);
+    document.querySelectorAll(".term-text").forEach((el, idx)=>{
+      if(el.dataset.masteryDone) return;
+      const term = el.textContent.trim();
+      const foundKey = Object.keys(masteryRec).find(k => masteryRec[k].term === term);
+      if(foundKey) {
+        const count = masteryRec[foundKey].correct || 0;
+        el.insertAdjacentHTML("afterend", ` <span class="mastery-pill">${getMasteryLevelText(count)}</span>`);
+      }
+      el.dataset.masteryDone = "1";
+    });
+  } catch(e) {}
+}
+function makeTestFromCards(cards) {
+  if(!cards || !cards.length) return;
+  const originalGetCards = getCards;
+  window.__tempTestCards = cards;
+  const oldCurrentTestMode = typeof currentTestMode !== "undefined" ? currentTestMode : "mixed";
+  makeTestWithCards(cards);
+}
+function makeTestWithCards(cards) {
+  recordFolderPractice("test");
+  const koQuestions = shuffle(cards.map(c => ({...c, mode:"koToZh", prompt:c.term, answer:c.definition, label:"韓文翻中文"})));
+  const zhQuestions = shuffle(cards.map(c => ({...c, mode:"zhToKo", prompt:c.definition, answer:c.term, label:"中文翻韓文"})));
+  if(typeof currentTestMode !== "undefined" && currentTestMode === "ko") testCards = koQuestions;
+  else if(typeof currentTestMode !== "undefined" && currentTestMode === "zh") testCards = zhQuestions;
+  else {
+    testCards = [];
+    const maxLen = Math.max(koQuestions.length, zhQuestions.length);
+    for(let i=0;i<maxLen;i++){ if(koQuestions[i]) testCards.push(koQuestions[i]); if(zhQuestions[i]) testCards.push(zhQuestions[i]); }
+  }
+  const q = document.getElementById("questions");
+  if(!q) return;
+  q.innerHTML = '<div class="questions-grid" id="questionsGrid"></div>';
+  const grid = document.getElementById("questionsGrid");
+  testCards.forEach((c,i)=>{
+    grid.innerHTML += `<div class="q"><div>${i+1}. ${c.label}</div><div class="prompt-box">${esc(c.prompt)}${c.mode==="koToZh" ? `<button class="speak-btn" onclick="speakKorean('${String(c.prompt).replace(/'/g,"\\'")}')">🔊</button>` : ""}</div><input id="ans-${i}" placeholder="請輸入答案..."><div id="res-${i}"></div></div>`;
+  });
+  const score = document.getElementById("score");
+  if(score) score.textContent = "";
+  const prog = document.getElementById("testProgress");
+  if(prog) prog.innerHTML = testCards.map((_,i)=>`<div class="bubble">${i+1}</div>`).join("");
 }
 
 function makeTest() {
@@ -1718,6 +2268,7 @@ function makeTest() {
   }
 
   addPractice();
+  recordFolderPractice("test");
 
   const summary = document.getElementById("testSummary");
   if(summary){
@@ -1756,6 +2307,8 @@ function checkAnswers() {
     const inputEl = document.getElementById("ans-" + i);
     const userAnswer = inputEl ? inputEl.value : "";
     const ok = isFuzzyCorrect(userAnswer, ans);
+
+    recordAnswerResult(c, i, ok);
 
     if (ok) {
       correctCount++;
@@ -1806,6 +2359,8 @@ function checkAnswers() {
     });
   }
 
+  saveStorage();
+  renderStudyUpgradePanel();
   const progress = document.getElementById("testProgress");
   if (progress) {
     progress.innerHTML = testCards.map((_, i) => '<div class="bubble done">' + (i + 1) + '</div>').join("");
@@ -1847,6 +2402,7 @@ function startMatch() {
   }
 
   addPractice();
+  recordFolderPractice("match");
 
   // 配對改成「一次顯示 5 組，配對成功就消失，並補下一組」
   // 例如 15 個單字：畫面一次只出 5 組，配完一組就補第 6 組，直到 15 組都完成。
@@ -1870,6 +2426,39 @@ function fillMatchActive() {
   }
 }
 
+
+function shuffleRightAvoidSameRow(leftList, rightList) {
+  if(!leftList || !rightList || leftList.length !== rightList.length || leftList.length <= 1) {
+    return shuffle([...rightList]);
+  }
+
+  let best = shuffle([...rightList]);
+  let bestMatches = best.filter((c,i)=>leftList[i] && c.id === leftList[i].id).length;
+
+  for(let attempt=0; attempt<80; attempt++) {
+    const candidate = shuffle([...rightList]);
+    const matches = candidate.filter((c,i)=>leftList[i] && c.id === leftList[i].id).length;
+
+    if(matches === 0) return candidate;
+
+    if(matches < bestMatches) {
+      best = candidate;
+      bestMatches = matches;
+    }
+  }
+
+  // 若隨機多次仍有同列，做一次輪轉處理
+  if(bestMatches > 0 && best.length > 1) {
+    for(let shift=1; shift<best.length; shift++) {
+      const rotated = best.slice(shift).concat(best.slice(0, shift));
+      const matches = rotated.filter((c,i)=>leftList[i] && c.id === leftList[i].id).length;
+      if(matches === 0) return rotated;
+    }
+  }
+
+  return best;
+}
+
 function renderMatchBoard() {
   const board = document.getElementById("matchBoard");
 
@@ -1883,7 +2472,7 @@ function renderMatchBoard() {
   board.innerHTML = `<div class="match-col" id="leftCol"></div><div class="match-col" id="rightCol"></div>`;
 
   const left = shuffle([...matchActive]);
-  const right = shuffle([...matchActive]);
+  const right = shuffleRightAvoidSameRow(left, [...matchActive]);
 
   left.forEach(c=>addMatch("leftCol",c,"left",c.term));
   right.forEach(c=>addMatch("rightCol",c,"right",c.definition));
