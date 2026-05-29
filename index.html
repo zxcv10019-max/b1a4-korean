@@ -1119,6 +1119,26 @@ textarea {
 
 .folder-stat-grid{grid-template-columns:repeat(5,1fr)!important;}
 
+
+/* ===== 單字卡看過進度 ===== */
+.flash-seen-box{
+  margin-top:12px;
+  padding:12px 14px;
+  border-radius:16px;
+  background:#fbfff6;
+  border:1px solid #d9ecc4;
+  color:#315321;
+  font-weight:900;
+  display:flex;
+  justify-content:center;
+  gap:18px;
+  flex-wrap:wrap;
+}
+.flash-seen-box span b{
+  color:#4e8f24;
+  font-size:20px;
+}
+
 </style>
 
 
@@ -1331,7 +1351,8 @@ textarea {
         <div class="topbar">
           <button class="ghost" onclick="goPage('library')">‹ 返回題庫</button>
           <select id="flashSelect" onchange="selectFromDropdown(this.value)"></select>
-          <span id="flashInfo" class="soft" style="padding:8px 14px;border-radius:999px;font-weight:900;">0 / 0</span>
+          <div id="flashSeenBox" class="flash-seen-box"></div>
+<span id="flashInfo" class="soft" style="padding:8px 14px;border-radius:999px;font-weight:900;">0 / 0</span>
         </div>
         <div class="study-shell">
           <div class="card study-main">
@@ -1560,12 +1581,12 @@ function renderFolderStatsPanel() {
     const cards=(data && (data.cards||data.words)) || [];
     const s=ensureFolderPracticeStats(id);
     const total=(Number(s.flashcard)||0)+(Number(s.test)||0)+(Number(s.match)||0)+(Number(s.listen)||0);
-    const completion=Math.min(100,total*10);
+    const completion = getFourPartCompletion(id);
     const grad=completion>=100?"🏆 已畢業":completion>=80?"🌟 即將畢業":"🌱 學習中";
     return `<div class="folder-stat-row">
       <div class="folder-stat-row-title"><span>${data.name||data.title||"未命名題庫"}</span><span>${grad}</span></div>
       <div class="folder-stat-grid">
-        <div class="folder-stat-mini">單字卡<b>${Number(s.flashcard)||0}</b></div>
+        <div class="folder-stat-mini">單字卡<b>${getFlashSeenStats(id).seenCount}/${getFlashSeenStats(id).total}</b></div>
         <div class="folder-stat-mini">筆試<b>${Number(s.test)||0}</b></div>
         <div class="folder-stat-mini">配對<b>${Number(s.match)||0}</b></div>
         <div class="folder-stat-mini">聽力<b>${Number(s.listen)||0}</b></div>
@@ -1664,12 +1685,12 @@ function renderFolderStatsPanel() {
   detail.innerHTML = list.map(({id,data})=>{
     const s=ensureFolderPracticeStats(id);
     const total=(Number(s.flashcard)||0)+(Number(s.test)||0)+(Number(s.match)||0)+(Number(s.listen)||0);
-    const completion=Math.min(100,total*10);
+    const completion = getFourPartCompletion(id);
     const grad=completion>=100?"🏆 已畢業":completion>=80?"🌟 即將畢業":"🌱 學習中";
     return `<div class="folder-stat-row">
       <div class="folder-stat-row-title"><span>${data.name||data.title||"未命名題庫"}</span><span>${grad}</span></div>
       <div class="folder-stat-grid">
-        <div class="folder-stat-mini">單字卡<b>${Number(s.flashcard)||0}</b></div>
+        <div class="folder-stat-mini">單字卡<b>${getFlashSeenStats(id).seenCount}/${getFlashSeenStats(id).total}</b></div>
         <div class="folder-stat-mini">筆試<b>${Number(s.test)||0}</b></div>
         <div class="folder-stat-mini">配對<b>${Number(s.match)||0}</b></div>
         <div class="folder-stat-mini">聽力<b>${Number(s.listen)||0}</b></div>
@@ -1709,10 +1730,84 @@ function toggleFolderStats(){
 
 // 最終初始化：學習進度刷新
 setTimeout(()=>{try{renderFolderStatsPanel();renderStudyUpgradePanel();}catch(e){}},1000);
+
+/* ===== 單字卡看過進度 + 四項完成度 ===== */
+function getFlashCardKey(card, index) {
+  return String((card && (card.id || card.term || card.definition)) || index);
+}
+function ensureFlashSeenRecord(folderId) {
+  if(!folderId && typeof current !== "undefined") folderId = current;
+  if(!folderId) return [];
+  if(!flashSeenData) flashSeenData = {};
+  if(!Array.isArray(flashSeenData[folderId])) flashSeenData[folderId] = [];
+  return flashSeenData[folderId];
+}
+function markCurrentFlashSeen() {
+  const fid = (typeof current !== "undefined") ? current : null;
+  if(!fid) return;
+  const cards = (typeof getCards === "function") ? getCards() : [];
+  const idx = (typeof flashIndex !== "undefined") ? flashIndex : 0;
+  const card = cards[idx];
+  if(!card) return;
+
+  const seen = ensureFlashSeenRecord(fid);
+  const key = getFlashCardKey(card, idx);
+  if(!seen.includes(key)) {
+    seen.push(key);
+    try { localStorage.setItem("b1a4FlashSeenData", JSON.stringify(flashSeenData || {})); } catch(e) {}
+    try { if(typeof saveStorage === "function") saveStorage(); } catch(e) {}
+    try { if(typeof saveCloudData === "function" && typeof cloudUser !== "undefined" && cloudUser) saveCloudData(); } catch(e) {}
+  }
+  renderFlashSeenBox();
+  renderFolderStatsPanel();
+  renderStudyUpgradePanel();
+}
+function getFlashSeenStats(folderId) {
+  const fid = folderId || ((typeof current !== "undefined") ? current : null);
+  const cards = (typeof getCardsByFolderId === "function") ? getCardsByFolderId(fid) : ((typeof getCards === "function") ? getCards() : []);
+  const total = cards.length || 0;
+  const seen = ensureFlashSeenRecord(fid);
+  const seenCount = total ? cards.filter((c,i)=>seen.includes(getFlashCardKey(c,i))).length : 0;
+  const unseenCount = Math.max(0, total - seenCount);
+  const completed = total > 0 && seenCount >= total;
+  return {total, seenCount, unseenCount, completed};
+}
+function renderFlashSeenBox() {
+  const box = document.getElementById("flashSeenBox");
+  if(!box) return;
+  const s = getFlashSeenStats();
+  box.innerHTML = `
+    <span>已看過 <b>${s.seenCount}</b> / ${s.total}</span>
+    <span>未看過 <b>${s.unseenCount}</b></span>
+    <span>${s.completed ? "✅ 單字卡完成" : "🌱 學習中"}</span>
+  `;
+}
+function isModeCompleted(folderId, type) {
+  const s = ensureFolderPracticeStats(folderId);
+  if(!s) return false;
+  if(type === "flashcard") return getFlashSeenStats(folderId).completed;
+  if(type === "test") return (Number(s.test) || 0) > 0;
+  if(type === "match") return (Number(s.match) || 0) > 0;
+  if(type === "listen") return (Number(s.listen) || 0) > 0;
+  return false;
+}
+function getFourPartCompletion(folderId) {
+  let score = 0;
+  if(isModeCompleted(folderId, "flashcard")) score += 25;
+  if(isModeCompleted(folderId, "test")) score += 25;
+  if(isModeCompleted(folderId, "match")) score += 25;
+  if(isModeCompleted(folderId, "listen")) score += 25;
+  return score;
+}
+
+
+// 四項完成度初始化
+setTimeout(()=>{try{renderFlashSeenBox();renderFolderStatsPanel();renderStudyUpgradePanel();}catch(e){}},1000);
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script>
+let flashSeenData = {};
 // ===== Firebase 雲端同步設定 =====
 // 使用前請到 Firebase 建立 Web App，並把下方值換成自己的設定。
 // Authentication 請啟用 Google 登入；Firestore 請建立資料庫。
@@ -1811,6 +1906,7 @@ async function loadCloudData() {
       if (current !== null) loadFolder(current); else voiceSpeed = Number(data.voiceSpeed || voiceSpeed || 0.65);
       initVoiceSpeedUI();
       folderPracticeStats = data.folderPracticeStats || folderPracticeStats || {};
+      flashSeenData = data.flashSeenData || flashSeenData || {};
       renderDashboard();
       isLoadingCloud = false;
       updateSyncUI("已登入：" + (cloudUser.email || cloudUser.displayName || "Google 帳號") + "，題庫已同步。", "已同步", true);
@@ -1870,6 +1966,7 @@ function saveStorage() {
   localStorage.setItem("b1a4MasteryData", JSON.stringify(masteryData || {}));
   localStorage.setItem("b1a4FolderPracticeStats", JSON.stringify(folderPracticeStats || {}));
   localStorage.setItem("b1a4VoiceSpeed", String(voiceSpeed || 0.65));
+  try { localStorage.setItem("b1a4FlashSeenData", JSON.stringify(flashSeenData || {})); } catch(e) {}
 }
 function parseCards(t) {
   return String(t || "").split(/\n+/).map(x => x.trim()).filter(Boolean).map(line => {
@@ -2170,6 +2267,9 @@ function renderFlash() {
     window.__lastFlashPracticeKey = String(current)+"-"+String(flashIndex);
     recordFolderPractice("flashcard");
   }
+
+  markCurrentFlashSeen();
+  renderFlashSeenBox();
 }
 function flipCard() { document.getElementById("flashCard").classList.toggle("flipped"); }
 function nextCard() { if(!flashCards.length)return; flashIndex=(flashIndex+1)%flashCards.length; renderFlash(); }
@@ -2504,7 +2604,7 @@ function renderFolderStatsPanel() {
           <span>${grad}</span>
         </div>
         <div class="folder-stat-grid">
-          <div class="folder-stat-mini">單字卡<b>${s.flashcard || 0}</b></div>
+          <div class="folder-stat-mini">單字卡<b>${getFlashSeenStats(id).seenCount}/${getFlashSeenStats(id).total}</b></div>
           <div class="folder-stat-mini">筆試<b>${s.test || 0}</b></div>
           <div class="folder-stat-mini">配對<b>${s.match || 0}</b></div>
           <div class="folder-stat-mini">聽力<b>${s.listen || 0}</b></div>
