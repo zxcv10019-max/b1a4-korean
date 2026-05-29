@@ -1116,6 +1116,20 @@ textarea {
     color:#4e8f24;
     font-size:18px;
 }
+
+.folder-stat-grid{grid-template-columns:repeat(5,1fr)!important;}
+
+</style>
+
+
+<style>
+#voiceControlVisible,
+#voiceSpeedRangeVisible,
+#voiceSpeedValueVisible,
+[id*="voiceSpeed"],
+[class*="voice-speed"]{
+    display:none !important;
+}
 </style>
 
 </head>
@@ -1141,10 +1155,7 @@ textarea {
     oninput="setVoiceSpeed(this.value)">
   
 <div style="display:flex;justify-content:center;margin-top:10px;">
-<button onclick="speakKorean('바나 바나 바나 바나 바나')"
-style="width:70px;height:70px;border-radius:20px;border:none;background:#eef6e6;color:#315321;font-weight:900;cursor:pointer;">
-測試
-</button>
+
 </div>
 
 </div>
@@ -1483,6 +1494,99 @@ setTimeout(decorateSpeakButtons, 800);
 
 // 語速設定初始化
 setTimeout(initVoiceSpeedUI, 900);
+
+/* ===== 學習紀錄修正版 ===== */
+function ensureFolderPracticeStats(folderId) {
+  if(!folderId && typeof current !== "undefined") folderId = current;
+  if(!folderId) return null;
+  if(!folderPracticeStats) folderPracticeStats = {};
+  if(!folderPracticeStats[folderId]) folderPracticeStats[folderId] = {flashcard:0,test:0,match:0,listen:0,total:0,lastStudy:"",lastType:""};
+  return folderPracticeStats[folderId];
+}
+function getCurrentFolderIdSafe() {
+  if(typeof current !== "undefined" && current !== null && current !== "") return current;
+  if(typeof currentFolder !== "undefined" && currentFolder !== null && currentFolder !== "") return currentFolder;
+  return null;
+}
+function getPracticeTypeLabel(type) {
+  return type==="flashcard"?"單字卡":type==="test"?"筆試":type==="match"?"配對":type==="listen"?"聽力":"尚未學習";
+}
+function recordFolderPractice(type) {
+  const fid = getCurrentFolderIdSafe();
+  if(!fid) return;
+  const s = ensureFolderPracticeStats(fid);
+  if(!s) return;
+  if(type==="flashcard") s.flashcard=(Number(s.flashcard)||0)+1;
+  if(type==="test") s.test=(Number(s.test)||0)+1;
+  if(type==="match") s.match=(Number(s.match)||0)+1;
+  if(type==="listen") s.listen=(Number(s.listen)||0)+1;
+  s.total=(Number(s.flashcard)||0)+(Number(s.test)||0)+(Number(s.match)||0)+(Number(s.listen)||0);
+  s.lastStudy=new Date().toISOString();
+  s.lastType=type;
+  try{localStorage.setItem("b1a4FolderPracticeStats",JSON.stringify(folderPracticeStats||{}));}catch(e){}
+  try{if(typeof saveStorage==="function") saveStorage();}catch(e){}
+  try{if(typeof saveCloudData==="function" && typeof cloudUser!=="undefined" && cloudUser) saveCloudData();}catch(e){}
+  try{renderFolderStatsPanel();}catch(e){}
+}
+function formatStudyDate(iso) {
+  if(!iso) return "尚未學習";
+  const d=new Date(iso);
+  if(isNaN(d.getTime())) return "尚未學習";
+  return d.getFullYear()+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0")+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+}
+function getStatsFolders() {
+  if(typeof folders === "undefined" || !folders) return [];
+  if(Array.isArray(folders)) return folders.map((f,i)=>({id:String(i), data:f}));
+  return Object.keys(folders).map(id=>({id, data:folders[id]}));
+}
+function renderFolderStatsPanel() {
+  const summary=document.getElementById("folderStatsSummary");
+  const detail=document.getElementById("folderStatsDetail");
+  if(!summary || !detail) return;
+  const list=getStatsFolders();
+  let totalPractice=0,totalWords=0,activeFolder="尚無紀錄",maxPractice=-1;
+  list.forEach(({id,data})=>{
+    const cards=(data && (data.cards||data.words)) || [];
+    totalWords+=cards.length;
+    const s=ensureFolderPracticeStats(id);
+    const total=(Number(s.flashcard)||0)+(Number(s.test)||0)+(Number(s.match)||0)+(Number(s.listen)||0);
+    totalPractice+=total;
+    if(total>maxPractice){maxPractice=total;activeFolder=(data.name||data.title||"未命名題庫");}
+  });
+  summary.innerHTML=`<div class="folder-stat-card">題庫數<div class="folder-stat-num">${list.length}</div></div>
+  <div class="folder-stat-card">總單字<div class="folder-stat-num">${totalWords}</div></div>
+  <div class="folder-stat-card">總練習<div class="folder-stat-num">${totalPractice}</div><div style="font-size:12px;color:#74816c;">最常練：${activeFolder}</div></div>`;
+  detail.innerHTML=list.map(({id,data})=>{
+    const cards=(data && (data.cards||data.words)) || [];
+    const s=ensureFolderPracticeStats(id);
+    const total=(Number(s.flashcard)||0)+(Number(s.test)||0)+(Number(s.match)||0)+(Number(s.listen)||0);
+    const completion=Math.min(100,total*10);
+    const grad=completion>=100?"🏆 已畢業":completion>=80?"🌟 即將畢業":"🌱 學習中";
+    return `<div class="folder-stat-row">
+      <div class="folder-stat-row-title"><span>${data.name||data.title||"未命名題庫"}</span><span>${grad}</span></div>
+      <div class="folder-stat-grid">
+        <div class="folder-stat-mini">單字卡<b>${Number(s.flashcard)||0}</b></div>
+        <div class="folder-stat-mini">筆試<b>${Number(s.test)||0}</b></div>
+        <div class="folder-stat-mini">配對<b>${Number(s.match)||0}</b></div>
+        <div class="folder-stat-mini">聽力<b>${Number(s.listen)||0}</b></div>
+        <div class="folder-stat-mini">總計<b>${total}</b></div>
+      </div>
+      <div class="folder-progress-line"><div class="folder-progress-label"><span>完成度</span><span>${completion}%</span></div><div class="folder-progress-track"><div class="folder-progress-fill ${completion>=100?"gold":""}" style="width:${completion}%"></div></div></div>
+      <div style="margin-top:10px;color:#74816c;font-weight:800;font-size:13px;">最後學習：${formatStudyDate(s.lastStudy)}　｜　最後模式：${getPracticeTypeLabel(s.lastType)}</div>
+    </div>`;
+  }).join("");
+}
+function toggleFolderStats(){
+  const box=document.getElementById("folderStatsDetail");
+  if(!box) return;
+  box.classList.toggle("show");
+  const btn=document.querySelector(".folder-stats-toggle");
+  if(btn) btn.textContent=box.classList.contains("show")?"收合詳細紀錄":"查看詳細紀錄";
+}
+
+
+// 修正版統計初始化
+setTimeout(()=>{try{renderFolderStatsPanel();}catch(e){}},1000);
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
@@ -1584,6 +1688,7 @@ async function loadCloudData() {
       renderFolders();
       if (current !== null) loadFolder(current); else voiceSpeed = Number(data.voiceSpeed || voiceSpeed || 0.65);
       initVoiceSpeedUI();
+      folderPracticeStats = data.folderPracticeStats || folderPracticeStats || {};
       renderDashboard();
       isLoadingCloud = false;
       updateSyncUI("已登入：" + (cloudUser.email || cloudUser.displayName || "Google 帳號") + "，題庫已同步。", "已同步", true);
@@ -1938,6 +2043,11 @@ function renderFlash() {
   if (el) { el.textContent = emoji; el.style.left = side; el.style.right = right; }
 
   markFlashcardViewed(flashIndex);
+
+  if(window.__lastFlashPracticeKey !== String(current)+"-"+String(flashIndex)) {
+    window.__lastFlashPracticeKey = String(current)+"-"+String(flashIndex);
+    recordFolderPractice("flashcard");
+  }
 }
 function flipCard() { document.getElementById("flashCard").classList.toggle("flipped"); }
 function nextCard() { if(!flashCards.length)return; flashIndex=(flashIndex+1)%flashCards.length; renderFlash(); }
@@ -2482,6 +2592,8 @@ function decorateMasteryBadges() {
   } catch(e) {}
 }
 function makeTestFromCards(cards) {
+  recordFolderPractice("test");
+
   if(!cards || !cards.length) return;
   const originalGetCards = getCards;
   window.__tempTestCards = cards;
