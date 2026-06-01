@@ -510,6 +510,64 @@ textarea {
   color:#4d8b22;
   opacity:.72;
 }
+
+.flash-note-box{
+  margin:18px auto 0;
+  max-width:720px;
+  border:1px solid var(--line);
+  background:#fbfff7;
+  border-radius:22px;
+  padding:18px;
+  box-shadow:0 10px 24px rgba(90,120,60,.08);
+}
+.flash-note-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  font-weight:900;
+  color:var(--green-dark);
+  margin-bottom:10px;
+}
+.flash-note-view{
+  min-height:44px;
+  padding:12px 14px;
+  border-radius:16px;
+  background:#f3f9ec;
+  color:#3b4d32;
+  line-height:1.7;
+  white-space:pre-wrap;
+}
+.flash-note-empty{
+  color:var(--muted);
+  font-weight:700;
+}
+.flash-note-textarea{
+  width:100%;
+  min-height:96px;
+  resize:vertical;
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:12px 14px;
+  font-family:inherit;
+  font-size:15px;
+  line-height:1.6;
+  background:#fffef9;
+  color:var(--text);
+  outline:none;
+}
+.flash-note-textarea:focus{
+  border-color:var(--green);
+  box-shadow:0 0 0 3px rgba(131,184,66,.16);
+}
+.flash-note-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:12px;
+  flex-wrap:wrap;
+}
+
 @media(max-width:1050px) {
   .app { grid-template-columns:1fr; }
   .sidebar {
@@ -1350,6 +1408,20 @@ textarea {
                 <button class="ghost" onclick="nextCard()">下一張 ›</button>
                 <button class="soft" onclick="startFlash(true)">隨機播放</button>
               </div>
+              <div class="flash-note-box" onclick="event.stopPropagation();">
+                <div class="flash-note-head">
+                  <span>📝 我的備註</span>
+                  <button class="soft" id="flashNoteToggleBtn" onclick="toggleFlashNoteEditor()">編輯備註</button>
+                </div>
+                <div id="flashNoteView" class="flash-note-view flash-note-empty">這張單字卡還沒有備註。</div>
+                <div id="flashNoteEditor" style="display:none;">
+                  <textarea id="flashNoteInput" class="flash-note-textarea" placeholder="可以記發音、文法、容易搞混的地方..."></textarea>
+                  <div class="flash-note-actions">
+                    <button class="ghost" onclick="cancelFlashNoteEdit()">取消</button>
+                    <button class="primary" onclick="saveFlashNote()">儲存備註</button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <div class="card side-panel">
@@ -2120,6 +2192,68 @@ function resetViews() {
   document.getElementById("score").textContent = "";
   document.getElementById("matchBoard").innerHTML = "";
   document.getElementById("matchScore").textContent = "";
+}
+
+
+function loadFlashNotes(){
+  try { return JSON.parse(localStorage.getItem("banaFlashNotes") || "{}"); }
+  catch(e){ return {}; }
+}
+function saveFlashNotes(notes){
+  localStorage.setItem("banaFlashNotes", JSON.stringify(notes || {}));
+}
+function getFlashCardNoteKey(){
+  if(current === null || !flashCards.length) return "";
+  const c = flashCards[flashIndex] || {};
+  return "folder_" + current + "::" + String(c.term || "") + "::" + String(c.definition || "");
+}
+function renderFlashNote(){
+  const view = document.getElementById("flashNoteView");
+  const editor = document.getElementById("flashNoteEditor");
+  const input = document.getElementById("flashNoteInput");
+  const btn = document.getElementById("flashNoteToggleBtn");
+  if(!view || !input) return;
+
+  const notes = loadFlashNotes();
+  const key = getFlashCardNoteKey();
+  const note = key ? (notes[key] || "") : "";
+
+  if(note.trim()){
+    view.textContent = note;
+    view.classList.remove("flash-note-empty");
+  }else{
+    view.textContent = "這張單字卡還沒有備註。";
+    view.classList.add("flash-note-empty");
+  }
+
+  input.value = note;
+  if(editor) editor.style.display = "none";
+  if(btn) btn.textContent = "編輯備註";
+}
+function toggleFlashNoteEditor(){
+  const editor = document.getElementById("flashNoteEditor");
+  const input = document.getElementById("flashNoteInput");
+  const btn = document.getElementById("flashNoteToggleBtn");
+  if(!editor) return;
+  const open = editor.style.display !== "none";
+  editor.style.display = open ? "none" : "block";
+  if(btn) btn.textContent = open ? "編輯備註" : "收合備註";
+  if(!open && input) input.focus();
+}
+function cancelFlashNoteEdit(){
+  renderFlashNote();
+}
+function saveFlashNote(){
+  const input = document.getElementById("flashNoteInput");
+  if(!input) return;
+  const key = getFlashCardNoteKey();
+  if(!key) return;
+  const notes = loadFlashNotes();
+  const value = input.value.trim();
+  if(value) notes[key] = value;
+  else delete notes[key];
+  saveFlashNotes(notes);
+  renderFlashNote();
 }
 
 function startFlash(random) {
