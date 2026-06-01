@@ -4085,6 +4085,9 @@ else renderDashboard();
           if(Array.isArray(f.cards)) return f.cards;
           if(Array.isArray(f.words)) return f.words;
           if(Array.isArray(f.items)) return f.items;
+          if(typeof f.content === "string" && f.content.trim()){
+            if(typeof parseCards === "function") return parseCards(f.content);
+          }
         }
       }
     }catch(e){}
@@ -4093,9 +4096,6 @@ else renderDashboard();
         var cards = getCards();
         if(Array.isArray(cards)) return cards;
       }
-    }catch(e){}
-    try{
-      if(typeof flashCards !== "undefined" && Array.isArray(flashCards) && flashCards.length) return flashCards;
     }catch(e){}
     return [];
   }
