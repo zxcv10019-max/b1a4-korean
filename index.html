@@ -2205,7 +2205,9 @@ function saveFlashNotes(notes){
 function getFlashCardNoteKey(){
   if(current === null || !flashCards.length) return "";
   const c = flashCards[flashIndex] || {};
-  return "folder_" + current + "::" + String(c.term || "") + "::" + String(c.definition || "");
+  const term = String(c.term || "").trim();
+  const definition = String(c.definition || "").trim();
+  return "bana_note_v2::folder_" + current + "::card_" + flashIndex + "::" + term + "::" + definition;
 }
 function renderFlashNote(){
   const view = document.getElementById("flashNoteView");
@@ -2214,21 +2216,21 @@ function renderFlashNote(){
   const btn = document.getElementById("flashNoteToggleBtn");
   if(!view || !input) return;
 
-  const notes = loadFlashNotes();
+  view.textContent = "這張單字卡還沒有備註。";
+  view.classList.add("flash-note-empty");
+  input.value = "";
+  if(editor) editor.style.display = "none";
+  if(btn) btn.textContent = "編輯備註";
+
   const key = getFlashCardNoteKey();
-  const note = key ? (notes[key] || "") : "";
+  const notes = loadFlashNotes();
+  const note = key ? String(notes[key] || "") : "";
 
   if(note.trim()){
     view.textContent = note;
     view.classList.remove("flash-note-empty");
-  }else{
-    view.textContent = "這張單字卡還沒有備註。";
-    view.classList.add("flash-note-empty");
+    input.value = note;
   }
-
-  input.value = note;
-  if(editor) editor.style.display = "none";
-  if(btn) btn.textContent = "編輯備註";
 }
 function toggleFlashNoteEditor(){
   const editor = document.getElementById("flashNoteEditor");
@@ -2304,6 +2306,9 @@ function renderFlash() {
     window.__lastFlashPracticeKey = String(current)+"-"+String(flashIndex);
     recordFolderPractice("flashcard");
   }
+
+  // 每次切換單字卡時，重新載入該張卡自己的備註
+  renderFlashNote();
 }
 function flipCard() { document.getElementById("flashCard").classList.toggle("flipped"); }
 function nextCard() { if(!flashCards.length)return; flashIndex=(flashIndex+1)%flashCards.length; renderFlash(); }
