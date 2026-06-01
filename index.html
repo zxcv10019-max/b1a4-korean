@@ -2115,7 +2115,38 @@ function syncDropdowns() {
   });
 }
 function selectFromDropdown(v) {
-  if (folders.length) loadFolder(Number(v));
+  if (!folders.length) return;
+  const next = Number(v);
+  if (Number.isNaN(next) || !folders[next]) return;
+
+  // 切換目前題庫
+  loadFolder(next);
+  syncDropdowns();
+
+  // 依目前所在頁面，立刻重新載入對應內容
+  if (document.getElementById("flash")?.classList.contains("active")) {
+    flashIndex = 0;
+    flipped = false;
+    startFlash(false);
+  }
+
+  if (document.getElementById("test")?.classList.contains("active")) {
+    document.getElementById("score").textContent = "";
+    makeTest();
+  }
+
+  if (document.getElementById("match")?.classList.contains("active")) {
+    startMatch();
+  }
+
+  if (document.getElementById("listen")?.classList.contains("active")) {
+    listenCards = [];
+    listenIndex = 0;
+    document.getElementById("listenPrompt").textContent = "按「開始聽力」產生題目";
+    document.getElementById("listenOptions").innerHTML = "";
+    document.getElementById("listenScore").textContent = "";
+  }
+
   renderGraduationPanel();
   updateFolderGraduationBadges();
   renderStudyUpgradePanel();
@@ -2267,11 +2298,7 @@ function startFlash(random) {
     document.getElementById("flashProgress").innerHTML = "";
     return;
   }
-  if (random) {
-    flashCards = shuffle(cards);
-  } else {
-    flashCards = [...cards];
-  }
+  if (random || !flashCards.length) flashCards = shuffle(cards);
   flashIndex = 0;
   addPractice();
   renderFlash();
