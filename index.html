@@ -2298,7 +2298,8 @@ function startFlash(random) {
     document.getElementById("flashProgress").innerHTML = "";
     return;
   }
-  if (random || !flashCards.length) flashCards = shuffle(cards);
+  if (random) flashCards = shuffle(cards);
+  else flashCards = [...cards];
   flashIndex = 0;
   addPractice();
   renderFlash();
