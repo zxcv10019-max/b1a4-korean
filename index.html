@@ -1496,50 +1496,108 @@ textarea {
   .hero-kpi small { font-size:11px; }
   .hero-nav-btn { display:none; }
 }
+
+/* ===== Android-style bottom navigation ===== */
+.app {
+  grid-template-columns: 1fr !important;
+}
+.sidebar { display:none !important; }
+.main { padding-bottom: calc(78px + env(safe-area-inset-bottom, 0px)); }
+
+.bottom-nav {
+  position:fixed;
+  left:0; right:0; bottom:0;
+  z-index:500;
+  display:flex;
+  background:#fffef9;
+  border-top:1px solid var(--line);
+  box-shadow:0 -8px 24px rgba(49,83,33,.10);
+  padding:6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+}
+.bottom-nav button {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:2px;
+  background:transparent;
+  border:0;
+  border-radius:14px;
+  padding:8px 2px;
+  color:#8a9481;
+  font-size:11px;
+  font-weight:900;
+  cursor:pointer;
+}
+.bottom-nav button .bn-ico { font-size:21px; line-height:1; }
+.bottom-nav button.active {
+  color:#4e8f24;
+  background:#eaf5dd;
+}
+
+.vocab-subnav {
+  display:none;
+  gap:8px;
+  overflow-x:auto;
+  padding:0 0 18px;
+  margin-bottom:6px;
+}
+.vocab-subnav button {
+  flex:0 0 auto;
+  border:1px solid var(--line);
+  background:#fff;
+  color:#4e8f24;
+  font-weight:900;
+  font-size:14px;
+  padding:9px 16px;
+  border-radius:999px;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.vocab-subnav button.active {
+  background:#83b842;
+  color:#fff;
+  border-color:#83b842;
+}
+
+.lyrics-mock, .profile-page { padding-bottom:20px; }
+.lyrics-line-card {
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:20px;
+  padding:18px 20px;
+  margin-bottom:14px;
+  cursor:pointer;
+}
+.lyrics-line-kr { font-size:19px; font-weight:900; margin-bottom:4px; }
+.lyrics-line-zh { color:var(--muted); font-size:15px; }
+.lyrics-line-card.active { border-color:#83b842; background:#f4faed; }
+.lyrics-detail {
+  margin-top:10px;
+  padding-top:10px;
+  border-top:1px dashed var(--line);
+  display:none;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.lyrics-line-card.active .lyrics-detail { display:flex; }
+.lyrics-detail span {
+  background:var(--green-soft);
+  color:#4e8f24;
+  border-radius:999px;
+  padding:6px 12px;
+  font-size:13px;
+  font-weight:900;
+}
+@media(min-width:900px) {
+  .bottom-nav { max-width:520px; left:50%; transform:translateX(-50%); border-radius:24px 24px 0 0; }
+}
 </style>
 
 </head>
 <body>
 <div class="app">
-  <aside class="sidebar">
-    <div>
-      <div class="logo">B1A4</div>
-      <nav class="nav">
-        <button class="active" onclick="goPage('home')">⌂ 首頁</button>
-        <button onclick="goPage('library')">▣ 題庫</button>
-        <button onclick="goPage('flash')">▤ 單字卡</button>
-        <button onclick="goPage('test')">✎ 筆試</button>
-        <button onclick="goPage('match')">⌘ 配對</button>
-        <button onclick="goPage('listen')">🔊 聽力</button>
-      </nav>
-<div id="voiceControlVisible" style="margin-top:16px;padding:12px;border:1px solid #dce9cc;border-radius:14px;background:#fbfff6">
-  <div style="font-weight:900;margin-bottom:8px;">🔊 發音速度</div>
-  
-  <div class="voice-speed-label"><span id="voiceSpeedValueVisible">0.65x</span></div>
-<input id="voiceSpeedRangeVisible" type="range" min="0.50" max="1.20" step="0.05" value="0.65"
-    style="width:100%"
-    oninput="setVoiceSpeed(this.value)">
-  
-<div style="display:flex;justify-content:center;margin-top:10px;">
-
-</div>
-
-</div>
-
-
-      <div class="account-box">
-        <div class="account-title">帳號同步</div>
-        <div id="syncStatus" class="account-status">未登入，目前題庫只儲存在這台裝置。</div>
-        <span id="syncBadge" class="sync-pill">本機模式</span>
-        <div class="account-actions">
-          <button id="loginBtn" class="login-btn" onclick="loginWithGoogle()">Google 登入同步</button>
-          <button id="logoutBtn" class="logout-btn" onclick="logoutAccount()" style="display:none">登出</button>
-        </div>
-      </div>
-    </div>
-    <div class="bear animals"><span>🦊</span><span>🐻</span><span>🦆</span><span>🦖</span></div>
-  </aside>
-
   <main class="main">
     <section class="hero">
   <div class="hero-carousel" id="heroCarousel">
@@ -1565,6 +1623,12 @@ textarea {
 </section>
 
     <div class="content">
+      <div id="vocabSubnav" class="vocab-subnav">
+        <button data-page="library" onclick="goPage('library')">▣ 題庫</button>
+        <button data-page="flash" onclick="goPage('flash')">▤ 單字卡</button>
+        <button data-page="match" onclick="goPage('match')">⌘ 配對</button>
+        <button data-page="listen" onclick="goPage('listen')">🔊 聽力</button>
+      </div>
       <section id="home" class="page active">
 
         <div class="home-quest-wrap">
@@ -1864,8 +1928,82 @@ textarea {
           <div id="matchBoard" class="match-board"></div>
         </div>
       </section>
+
+      <section id="lyrics" class="page">
+        <div class="topbar">
+          <h2>🎵 歌詞讀本</h2>
+        </div>
+        <div class="lyrics-mock card" style="padding:24px;">
+          <div style="text-align:center;font-weight:1000;font-size:20px;margin-bottom:4px;">Baby Good Night</div>
+          <div style="text-align:center;color:var(--muted);font-weight:800;margin-bottom:20px;">點一句歌詞，看翻譯、單字與文法</div>
+
+          <div class="lyrics-line-card" onclick="this.classList.toggle('active')">
+            <div class="lyrics-line-kr">오늘도 난</div>
+            <div class="lyrics-line-zh">今天我依然...</div>
+            <div class="lyrics-detail">
+              <span>單字：오늘 (今天)</span>
+              <span>單字：난 (我)</span>
+              <span>文法：도「也」</span>
+              <span>⭐ 加入單字</span>
+              <span>❤️ 收藏句子</span>
+            </div>
+          </div>
+
+          <div class="lyrics-line-card" onclick="this.classList.toggle('active')">
+            <div class="lyrics-line-kr">니 생각뿐이야</div>
+            <div class="lyrics-line-zh">滿腦子都是你</div>
+            <div class="lyrics-detail">
+              <span>單字：생각 (想法)</span>
+              <span>文法：뿐이야「只是⋯而已」</span>
+              <span>⭐ 加入單字</span>
+              <span>❤️ 收藏句子</span>
+            </div>
+          </div>
+
+          <div style="text-align:center;margin-top:18px;color:var(--muted);font-weight:800;">
+            🚧 完整歌詞讀本（含播放、發音、例句）正在製作中 — v0.6 上線
+          </div>
+        </div>
+      </section>
+
+      <section id="profile" class="page profile-page">
+        <div class="topbar">
+          <h2>👤 我的</h2>
+        </div>
+
+        <div class="card" style="padding:22px;margin-bottom:18px;">
+          <div class="account-title">帳號同步</div>
+          <div id="syncStatus" class="account-status">未登入，目前題庫只儲存在這台裝置。</div>
+          <span id="syncBadge" class="sync-pill">本機模式</span>
+          <div class="account-actions">
+            <button id="loginBtn" class="login-btn" onclick="loginWithGoogle()">Google 登入同步</button>
+            <button id="logoutBtn" class="logout-btn" onclick="logoutAccount()" style="display:none">登出</button>
+          </div>
+        </div>
+
+        <div class="card" style="padding:22px;margin-bottom:18px;">
+          <div style="font-weight:900;margin-bottom:8px;">🔊 發音速度</div>
+          <div class="voice-speed-label"><span id="voiceSpeedValueVisible">0.65x</span></div>
+          <input id="voiceSpeedRangeVisible" type="range" min="0.50" max="1.20" step="0.05" value="0.65"
+              style="width:100%"
+              oninput="setVoiceSpeed(this.value)">
+        </div>
+
+        <div class="card" style="padding:22px;text-align:center;">
+          <div class="bear animals"><span>🦊</span><span>🐻</span><span>🦆</span><span>🦖</span></div>
+          <div style="color:var(--muted);font-weight:800;margin-top:10px;">你的森林夥伴正在等你完成今天的任務 🌱</div>
+        </div>
+      </section>
     </div>
   </main>
+
+  <nav class="bottom-nav">
+    <button data-tab="home" class="active" onclick="goBottomTab('home')"><span class="bn-ico">🏠</span>首頁</button>
+    <button data-tab="vocab" onclick="goBottomTab('vocab')"><span class="bn-ico">📚</span>單字</button>
+    <button data-tab="lyrics" onclick="goBottomTab('lyrics')"><span class="bn-ico">🎵</span>歌詞</button>
+    <button data-tab="test" onclick="goBottomTab('test')"><span class="bn-ico">📝</span>測驗</button>
+    <button data-tab="profile" onclick="goBottomTab('profile')"><span class="bn-ico">👤</span>我的</button>
+  </nav>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
@@ -2407,12 +2545,36 @@ function esc(s) { return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;
 function norm(v) { return String(v||"").trim().toLowerCase().replace(/[，。！？、,.!?]/g,"").replace(/\s+/g," "); }
 function today() { return new Date().toISOString().slice(0,10).replaceAll("-","/"); }
 
+const BOTTOM_TAB_MAP = { home:"home", library:"vocab", flash:"vocab", match:"vocab", listen:"vocab", test:"test", lyrics:"lyrics", profile:"profile" };
+const VOCAB_PAGES = ["library","flash","match","listen"];
+
+function updateBottomNav(id) {
+  document.querySelectorAll(".bottom-nav button").forEach(b => b.classList.remove("active"));
+  const tab = BOTTOM_TAB_MAP[id] || "home";
+  const activeBtn = document.querySelector(`.bottom-nav button[data-tab="${tab}"]`);
+  if (activeBtn) activeBtn.classList.add("active");
+
+  const subnav = document.getElementById("vocabSubnav");
+  if (subnav) {
+    subnav.style.display = VOCAB_PAGES.includes(id) ? "flex" : "none";
+    subnav.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.page === id));
+  }
+}
+
+function goBottomTab(tab) {
+  if (tab === "home") return goPage("home");
+  if (tab === "vocab") return goPage(VOCAB_PAGES.includes(current_vocab_page) ? current_vocab_page : "flash");
+  if (tab === "lyrics") return goPage("lyrics");
+  if (tab === "test") return goPage("test");
+  if (tab === "profile") return goPage("profile");
+}
+let current_vocab_page = "flash";
+
 function goPage(id) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.getElementById(id).classList.add("active");
-  document.querySelectorAll(".nav button").forEach(b => b.classList.remove("active"));
-  const map = { home:0, library:1, flash:2, test:3, match:4, listen:5 };
-  document.querySelectorAll(".nav button")[map[id]].classList.add("active");
+  if (VOCAB_PAGES.includes(id)) current_vocab_page = id;
+  updateBottomNav(id);
   syncDropdowns();
   if (id === "flash") startFlash(false);
   if (id === "match" && !document.getElementById("matchBoard").innerHTML) startMatch();
