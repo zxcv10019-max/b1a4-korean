@@ -1919,6 +1919,165 @@ textarea {
   .folder-table-head { display:none; }
   .fr-hide-sm { display:none; }
 }
+
+/* ===== 題庫編輯區：森林可愛化 ===== */
+.forest-editor .forest-card-editor {
+  position:relative;
+  overflow:hidden;
+  background-image:radial-gradient(rgba(131,184,66,.09) 2px, transparent 2px);
+  background-size:22px 22px;
+}
+.leaf-float {
+  position:absolute;
+  font-size:20px;
+  opacity:.5;
+  pointer-events:none;
+  animation:leafDrift 7s ease-in-out infinite;
+}
+.leaf-1 { top:14px; right:60px; animation-delay:0s; }
+.leaf-2 { top:80px; right:20px; animation-delay:2.2s; font-size:16px; }
+.leaf-3 { top:150px; right:90px; animation-delay:4.4s; font-size:15px; }
+@keyframes leafDrift {
+  0%,100% { transform:translateY(0) rotate(0deg); }
+  50% { transform:translateY(16px) rotate(18deg); }
+}
+
+.mascot-tip {
+  display:flex; align-items:center; gap:10px;
+  background:linear-gradient(135deg,#eef8df,#f6fff0);
+  border:1px solid #d7edb8;
+  border-radius:16px;
+  padding:12px 16px;
+  font-weight:900;
+  color:#3f5634;
+  margin-bottom:18px;
+}
+.mascot-tip span { font-size:22px; }
+
+.cute-input, input.cute-input, #folderName {
+  border:2px solid #e3f0d2 !important;
+  border-radius:16px !important;
+  padding:12px 14px !important;
+  transition:.2s;
+}
+#folderName:focus {
+  outline:none;
+  border-color:#83b842 !important;
+  box-shadow:0 0 0 5px rgba(131,184,66,.18);
+}
+
+#cardEditorList { margin-top:10px; }
+.word-card {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:#fff;
+  border:1px solid #e2ecd6;
+  border-radius:16px;
+  padding:10px 12px;
+  margin-bottom:10px;
+  box-shadow:0 6px 16px rgba(72,108,39,.06);
+}
+.word-card .wc-flag { font-size:15px; flex:0 0 auto; }
+.word-card input {
+  flex:1;
+  border:1px solid transparent;
+  border-radius:10px;
+  padding:8px 10px;
+  font-weight:800;
+  min-width:0;
+  background:#fbfdf7;
+}
+.word-card input:focus {
+  outline:none;
+  border-color:#83b842;
+  background:#fff;
+  box-shadow:0 0 0 3px rgba(131,184,66,.15);
+}
+.word-card .wc-del {
+  flex:0 0 auto;
+  border:0;
+  background:transparent;
+  font-size:15px;
+  cursor:pointer;
+  padding:4px 6px;
+  border-radius:50%;
+  transition:.15s;
+}
+.word-card .wc-del:hover { background:#ffe3e8; transform:scale(1.15); }
+
+.word-card.card-drop-in { animation:cardDropIn .45s ease; }
+@keyframes cardDropIn {
+  0% { transform:translateY(-26px) scale(.9); opacity:0; }
+  60% { transform:translateY(4px) scale(1.02); opacity:1; }
+  100% { transform:translateY(0) scale(1); }
+}
+.word-card.leaf-away {
+  animation:leafAway .5s ease forwards;
+  pointer-events:none;
+}
+@keyframes leafAway {
+  0% { transform:translateY(0) rotate(0deg); opacity:1; }
+  100% { transform:translateY(50px) rotate(25deg); opacity:0; }
+}
+
+.add-word-btn {
+  width:100%;
+  border:2px dashed #b9dd8d;
+  background:#f8fdf3;
+  color:#4e8f24;
+  font-weight:1000;
+  border-radius:16px;
+  padding:12px;
+  cursor:pointer;
+  transition:.15s;
+}
+.add-word-btn:hover { background:#eef8df; transform:translateY(-1px); }
+
+.empty-fox {
+  text-align:center;
+  padding:32px 10px;
+  color:var(--muted);
+  font-weight:800;
+}
+.empty-fox .ef-icon { font-size:44px; display:block; margin-bottom:10px; }
+.empty-fox .ef-sub { font-size:13px; margin-top:4px; }
+
+.color-dots-named { display:flex; gap:14px; flex-wrap:wrap; }
+.color-choice { display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; }
+.color-choice .dot {
+  width:34px; height:34px; border-radius:50%;
+  display:block; border:3px solid transparent;
+  box-shadow:0 4px 10px rgba(0,0,0,.08);
+  transition:.15s;
+}
+.color-choice.active .dot { border-color:#3f5634; transform:scale(1.1); }
+.color-choice small { font-size:11px; font-weight:900; color:#5c6e52; }
+
+.cute-btn { transition:transform .15s; }
+.cute-btn:hover { transform:translateY(-2px) scale(1.03); }
+.cute-btn:active { transform:translateY(0) scale(.97); }
+
+.save-toast {
+  position:fixed;
+  left:50%;
+  bottom:30px;
+  transform:translate(-50%, 20px);
+  background:linear-gradient(135deg,#ffffff,#f2fae9);
+  border:1px solid #d7edb8;
+  border-radius:22px;
+  padding:16px 26px;
+  text-align:center;
+  box-shadow:0 20px 40px rgba(32,53,31,.2);
+  z-index:10000;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .3s, transform .3s;
+}
+.save-toast.show { opacity:1; transform:translate(-50%, 0); }
+.save-toast-emoji { font-size:30px; }
+.save-toast-text { font-weight:1000; color:#20351f; margin-top:4px; }
+.save-toast-sub { font-size:12px; color:#5c9b36; font-weight:900; margin-top:2px; }
 </style>
 
 </head>
@@ -2116,14 +2275,20 @@ textarea {
         </div>
 
         <div id="editorWrap" style="display:none"><div id="editor" class="topbar" style="margin-top:28px">
-          <div style="display:flex;align-items:center;gap:12px"><h2 id="editorTitle">題庫內容</h2><button class="ghost" onclick="closeEditor()">✕ 關閉</button></div>
-          <span id="countBadge" class="soft" style="padding:8px 14px;border-radius:999px;font-weight:900;">0 張單字</span>
+          <div style="display:flex;align-items:center;gap:12px"><h2 id="editorTitle">🌱 題庫內容</h2><button class="ghost" onclick="closeEditor()">✕ 關閉</button></div>
+          <span id="countBadge" class="soft" style="padding:8px 14px;border-radius:999px;font-weight:900;">🍀 0 張小葉子</span>
         </div>
 
-        <div class="editor-layout">
-          <div class="card editor">
-            <label>題庫名稱</label>
-            <input id="folderName" placeholder="例如：初級單字">
+        <div class="editor-layout forest-editor">
+          <div class="card editor forest-card-editor">
+            <div class="leaf-float leaf-1">🍃</div>
+            <div class="leaf-float leaf-2">🍃</div>
+            <div class="leaf-float leaf-3">🍂</div>
+
+            <div class="mascot-tip" id="editorMascotTip"><span>🦊</span> 今天也一起加油背單字吧！</div>
+
+            <label>🍀 題庫名稱</label>
+            <input id="folderName" class="cute-input" placeholder="例如：初級單字" oninput="updateEditorCountLabels()">
             <label>所屬分組</label>
             <div class="group-selector">
               <select id="folderGroup">
@@ -2135,27 +2300,42 @@ textarea {
               <option value="termToDefinition">韓文 ➜ 中文</option>
               <option value="definitionToTerm">中文 ➜ 韓文</option>
             </select>
-            <label>題庫內容</label>
-            <textarea id="raw" placeholder="안녕하세요	你好&#10;감사합니다	謝謝"></textarea>
-            <div class="btns">
-              <button class="primary" onclick="saveFolder()">儲存題庫</button>
-              <button class="ghost" onclick="deleteFolder()">刪除題庫</button>
+
+            <label style="display:flex;justify-content:space-between;align-items:center;">
+              <span>🌱 題庫內容</span>
+              <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="toggleBatchPaste()" id="batchPasteToggleBtn">📋 批次貼上</button>
+            </label>
+
+            <div id="cardEditorWrap">
+              <div id="cardEditorList"></div>
+              <button type="button" class="add-word-btn" onclick="addEditorCard()">➕ 新增單字</button>
+            </div>
+
+            <div id="batchPasteWrap" style="display:none;">
+              <textarea id="raw" placeholder="안녕하세요	你好&#10;감사합니다	謝謝"></textarea>
+              <button type="button" class="primary cute-btn" style="margin-top:10px;width:100%;" onclick="applyBatchPaste()">✅ 套用並返回小卡</button>
+            </div>
+
+            <div class="btns" style="margin-top:18px;">
+              <button class="primary cute-btn" onclick="saveFolder()">🌱 儲存</button>
+              <button class="ghost cute-btn" onclick="deleteFolder()">🗑 放進回收桶</button>
             </div>
           </div>
 
           <div class="card editor">
-            <label>題庫顏色</label>
-            <div class="color-dots">
-              <span class="dot" style="background:#c6e09c" onclick="setColor('#c6e09c')"></span>
-              <span class="dot" style="background:#ffe39b" onclick="setColor('#ffe39b')"></span>
-              <span class="dot" style="background:#ffadc5" onclick="setColor('#ffadc5')"></span>
-              <span class="dot" style="background:#a8c6ff" onclick="setColor('#a8c6ff')"></span>
-              <span class="dot" style="background:#a8dfc5" onclick="setColor('#a8dfc5')"></span>
+            <label>🎨 題庫顏色</label>
+            <div class="color-dots color-dots-named">
+              <div class="color-choice active" data-color="#c6e09c" onclick="setColor('#c6e09c')"><span class="dot" style="background:#c6e09c"></span><small>🍀 萌芽綠</small></div>
+              <div class="color-choice" data-color="#ffadc5" onclick="setColor('#ffadc5')"><span class="dot" style="background:#ffadc5"></span><small>🌸 櫻花粉</small></div>
+              <div class="color-choice" data-color="#a8c6ff" onclick="setColor('#a8c6ff')"><span class="dot" style="background:#a8c6ff"></span><small>🌊 湖水藍</small></div>
+              <div class="color-choice" data-color="#ffe39b" onclick="setColor('#ffe39b')"><span class="dot" style="background:#ffe39b"></span><small>🌻 奶油黃</small></div>
+              <div class="color-choice" data-color="#ffcba4" onclick="setColor('#ffcba4')"><span class="dot" style="background:#ffcba4"></span><small>🍑 蜜桃粉</small></div>
             </div>
             <div class="folder card" id="previewFolder" style="--tab:#c6e09c;margin-top:22px">
               <div class="folder-inner">
-                <div class="folder-title">🌱 預覽</div>
-                <div class="folder-meta">可愛資料夾</div>
+                <div class="folder-title">📂 我的資料夾</div>
+                <div class="folder-meta" id="previewFolderName">第一課</div>
+                <div class="folder-meta" id="previewFolderCount">🍀 0 張小葉子</div>
               </div>
             </div>
           </div>
@@ -2368,6 +2548,12 @@ textarea {
       </section>
     </div>
   </main>
+
+  <div id="saveToast" class="save-toast">
+    <div class="save-toast-emoji">🌱</div>
+    <div class="save-toast-text">已經幫你種進森林啦！</div>
+    <div class="save-toast-sub">✓ 儲存完成</div>
+  </div>
 
   <div id="searchMask" class="hero-modal-mask">
     <div class="hero-modal" style="width:min(560px,100%);max-height:80vh;">
@@ -3444,6 +3630,123 @@ function newFolder() {
   loadFolder(current);
   document.getElementById("editor").scrollIntoView({behavior:"smooth"});
 }
+
+/* ===== 題庫內容：小卡編輯引擎 ===== */
+let editorCards = [];
+let editorCardSeq = 0;
+
+function parseRawLinesLenient(t) {
+  return String(t || "").split(/\n+/).map(x => x.trim()).filter(Boolean).map(line => {
+    let p;
+    if (line.includes("\t")) p = line.split("\t");
+    else if (line.includes(" - ")) p = line.split(" - ");
+    else if (line.includes(",")) p = line.split(",");
+    else p = line.split(/\s{2,}/);
+    return { term:(p[0] || "").trim(), definition:(p.slice(1).join(" ") || "").trim() };
+  });
+}
+
+function syncEditorCardsFromContent(content) {
+  editorCards = parseRawLinesLenient(content).map(c => ({ id: "wc" + (editorCardSeq++), term: c.term, definition: c.definition }));
+}
+
+function serializeEditorCards() {
+  const text = editorCards.map(c => `${c.term}\t${c.definition}`).join("\n");
+  const rawEl = document.getElementById("raw");
+  if (rawEl) rawEl.value = text;
+  updateEditorCountLabels();
+  return text;
+}
+
+function updateEditorCountLabels() {
+  const count = editorCards.filter(c => c.term.trim()).length;
+  const badge = document.getElementById("countBadge");
+  if (badge) badge.textContent = `🍀 ${count} 張小葉子`;
+  const previewCount = document.getElementById("previewFolderCount");
+  if (previewCount) previewCount.textContent = `🍀 ${count} 張小葉子`;
+  const previewName = document.getElementById("previewFolderName");
+  if (previewName) previewName.textContent = document.getElementById("folderName")?.value || "第一課";
+}
+
+function renderCardEditor(highlightId) {
+  const list = document.getElementById("cardEditorList");
+  if (!list) return;
+  if (!editorCards.length) {
+    list.innerHTML = `<div class="empty-fox"><span class="ef-icon">🦊</span>還沒有任何單字哦～<div class="ef-sub">快新增第一個吧！</div></div>`;
+    updateEditorCountLabels();
+    return;
+  }
+  list.innerHTML = editorCards.map(c => `
+    <div class="word-card${c.id === highlightId ? " card-drop-in" : ""}" data-id="${c.id}">
+      <span class="wc-flag">🇰🇷</span>
+      <input type="text" placeholder="韓文" value="${escapeAttr(c.term)}" oninput="updateEditorCard('${c.id}','term',this.value)">
+      <span class="wc-flag">🇹🇼</span>
+      <input type="text" placeholder="中文" value="${escapeAttr(c.definition)}" oninput="updateEditorCard('${c.id}','definition',this.value)">
+      <button type="button" class="wc-del" title="刪除" onclick="deleteEditorCard('${c.id}')">❌</button>
+    </div>`).join("");
+  updateEditorCountLabels();
+}
+
+function updateEditorCard(id, field, value) {
+  const c = editorCards.find(x => x.id === id);
+  if (!c) return;
+  c[field] = value;
+  serializeEditorCards();
+}
+
+function addEditorCard() {
+  const c = { id: "wc" + (editorCardSeq++), term: "", definition: "" };
+  editorCards.push(c);
+  serializeEditorCards();
+  renderCardEditor(c.id);
+  setTimeout(() => {
+    const el = document.querySelector(`.word-card[data-id="${c.id}"] input`);
+    if (el) el.focus();
+  }, 60);
+}
+
+function deleteEditorCard(id) {
+  const el = document.querySelector(`.word-card[data-id="${id}"]`);
+  if (el) el.classList.add("leaf-away");
+  setTimeout(() => {
+    editorCards = editorCards.filter(c => c.id !== id);
+    serializeEditorCards();
+    renderCardEditor();
+  }, el ? 420 : 0);
+}
+
+function toggleBatchPaste() {
+  const cardWrap = document.getElementById("cardEditorWrap");
+  const batchWrap = document.getElementById("batchPasteWrap");
+  const btn = document.getElementById("batchPasteToggleBtn");
+  const showingBatch = batchWrap.style.display !== "none";
+  if (showingBatch) {
+    cardWrap.style.display = "block";
+    batchWrap.style.display = "none";
+    btn.textContent = "📋 批次貼上";
+  } else {
+    serializeEditorCards();
+    cardWrap.style.display = "none";
+    batchWrap.style.display = "block";
+    btn.textContent = "🍀 卡片模式";
+  }
+}
+
+function applyBatchPaste() {
+  const raw = document.getElementById("raw").value;
+  syncEditorCardsFromContent(raw);
+  renderCardEditor();
+  toggleBatchPaste();
+}
+
+function showSaveToast() {
+  const toast = document.getElementById("saveToast");
+  if (!toast) return;
+  toast.classList.add("show");
+  clearTimeout(showSaveToast._t);
+  showSaveToast._t = setTimeout(() => toast.classList.remove("show"), 3000);
+}
+
 function loadFolder(i) {
   current = i;
   const f = folders[i];
@@ -3452,7 +3755,9 @@ function loadFolder(i) {
   document.getElementById("direction").value = f.direction || "termToDefinition";
   document.getElementById("raw").value = f.content || "";
   document.getElementById("previewFolder").style.setProperty("--tab", currentColor);
-  document.getElementById("countBadge").textContent = parseCards(f.content).length + " 張單字";
+  document.querySelectorAll(".color-choice").forEach(el => el.classList.toggle("active", el.dataset.color === currentColor));
+  syncEditorCardsFromContent(f.content);
+  renderCardEditor();
   document.getElementById("editorWrap").style.display = "block";
   renderFolders();
   resetViews();
@@ -3460,9 +3765,11 @@ function loadFolder(i) {
 function setColor(c) {
   currentColor = c;
   document.getElementById("previewFolder").style.setProperty("--tab", c);
+  document.querySelectorAll(".color-choice").forEach(el => el.classList.toggle("active", el.dataset.color === c));
 }
 function saveFolder() {
   if (current === null) newFolder();
+  serializeEditorCards();
   folders[current].name = document.getElementById("folderName").value || "未命名題庫";
   folders[current].direction = document.getElementById("direction").value;
   folders[current].content = document.getElementById("raw").value;
@@ -3472,11 +3779,11 @@ function saveFolder() {
   folders[current].groupId = document.getElementById("folderGroup").value || "";
   saveStorage();
   loadFolder(current);
-  alert("已儲存！");
+  showSaveToast();
 }
 function deleteFolder() {
   if (current === null) return;
-  if (!confirm("確定刪除這個題庫？")) return;
+  if (!confirm("確定要把這個題庫放進回收桶嗎？此動作無法復原。")) return;
   folders.splice(current,1);
   current = folders.length ? 0 : null;
   saveStorage();
@@ -3484,7 +3791,8 @@ function deleteFolder() {
   else {
     document.getElementById("folderName").value = "";
     document.getElementById("raw").value = "";
-    document.getElementById("countBadge").textContent = "0 張單字";
+    editorCards = [];
+    renderCardEditor();
     renderFolders();
     resetViews();
   }
