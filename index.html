@@ -1870,55 +1870,103 @@ textarea {
 .folder-stat-item .fsi-bar { height:8px; border-radius:999px; background:#eef2e6; overflow:hidden; }
 .folder-stat-item .fsi-bar span { display:block; height:100%; background:linear-gradient(90deg,#9bc95d,#6fae37); }
 
-/* ===== 題庫列表：正式表格清單風格 ===== */
+/* ===== 題庫列表：森林資料夾卡 ===== */
 #folderGrid { display:block !important; }
-.folder-table {
-  display:flex;
-  flex-direction:column;
-  border:1px solid var(--line);
-  border-radius:18px;
-  overflow:hidden;
+.folder-card-grid {
+  display:grid;
+  grid-template-columns:repeat(4, 1fr);
+  gap:14px;
+}
+@media (max-width:980px) {
+  .folder-card-grid { grid-template-columns:repeat(3, 1fr); }
+}
+@media (max-width:720px) {
+  .folder-card-grid { grid-template-columns:repeat(2, 1fr); }
+}
+@media (max-width:460px) {
+  .folder-card-grid { grid-template-columns:1fr 1fr; }
+}
+.forest-folder-card {
+  position:relative;
   background:#fff;
-  box-shadow:0 10px 26px rgba(72,108,39,.06);
-}
-.folder-table-head {
-  display:flex;
-  align-items:center;
-  gap:14px;
-  padding:10px 18px;
-  background:#f2f8ea;
-  font-size:12px;
-  font-weight:1000;
-  color:#5c9b36;
-  letter-spacing:.02em;
-}
-.folder-table-head .fr-dot-spacer { width:12px; flex:0 0 auto; }
-.folder-table-head .fr-arrow-spacer { width:16px; flex:0 0 auto; }
-.folder-row {
-  display:flex;
-  align-items:center;
-  gap:14px;
-  padding:14px 18px;
-  border-top:1px solid var(--line);
+  border:2px solid var(--line);
+  border-radius:20px;
+  padding:14px;
   cursor:pointer;
   transition:.15s;
-  background:#fff;
+  box-shadow:0 8px 18px rgba(72,108,39,.06);
+  border-top:5px solid var(--tab, #c6e09c);
+  min-height:150px;
+  display:flex;
+  flex-direction:column;
 }
-.folder-row:hover { background:#f7fbf2; }
-.folder-row.active { background:#eef8df; }
-.fr-dot { width:12px; height:12px; border-radius:50%; flex:0 0 auto; }
-.fr-main { flex:1; min-width:0; }
-.fr-name { font-weight:1000; color:#20351f; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.fr-sub { font-size:11px; color:var(--muted); font-weight:700; margin-top:2px; }
-.fr-stat { width:60px; text-align:center; flex:0 0 auto; }
-.fr-stat b { display:block; font-size:15px; color:#3f7a1f; }
-.fr-stat small { font-size:10px; color:var(--muted); font-weight:800; }
-.fr-date { width:96px; text-align:center; font-size:12px; color:var(--muted); font-weight:800; flex:0 0 auto; }
-.fr-arrow { width:16px; text-align:center; color:#9db98c; font-weight:1000; flex:0 0 auto; }
-@media (max-width:720px) {
-  .folder-table-head { display:none; }
-  .fr-hide-sm { display:none; }
+.forest-folder-card:hover { transform:translateY(-3px); box-shadow:0 14px 26px rgba(72,108,39,.14); }
+.forest-folder-card.active { border-color:#83b842; background:#f7fdf1; }
+.ffc-head { display:flex; justify-content:space-between; align-items:center; }
+.ffc-folder-ico { font-size:22px; }
+.ffc-mascot { font-size:18px; opacity:.85; }
+.ffc-name {
+  font-weight:1000;
+  font-size:14px;
+  color:#20351f;
+  margin-top:6px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
+.ffc-meta {
+  display:flex;
+  gap:8px;
+  font-size:11px;
+  color:var(--muted);
+  font-weight:800;
+  margin-top:4px;
+}
+.ffc-progress-track {
+  height:6px;
+  background:#eef2e6;
+  border-radius:999px;
+  overflow:hidden;
+  margin-top:10px;
+}
+.ffc-progress-fill { height:100%; background:linear-gradient(90deg,#9bc95d,#6fae37); border-radius:999px; }
+.ffc-stage-row {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:11px;
+  font-weight:900;
+  color:#4e8f24;
+  margin-top:6px;
+}
+.ffc-date { font-size:10px; color:var(--muted); font-weight:700; margin-top:4px; }
+.ffc-start-btn {
+  margin-top:auto;
+  padding-top:10px;
+  border:0;
+  border-top:1px dashed var(--line);
+  background:transparent;
+  color:#4e8f24;
+  font-weight:1000;
+  font-size:12px;
+  cursor:pointer;
+  text-align:center;
+  transition:.15s;
+}
+.ffc-start-btn:hover { color:#3a6b1f; transform:scale(1.03); }
+
+.group-progress {
+  display:flex; align-items:center; gap:6px;
+  flex:0 0 auto;
+}
+.group-progress-track {
+  width:70px; height:6px;
+  background:#e2edd6;
+  border-radius:999px;
+  overflow:hidden;
+}
+.group-progress-fill { height:100%; background:linear-gradient(90deg,#9bc95d,#6fae37); border-radius:999px; }
+.group-progress span { font-size:11px; font-weight:900; color:#4e8f24; }
 
 /* ===== 題庫編輯區：森林可愛化 ===== */
 .forest-editor .forest-card-editor {
@@ -3588,34 +3636,48 @@ function openFolderManager() {
   document.getElementById("editor").scrollIntoView({behavior:"smooth"});
 }
 
-function folderTableHeader() {
-  return `<div class="folder-table-head">
-    <span class="fr-dot-spacer"></span>
-    <span class="fr-main">題庫名稱</span>
-    <span class="fr-stat">單字</span>
-    <span class="fr-stat fr-hide-sm">練習</span>
-    <span class="fr-date fr-hide-sm">最後更新</span>
-    <span class="fr-arrow-spacer"></span>
-  </div>`;
+function getFolderStage(flashPercent, graduated) {
+  if (graduated) return { icon: "🌸", label: "已畢業" };
+  if (flashPercent >= 70) return { icon: "🌳", label: "已熟悉" };
+  if (flashPercent >= 30) return { icon: "🌿", label: "學習中" };
+  return { icon: "🌱", label: "新建立" };
 }
 
-function makeFolderRow(f, i) {
+const FOLDER_MASCOTS = ["🦊", "🐻", "🐥", "🦖", "🦆", "🐰"];
+
+function groupProgressBar(grpFolders) {
+  if (!grpFolders.length) return "";
+  const avg = Math.round(grpFolders.reduce((sum, {i}) => sum + (getGraduationStats(i).flashPercent || 0), 0) / grpFolders.length);
+  return `<div class="group-progress"><div class="group-progress-track"><div class="group-progress-fill" style="width:${avg}%"></div></div><span>${avg}%</span></div>`;
+}
+
+function makeForestFolderCard(f, i) {
   const d = document.createElement("div");
-  d.className = "folder-row " + (current === i ? "active" : "");
+  d.className = "forest-folder-card " + (current === i ? "active" : "");
+  d.style.setProperty("--tab", f.color || "#c6e09c");
   const cardCount = parseCards(f.content).length;
-  const dirLabel = (f.direction === "definitionToTerm") ? "中文 ➜ 韓文" : "韓文 ➜ 中文";
+  const gStats = getGraduationStats(i);
+  const stage = getFolderStage(gStats.flashPercent, gStats.graduated);
+  const mascot = FOLDER_MASCOTS[i % FOLDER_MASCOTS.length];
   d.innerHTML = `
-    <span class="fr-dot" style="background:${f.color || '#c6e09c'}"></span>
-    <div class="fr-main">
-      <div class="fr-name">${esc(f.name)}</div>
-      <div class="fr-sub">${dirLabel}</div>
+    <div class="ffc-head">
+      <span class="ffc-folder-ico">📂</span>
+      <span class="ffc-mascot">${mascot}</span>
     </div>
-    <div class="fr-stat"><b>${cardCount}</b><small>單字</small></div>
-    <div class="fr-stat fr-hide-sm"><b>${f.practice || 0}</b><small>次</small></div>
-    <div class="fr-date fr-hide-sm">${esc(f.updated || today())}</div>
-    <span class="fr-arrow">›</span>`;
+    <div class="ffc-name">${esc(f.name)}</div>
+    <div class="ffc-meta"><span>📖 ${cardCount} 字</span><span>🔥 ${f.practice || 0} 次</span></div>
+    <div class="ffc-progress-track"><div class="ffc-progress-fill" style="width:${gStats.flashPercent}%"></div></div>
+    <div class="ffc-stage-row"><span class="ffc-stage">${stage.icon} ${stage.label}</span><span class="ffc-percent">${gStats.flashPercent}%</span></div>
+    <div class="ffc-date">🕒 ${esc(f.updated || today())}</div>
+    <button type="button" class="ffc-start-btn" onclick="event.stopPropagation();quickStartFlash(${i})">▶ 開始學習</button>`;
   d.onclick = () => { loadFolder(i); document.getElementById("editor").scrollIntoView({behavior:"smooth"}); };
   return d;
+}
+
+function quickStartFlash(i) {
+  loadFolder(i);
+  goPage("flash");
+  startFlash();
 }
 
 function renderFolders() {
@@ -3639,7 +3701,8 @@ function renderFolders() {
     header.innerHTML = `
       <span class="group-toggle">▾</span>
       <span class="group-name">📁 ${esc(grp.name)}</span>
-      <span class="group-count">${grpFolders.length} 個題庫</span>
+      <span class="group-count">🌱 ${grpFolders.length} 個題庫</span>
+      ${groupProgressBar(grpFolders)}
       <div class="group-actions">
         <button onclick="event.stopPropagation();renameGroup('${grp.id}')">✏️ 改名</button>
         <button onclick="event.stopPropagation();deleteGroup('${grp.id}')">🗑</button>
@@ -3651,11 +3714,10 @@ function renderFolders() {
     body.id = "grpbody_" + grp.id;
 
     if (grpFolders.length) {
-      const table = document.createElement("div");
-      table.className = "folder-table";
-      table.innerHTML = folderTableHeader();
-      grpFolders.forEach(({f,i}) => table.appendChild(makeFolderRow(f,i)));
-      body.appendChild(table);
+      const grid = document.createElement("div");
+      grid.className = "folder-card-grid";
+      grpFolders.forEach(({f,i}) => grid.appendChild(makeForestFolderCard(f,i)));
+      body.appendChild(grid);
     } else {
       body.innerHTML = `<div class="empty" style="padding:18px 10px;font-size:14px">此分組尚無題庫</div>`;
     }
@@ -3675,24 +3737,22 @@ function renderFolders() {
       const isCollapsed = collapsedGroups.includes(grpId);
       const header = document.createElement("div");
       header.className = "group-header" + (isCollapsed ? " collapsed" : "");
-      header.innerHTML = `<span class="group-toggle">▾</span><span class="group-name">📂 未分組</span><span class="group-count">${ungrouped.length} 個題庫</span>`;
+      header.innerHTML = `<span class="group-toggle">▾</span><span class="group-name">📂 未分組</span><span class="group-count">${ungrouped.length} 個題庫</span>${groupProgressBar(ungrouped)}`;
       header.onclick = () => toggleGroup(grpId, header);
       const body = document.createElement("div");
       body.className = "group-body" + (isCollapsed ? " collapsed" : "");
       body.id = "grpbody_ungrouped";
-      const table = document.createElement("div");
-      table.className = "folder-table";
-      table.innerHTML = folderTableHeader();
-      ungrouped.forEach(({f,i}) => table.appendChild(makeFolderRow(f,i)));
-      body.appendChild(table);
+      const grid = document.createElement("div");
+      grid.className = "folder-card-grid";
+      ungrouped.forEach(({f,i}) => grid.appendChild(makeForestFolderCard(f,i)));
+      body.appendChild(grid);
       section.appendChild(header);
       section.appendChild(body);
     } else {
-      const table = document.createElement("div");
-      table.className = "folder-table";
-      table.innerHTML = folderTableHeader();
-      ungrouped.forEach(({f,i}) => table.appendChild(makeFolderRow(f,i)));
-      section.appendChild(table);
+      const grid = document.createElement("div");
+      grid.className = "folder-card-grid";
+      ungrouped.forEach(({f,i}) => grid.appendChild(makeForestFolderCard(f,i)));
+      section.appendChild(grid);
     }
     g.appendChild(section);
   }
