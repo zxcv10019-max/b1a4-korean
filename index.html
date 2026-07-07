@@ -2152,6 +2152,45 @@ textarea {
   color:var(--muted);
 }
 .pd-row b { color:#3f7a1f; font-size:12px; }
+
+/* ===== 首頁：今日目標（狐狸陪伴） ===== */
+.fox-goal-line {
+  display:flex; align-items:center; gap:8px;
+  font-weight:1000; color:#3f5634; font-size:16px;
+  margin-bottom:10px;
+}
+.fox-goal-line span { font-size:24px; }
+.quest-goal-percent {
+  text-align:right;
+  font-weight:1000;
+  color:#4e8f24;
+  font-size:13px;
+  margin-top:4px;
+}
+.quest-mini small { display:block; font-size:11px; color:var(--muted); font-weight:800; margin-top:2px; }
+
+/* ===== 學習加強：累積統計卡片 ===== */
+.cumulative-stat-grid {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+}
+.cs-tile {
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:12px 8px;
+  text-align:center;
+}
+.cs-tile .cs-ico { font-size:20px; display:block; margin-bottom:4px; }
+.cs-tile b { display:block; font-size:18px; color:#3f7a1f; }
+.cs-tile small { font-size:11px; color:var(--muted); font-weight:800; }
+.learned-rate-bar { margin-top:14px; }
+.lr-track { height:10px; background:#eef2e6; border-radius:999px; overflow:hidden; }
+.lr-fill { height:100%; background:linear-gradient(90deg,#9bc95d,#6fae37); border-radius:999px; }
+@media (max-width:600px) {
+  .cumulative-stat-grid { grid-template-columns:repeat(2,1fr); }
+}
 </style>
 
 </head>
@@ -2216,16 +2255,17 @@ textarea {
           <div class="today-quest-card">
             <div class="quest-eyebrow">TODAY STUDY</div>
             <div class="quest-title">영이 안녕！今天也一起加油 🌱</div>
-            <div class="quest-sub">完成今日任務，讓你的 BANA 森林繼續長大。</div>
+            <div class="fox-goal-line"><span>🦊</span> 今天完成目標了嗎？</div>
             <div class="quest-meter"><span id="todayQuestBar"></span></div>
+            <div class="quest-goal-percent" id="todayQuestPercent">0%</div>
             <div class="quest-row">
-              <div class="quest-mini">📚 單字<b id="questWords">0</b></div>
-              <div class="quest-mini">📝 筆試<b id="questTest">0</b></div>
-              <div class="quest-mini">🎮 配對<b id="questMatch">0</b></div>
-              <div class="quest-mini">🔥 練習<b id="questPractice">0</b></div>
+              <div class="quest-mini">📖 今日學習<b id="questFlashToday">0</b><small>個</small></div>
+              <div class="quest-mini">📝 今日測驗<b id="questTestToday">0</b><small>題</small></div>
+              <div class="quest-mini">🎧 今日聽力<b id="questListenToday">0</b><small>次</small></div>
+              <div class="quest-mini">🔥 今日 XP<b id="questXpToday">+0</b></div>
             </div>
             <div class="btns" style="justify-content:space-between;align-items:center;margin-top:12px;">
-              <div class="home-note-pill" style="margin-top:0;">🦊 🐻 🐥 🦖 오늘도 화이팅！</div>
+              <div class="home-note-pill" style="margin-top:0;">🔥 連續 <span id="questStreakDays">0</span> 天</div>
               <button class="ghost" style="font-size:12px;padding:8px 14px;" onclick="clearAllPracticeData()">🗑 清除練習紀錄</button>
             </div>
           </div>
@@ -3193,19 +3233,33 @@ function dateKey(d) {
   return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0");
 }
 
-function logActivity(amount) {
+function dayTotal(v) {
+  if (!v) return 0;
+  if (typeof v === "number") return v;
+  return Object.values(v).reduce((a, b) => a + (Number(b) || 0), 0);
+}
+
+function logActivity(category, amount) {
   const k = dateKey();
-  activityLog[k] = (activityLog[k] || 0) + (amount || 1);
+  if (!activityLog[k] || typeof activityLog[k] === "number") activityLog[k] = {};
+  const cat = category || "other";
+  activityLog[k][cat] = (activityLog[k][cat] || 0) + (amount || 1);
   localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(activityLog));
   renderLearningCalendar();
+  if (typeof renderHomeQuestDesign === "function") renderHomeQuestDesign();
+}
+
+function todayActivity() {
+  const v = activityLog[dateKey()];
+  return (v && typeof v === "object") ? v : {};
 }
 
 function computeCurrentStreak() {
   let streak = 0;
   const cursor = new Date();
   cursor.setHours(0, 0, 0, 0);
-  if (!activityLog[dateKey(cursor)]) cursor.setDate(cursor.getDate() - 1);
-  while (activityLog[dateKey(cursor)]) {
+  if (!dayTotal(activityLog[dateKey(cursor)])) cursor.setDate(cursor.getDate() - 1);
+  while (dayTotal(activityLog[dateKey(cursor)]) > 0) {
     streak++;
     cursor.setDate(cursor.getDate() - 1);
   }
@@ -3213,7 +3267,7 @@ function computeCurrentStreak() {
 }
 
 function computeBestStreak() {
-  const days = Object.keys(activityLog).filter(k => activityLog[k] > 0).sort();
+  const days = Object.keys(activityLog).filter(k => dayTotal(activityLog[k]) > 0).sort();
   if (!days.length) return 0;
   let best = 1, run = 1;
   for (let i = 1; i < days.length; i++) {
@@ -3257,7 +3311,7 @@ function renderLearningCalendar() {
     d.setDate(start.getDate() + i);
     const isFuture = d > today;
     const key = dateKey(d);
-    const count = activityLog[key] || 0;
+    const count = dayTotal(activityLog[key]);
     const lvl = activityLevel(count);
     cells.push({ d, isFuture, count, lvl });
     if (d.getDay() === 0) {
@@ -3288,6 +3342,8 @@ function renderDetailedStats() {
 
   const totalCards = folders.reduce((sum, f) => sum + parseCards(f.content).length, 0);
   let totalCorrect = 0, totalWrong = 0;
+  let graduatedCount = 0;
+  let flashPercentSum = 0;
   const folderRows = folders.map((f, i) => {
     const cardCount = parseCards(f.content).length;
     const rec = masteryData[i] || {};
@@ -3297,22 +3353,47 @@ function renderDetailedStats() {
     totalWrong += wrong;
     const attempts = correct + wrong;
     const accuracy = attempts ? Math.round((correct / attempts) * 100) : null;
+    const gStats = (typeof getGraduationStats === "function") ? getGraduationStats(i) : { graduated:false, flashPercent:0 };
+    if (gStats.graduated) graduatedCount++;
+    flashPercentSum += (gStats.flashPercent || 0);
     return { name: f.name, cardCount, accuracy, attempts };
   });
 
   const overallAttempts = totalCorrect + totalWrong;
   const overallAccuracy = overallAttempts ? Math.round((totalCorrect / overallAttempts) * 100) : 0;
-  const studyDays = Object.keys(activityLog).filter(k => activityLog[k] > 0).length;
-  const totalActions = Object.values(activityLog).reduce((a, b) => a + b, 0);
+  const studyDays = Object.keys(activityLog).filter(k => dayTotal(activityLog[k]) > 0).length;
+  const totalActions = Object.values(activityLog).reduce((a, b) => a + dayTotal(b), 0);
+  const totalTestQuestions = Object.values(activityLog).reduce((a, b) => a + (typeof b === "object" ? (b.test || 0) : 0), 0);
+  const estMinutes = Math.round(totalActions * 0.5);
+  const estHours = Math.floor(estMinutes / 60);
+  const estMinRemain = estMinutes % 60;
+  const learnedRate = folders.length ? Math.round(flashPercentSum / folders.length) : 0;
 
   let html = `
-    <div class="stat-row"><span>📁 題庫數量</span><b>${folders.length}</b></div>
-    <div class="stat-row"><span>📚 單字總數</span><b>${totalCards}</b></div>
-    <div class="stat-row"><span>✅ 整體正確率</span><b>${overallAttempts ? overallAccuracy + "%" : "尚無紀錄"}</b></div>
+    <div class="cumulative-stat-grid">
+      <div class="cs-tile"><span class="cs-ico">📚</span><b>${folders.length}</b><small>題庫</small></div>
+      <div class="cs-tile"><span class="cs-ico">📖</span><b>${totalCards}</b><small>總單字</small></div>
+      <div class="cs-tile"><span class="cs-ico">📝</span><b>${totalTestQuestions}</b><small>完成測驗題數</small></div>
+      <div class="cs-tile"><span class="cs-ico">⏱</span><b>${estHours > 0 ? estHours + "h" + estMinRemain + "m" : estMinRemain + "m"}</b><small>預估學習時間</small></div>
+      <div class="cs-tile"><span class="cs-ico">🏆</span><b>${graduatedCount}</b><small>完成題庫</small></div>
+      <div class="cs-tile"><span class="cs-ico">🔥</span><b>${computeBestStreak()}</b><small>最長連續天</small></div>
+    </div>
+
+    <div class="cumulative-stat-grid" style="grid-template-columns:repeat(2,1fr);margin-top:10px;">
+      <div class="cs-tile"><span class="cs-ico">🌱</span><b>${graduatedCount}</b><small>已畢業</small></div>
+      <div class="cs-tile"><span class="cs-ico">🌿</span><b>${Math.max(0, folders.length - graduatedCount)}</b><small>進行中</small></div>
+    </div>
+
+    <div class="learned-rate-bar">
+      <div style="display:flex;justify-content:space-between;font-weight:900;font-size:13px;margin-bottom:6px;">
+        <span>🌳 總學會率</span><span>${learnedRate}%</span>
+      </div>
+      <div class="lr-track"><div class="lr-fill" style="width:${learnedRate}%"></div></div>
+    </div>
+
+    <div class="stat-row" style="margin-top:14px;"><span>✅ 整體正確率</span><b>${overallAttempts ? overallAccuracy + "%" : "尚無紀錄"}</b></div>
     <div class="stat-row"><span>🔥 目前連續天數</span><b>${computeCurrentStreak()} 天</b></div>
-    <div class="stat-row"><span>🏆 最佳連續天數</span><b>${computeBestStreak()} 天</b></div>
     <div class="stat-row"><span>📅 累積學習天數</span><b>${studyDays} 天</b></div>
-    <div class="stat-row"><span>⚡ 累積學習次數</span><b>${totalActions} 次</b></div>
   `;
 
   if (folderRows.length) {
@@ -3628,20 +3709,32 @@ function renderFolders() {
 
 
 /* ===== 2026 首頁養成資料渲染 ===== */
+const DAILY_GOAL_UNITS = 20;
+
 function renderHomeQuestDesign(){
   try{
     const totalCards = folders.reduce((sum,f)=>sum + parseCards(f.content).length, 0);
     const totalPractice = stats.practice || 0;
-    const folderPractice = folders.reduce((sum,f)=>sum + (f.practice || 0), 0);
-    const wordsDone = Math.min(totalCards, folderPractice || totalPractice || 0);
-    const percent = totalCards ? Math.min(100, Math.round((wordsDone / totalCards) * 100)) : 0;
+    const setText = (id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val; };
+
+    const t = todayActivity();
+    const todayFlash = t.flash || 0;
+    const todayTest = t.test || 0;
+    const todayListen = t.listen || 0;
+    const todayLyrics = t.lyrics || 0;
+    const todayMatch = t.match || 0;
+    const todayTotal = dayTotal(t);
+    const todayXp = todayTotal * 5;
+    const percent = Math.min(100, Math.round((todayTotal / DAILY_GOAL_UNITS) * 100));
+
     const bar = document.getElementById('todayQuestBar');
     if(bar) bar.style.width = percent + '%';
-    const setText = (id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val; };
-    setText('questWords', totalCards);
-    setText('questTest', Math.floor(totalPractice/3));
-    setText('questMatch', Math.floor(totalPractice/4));
-    setText('questPractice', totalPractice);
+    setText('todayQuestPercent', percent + '%');
+    setText('questFlashToday', todayFlash);
+    setText('questTestToday', todayTest);
+    setText('questListenToday', todayListen);
+    setText('questXpToday', '+' + todayXp);
+    setText('questStreakDays', computeCurrentStreak());
 
     let level = Math.max(1, Math.floor(totalCards / 50) + 1);
     if(totalPractice >= 30) level += 1;
@@ -3670,7 +3763,7 @@ function renderHomeQuestDesign(){
 
     const heat = document.getElementById('studyHeatmap');
     if(heat){
-      const filled = Math.min(14, Math.ceil((percent/100)*14) || (totalPractice ? Math.min(14,totalPractice) : 0));
+      const filled = Math.min(14, Math.ceil((percent/100)*14) || (todayTotal ? Math.min(14,todayTotal) : 0));
       heat.innerHTML = Array.from({length:14},(_,i)=>`<div class="heat-cell ${i<filled?'on':''}"></div>`).join('');
     }
 
@@ -3959,10 +4052,10 @@ function deleteFolder() {
 function getCards() {
   return current === null ? [] : parseCards(folders[current].content);
 }
-function addPractice() {
+function addPractice(category) {
   stats.practice = (stats.practice || 0) + 1;
   if (current !== null) folders[current].practice = (folders[current].practice || 0) + 1;
-  logActivity(2);
+  logActivity(category || "other", 2);
   saveStorage();
   renderDashboard();
 }
@@ -3987,7 +4080,7 @@ function startFlash(random) {
   }
   if (random || !flashCards.length) flashCards = shuffle(cards);
   flashIndex = 0;
-  addPractice();
+  addPractice("flash");
   renderFlash();
 }
 function renderFlash() {
@@ -4029,7 +4122,7 @@ function renderFlash() {
   renderFlashSeenBox();
 }
 function flipCard() { document.getElementById("flashCard").classList.toggle("flipped"); }
-function nextCard() { if(!flashCards.length)return; flashIndex=(flashIndex+1)%flashCards.length; renderFlash(); }
+function nextCard() { if(!flashCards.length)return; flashIndex=(flashIndex+1)%flashCards.length; logActivity("flash", 1); renderFlash(); }
 function prevCard() { if(!flashCards.length)return; flashIndex=(flashIndex-1+flashCards.length)%flashCards.length; renderFlash(); }
 
 function clearAllPracticeData() {
@@ -4142,7 +4235,7 @@ function setTestMode(mode){
 
 
 function ensureGraduationRecord(folderId) {
-  if(!folderId) return null;
+  if(folderId === null || folderId === undefined) return null;
   if(!graduationData) graduationData = {};
   if(!graduationData[folderId]) graduationData[folderId] = { viewed: [], bestTestPercent: 0, bestTestScore: 0, bestTestTotal: 0, matchCompleted: false };
   if(!Array.isArray(graduationData[folderId].viewed)) graduationData[folderId].viewed = [];
@@ -4152,11 +4245,13 @@ function getCardKey(card, index) {
   return String((card && (card.id || card.term || card.definition)) || index);
 }
 function getGraduationCards(folderId) {
-  if(folderId && folders && folders[folderId]) return folders[folderId].cards || [];
+  if (folderId !== null && folderId !== undefined && folders && folders[folderId]) {
+    return parseCards(folders[folderId].content);
+  }
   return getCards ? getCards() : [];
 }
 function getGraduationStats(folderId) {
-  const fid = folderId || current;
+  const fid = (folderId !== null && folderId !== undefined) ? folderId : current;
   const cards = getGraduationCards(fid);
   const total = cards.length || 0;
   const rec = ensureGraduationRecord(fid);
@@ -4257,7 +4352,7 @@ function normalizeCardKeyValue(card, index) {
 }
 
 function ensureFolderPracticeStats(folderId) {
-  if(!folderId) return null;
+  if(folderId === null || folderId === undefined) return null;
   if(!folderPracticeStats) folderPracticeStats = {};
   if(!folderPracticeStats[folderId]) {
     folderPracticeStats[folderId] = {
@@ -4458,9 +4553,9 @@ function speakKorean(text) {
   if(koVoice) u.voice = koVoice;
   speechSynthesis.speak(u);
 }
-function recordAnswerResult(card, index, ok) {
+function recordAnswerResult(card, index, ok, category) {
   if(current === null || current === undefined || !card) return;
-  logActivity(1);
+  logActivity(category || "test", 1);
   const key = normalizeCardKeyValue(card, index);
   const wrongRec = ensureWrongRecord(current);
   const masteryRec = ensureMasteryRecord(current);
@@ -4688,7 +4783,7 @@ function answerListening(answer, btn) {
     : `✘ 錯誤，正確答案：${esc(listeningCurrent.definition)}`;
 
   if(typeof recordAnswerResult === "function") {
-    recordAnswerResult(listeningCurrent, 0, ok);
+    recordAnswerResult(listeningCurrent, 0, ok, "listen");
     saveStorage();
     if(typeof renderStudyUpgradePanel === "function") renderStudyUpgradePanel();
   }
@@ -4732,7 +4827,7 @@ function makeTest() {
     }
   }
 
-  addPractice();
+  addPractice("test");
   recordFolderPractice("test");
 
   const summary = document.getElementById("testSummary");
@@ -5017,7 +5112,7 @@ function startMatch() {
     return;
   }
 
-  addPractice();
+  addPractice("match");
   recordFolderPractice("match");
 
   // 配對改成「一次顯示 5 組，配對成功就消失，並補下一組」
@@ -5253,7 +5348,7 @@ function updateHeroStats() {
   const levelEl = document.getElementById("heroLevelText");
   const barEl = document.getElementById("heroProgressBar");
   const txtEl = document.getElementById("heroXpText");
-  const todayCount = activityLog[dateKey()] || 0;
+  const todayCount = dayTotal(activityLog[dateKey()]);
   if (streakEl) streakEl.textContent = String(computeCurrentStreak());
   if (xpEl) xpEl.textContent = (todayCount * 5) + " XP";
   if (levelEl) levelEl.textContent = "Lv. " + level;
@@ -6182,7 +6277,7 @@ function speakLyricsLine(lineId) {
   const line = song.lines.find(l => l.id === lineId);
   if (!line || !line.kr) return;
   speakKorean(line.kr);
-  logActivity(1);
+  logActivity("lyrics", 1);
 }
 
 function exportLyricsSongs() {
