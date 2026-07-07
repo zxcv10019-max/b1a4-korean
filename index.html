@@ -2018,43 +2018,13 @@ textarea {
           <div id="folderStatsDetail" class="folder-stats-detail"></div>
         </div>
 
-        <div id="voiceSpeedPanel" class="voice-speed-panel">
-          <div class="voice-speed-title">🔊 發音速度</div>
-          <div class="voice-speed-row">
-            <span>🐢 慢</span>
-            <input id="voiceSpeedRange" type="range" min="0.5" max="1.2" step="0.05" value="0.65" oninput="setVoiceSpeed(this.value)">
-            <span id="voiceSpeedValue">0.65</span>
-          </div>
-          <div class="voice-speed-tips">建議初學：0.65｜想聽更清楚可調到 0.55</div>
+        <div id="voiceSpeedPanel" class="voice-speed-panel" style="display:none">
+          <input id="voiceSpeedRange" type="range" min="0.5" max="1.2" step="0.05" value="0.65" oninput="setVoiceSpeed(this.value)">
+          <span id="voiceSpeedValue">0.65</span>
         </div>
 
 </div>
 
-        <div class="dashboard">
-          <div class="card panel">
-            <h2>快速開始</h2>
-            <div class="quick-item" onclick="goPage('library')">題庫管理 <span>›</span></div>
-            <div class="quick-item" onclick="goPage('flash')">單字卡 <span>›</span></div>
-            <div class="quick-item" onclick="goPage('test')">筆試 <span>›</span></div>
-            <div class="quick-item" onclick="goPage('match')">配對 <span>›</span></div>
-          </div>
-
-          <div class="card panel">
-            <h2>學習統計</h2>
-            <div class="stats">
-              <div class="stat"><div class="stat-icon">📁</div><div>題庫數</div><div class="stat-num" id="homeStatFolders">0</div><div>個</div></div>
-              <div class="stat"><div class="stat-icon">📖</div><div>總單字</div><div class="stat-num" id="homeStatCards">0</div><div>個</div></div>
-              <div class="stat"><div class="stat-icon">🌱</div><div>練習次數</div><div class="stat-num" id="homeStatPractice">0</div><div>次</div></div>
-            </div>
-            <button class="ghost" style="margin-top:10px;font-size:0.85em;" onclick="clearStats()">🗑 清除統計</button>
-          </div>
-
-          <div class="card panel">
-            <h2>最近學習</h2>
-            <div id="homeRecentList"></div>
-            <button class="ghost" style="margin-top:10px;font-size:0.85em;" onclick="clearProgress()">🗑 清除進度</button>
-          </div>
-        </div>
       </section>
 
       <section id="library" class="page">
