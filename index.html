@@ -1593,6 +1593,89 @@ textarea {
 @media(min-width:900px) {
   .bottom-nav { max-width:520px; left:50%; transform:translateX(-50%); border-radius:24px 24px 0 0; }
 }
+
+/* ===== Smaller mascot / forest animals ===== */
+.mascot-buddy span { font-size:22px !important; }
+.mascot-icons-only .mascot-buddy span { font-size:20px !important; }
+.mascot-buddy { min-height:76px !important; }
+.forest-stage { font-size:24px !important; min-height:120px !important; line-height:1.4 !important; }
+.animals span { max-width:26px !important; }
+.bear.animals { font-size:22px !important; }
+.bear.animals span { max-width:26px !important; }
+
+/* ===== Hero top bar (logo / bell / profile) ===== */
+.hero-topbar {
+  position:absolute; z-index:6; top:16px; left:20px; right:20px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.hero-topbar-logo {
+  display:flex; align-items:center; gap:8px;
+  color:#fff; font-weight:1000; font-size:15px;
+  text-shadow:0 2px 8px rgba(0,0,0,.4);
+}
+.hero-topbar-icons { display:flex; gap:10px; }
+.hero-topbar-icons button {
+  width:34px; height:34px; border-radius:50%;
+  border:1px solid rgba(255,255,255,.55);
+  background:rgba(255,255,255,.22);
+  color:#fff; font-size:15px; cursor:pointer;
+  backdrop-filter:blur(6px);
+  display:flex; align-items:center; justify-content:center;
+}
+
+/* ===== Hero quote bubble ===== */
+.hero-quote-bubble {
+  position:absolute; z-index:6; top:58px; right:20px;
+  max-width:190px;
+  background:rgba(255,255,255,.92);
+  border-radius:18px 18px 4px 18px;
+  padding:12px 14px;
+  box-shadow:0 12px 26px rgba(32,53,31,.22);
+  font-weight:900;
+}
+.hero-quote-eyebrow { font-size:11px; color:#7c8b73; margin-bottom:4px; }
+.hero-quote-kr { font-size:14px; color:#20351f; margin-bottom:2px; }
+.hero-quote-zh { font-size:12px; color:#74816c; font-weight:800; }
+@media(max-width:640px) {
+  .hero-quote-bubble { display:none; }
+}
+
+/* ===== Quick icon grid (matches reference screenshot) ===== */
+.quick-icons-row {
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:10px;
+  margin:6px 0 22px;
+}
+.quick-icon-tile {
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:20px;
+  padding:14px 4px;
+  text-align:center;
+  cursor:pointer;
+  font-weight:900;
+  font-size:12px;
+  color:#3f5634;
+  box-shadow:0 8px 20px rgba(72,108,39,.06);
+  transition:.15s;
+}
+.quick-icon-tile:hover { transform:translateY(-2px); box-shadow:0 12px 24px rgba(72,108,39,.12); }
+.quick-icon-tile .qi-ico { font-size:24px; display:block; margin-bottom:6px; }
+@media(max-width:680px) {
+  .quick-icons-row { grid-template-columns:repeat(3,1fr); }
+}
+
+/* ===== Hero photo cropper ===== */
+.hero-crop-viewport {
+  position:relative; width:100%; aspect-ratio:16/9;
+  overflow:hidden; border-radius:18px; background:#111;
+  touch-action:none; cursor:grab;
+}
+.hero-crop-viewport:active { cursor:grabbing; }
+.hero-crop-viewport img { position:absolute; left:0; top:0; user-select:none; pointer-events:none; max-width:none; }
+.hero-crop-controls { display:flex; align-items:center; gap:10px; margin-top:14px; }
+.hero-crop-controls input[type=range] { flex:1; }
 </style>
 
 </head>
@@ -1602,6 +1685,18 @@ textarea {
     <section class="hero">
   <div class="hero-carousel" id="heroCarousel">
     <div class="hero-slide active hero-placeholder"></div>
+  </div>
+  <div class="hero-topbar">
+    <div class="hero-topbar-logo">🌱 BANA Forest</div>
+    <div class="hero-topbar-icons">
+      <button type="button" title="通知" onclick="alert('通知功能開發中')">🔔</button>
+      <button type="button" title="我的" onclick="goPage('profile')">👤</button>
+    </div>
+  </div>
+  <div class="hero-quote-bubble">
+    <div class="hero-quote-eyebrow">오늘의 한마디</div>
+    <div class="hero-quote-kr" id="heroQuoteKr">나는 너를 사랑해.</div>
+    <div class="hero-quote-zh" id="heroQuoteZh">我愛你</div>
   </div>
   <button class="hero-nav-btn prev" type="button" onclick="moveHeroSlide(-1)" aria-label="上一張">‹</button>
   <button class="hero-nav-btn next" type="button" onclick="moveHeroSlide(1)" aria-label="下一張">›</button>
@@ -1630,6 +1725,15 @@ textarea {
         <button data-page="listen" onclick="goPage('listen')">🔊 聽力</button>
       </div>
       <section id="home" class="page active">
+
+        <div class="quick-icons-row">
+          <div class="quick-icon-tile" onclick="goPage('flash')"><span class="qi-ico">📖</span>單字卡</div>
+          <div class="quick-icon-tile" onclick="goBottomTab('lyrics')"><span class="qi-ico">🎵</span>歌詞讀本</div>
+          <div class="quick-icon-tile" onclick="goPage('listen')"><span class="qi-ico">🎧</span>聽力練習</div>
+          <div class="quick-icon-tile" onclick="goPage('test')"><span class="qi-ico">📝</span>筆試測驗</div>
+          <div class="quick-icon-tile" onclick="goPage('match')"><span class="qi-ico">🍀</span>配對遊戲</div>
+          <div class="quick-icon-tile" onclick="document.getElementById('badgeLogin')?.scrollIntoView({behavior:'smooth',block:'center'})"><span class="qi-ico">🏅</span>成就徽章</div>
+        </div>
 
         <div class="home-quest-wrap">
           <div class="today-quest-card">
@@ -1932,36 +2036,46 @@ textarea {
       <section id="lyrics" class="page">
         <div class="topbar">
           <h2>🎵 歌詞讀本</h2>
+          <div class="btns">
+            <button class="ghost" onclick="triggerLyricsImport()">📥 匯入</button>
+            <button class="ghost" onclick="exportLyricsSongs()">📤 匯出</button>
+            <button class="primary" onclick="openSongEditor(null)">＋ 新增歌曲</button>
+          </div>
+          <input id="lyricsImportFile" type="file" accept="application/json" style="display:none" onchange="importLyricsSongs(this.files[0])">
         </div>
-        <div class="lyrics-mock card" style="padding:24px;">
-          <div style="text-align:center;font-weight:1000;font-size:20px;margin-bottom:4px;">Baby Good Night</div>
-          <div style="text-align:center;color:var(--muted);font-weight:800;margin-bottom:20px;">點一句歌詞，看翻譯、單字與文法</div>
 
-          <div class="lyrics-line-card" onclick="this.classList.toggle('active')">
-            <div class="lyrics-line-kr">오늘도 난</div>
-            <div class="lyrics-line-zh">今天我依然...</div>
-            <div class="lyrics-detail">
-              <span>單字：오늘 (今天)</span>
-              <span>單字：난 (我)</span>
-              <span>文法：도「也」</span>
-              <span>⭐ 加入單字</span>
-              <span>❤️ 收藏句子</span>
+        <div id="lyricsListView">
+          <div id="lyricsSongGrid" class="folder-grid"></div>
+        </div>
+
+        <div id="lyricsReaderView" style="display:none">
+          <div class="topbar">
+            <button class="ghost" onclick="closeLyricsReader()">‹ 返回歌單</button>
+            <div class="btns">
+              <button class="ghost" onclick="addLyricsLine()">＋ 新增一句</button>
+              <button class="ghost" onclick="deleteCurrentSong()">🗑 刪除這首歌</button>
             </div>
           </div>
-
-          <div class="lyrics-line-card" onclick="this.classList.toggle('active')">
-            <div class="lyrics-line-kr">니 생각뿐이야</div>
-            <div class="lyrics-line-zh">滿腦子都是你</div>
-            <div class="lyrics-detail">
-              <span>單字：생각 (想法)</span>
-              <span>文法：뿐이야「只是⋯而已」</span>
-              <span>⭐ 加入單字</span>
-              <span>❤️ 收藏句子</span>
-            </div>
+          <div class="lyrics-mock card" style="padding:24px;">
+            <div id="lyricsReaderTitle" style="text-align:center;font-weight:1000;font-size:20px;margin-bottom:4px;"></div>
+            <div id="lyricsReaderArtist" style="text-align:center;color:var(--muted);font-weight:800;margin-bottom:20px;"></div>
+            <div id="lyricsLinesWrap"></div>
           </div>
+        </div>
 
-          <div style="text-align:center;margin-top:18px;color:var(--muted);font-weight:800;">
-            🚧 完整歌詞讀本（含播放、發音、例句）正在製作中 — v0.6 上線
+        <div id="songEditorMask" class="hero-modal-mask">
+          <div class="hero-modal" role="dialog" aria-modal="true" style="width:min(640px,100%)">
+            <div class="hero-modal-head">
+              <div class="hero-modal-title">新增歌曲 🎵</div>
+              <button class="hero-modal-close" type="button" onclick="closeSongEditor()">關閉</button>
+            </div>
+            <div style="display:grid;gap:12px;">
+              <input id="songEditorTitle" type="text" placeholder="歌曲名稱，例如：Baby Good Night" style="border:1px solid var(--line);border-radius:14px;padding:12px;font-size:15px;">
+              <input id="songEditorArtist" type="text" placeholder="歌手（選填），例如：B1A4" style="border:1px solid var(--line);border-radius:14px;padding:12px;font-size:15px;">
+              <textarea id="songEditorLyrics" rows="8" placeholder="貼上韓文歌詞，一行一句" style="border:1px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;"></textarea>
+              <div class="hero-help">建立後可以在歌詞讀本裡逐句補上中文翻譯、單字和文法。</div>
+              <button class="primary" type="button" onclick="createSongFromEditor()">建立歌曲</button>
+            </div>
           </div>
         </div>
       </section>
@@ -1970,6 +2084,7 @@ textarea {
         <div class="topbar">
           <h2>👤 我的</h2>
         </div>
+
 
         <div class="card" style="padding:22px;margin-bottom:18px;">
           <div class="account-title">帳號同步</div>
@@ -2749,6 +2864,8 @@ function renderHomeQuestDesign(){
     const pick = daily[new Date().getDate() % daily.length];
     setText('dailyKorean', pick[0]);
     setText('dailyZh', pick[1]);
+    setText('heroQuoteKr', pick[0]);
+    setText('heroQuoteZh', pick[1]);
   }catch(e){ console.log(e); }
 }
 
@@ -4096,6 +4213,29 @@ function installHeroManager() {
     </div>`;
   document.body.appendChild(modal);
   renderHeroManagerList();
+
+  const cropModal = document.createElement("div");
+  cropModal.id = "heroCropMask";
+  cropModal.className = "hero-modal-mask";
+  cropModal.innerHTML = `
+    <div class="hero-modal" style="width:min(560px,100%)">
+      <div class="hero-modal-head">
+        <div class="hero-modal-title">✂️ 裁剪照片</div>
+        <button class="hero-modal-close" type="button" onclick="cancelHeroCrop()">取消</button>
+      </div>
+      <div id="heroCropViewport" class="hero-crop-viewport">
+        <img id="heroCropImg" alt="">
+      </div>
+      <div class="hero-crop-controls">
+        <span>🔍－</span>
+        <input id="heroCropZoom" type="range" min="1" max="3" step="0.01" value="1" oninput="updateHeroCropZoom(this.value)">
+        <span>🔍＋</span>
+      </div>
+      <div class="hero-help">拖曳照片調整位置，用滑桿縮放，讓最重要的畫面落在框內，再按下方按鈕確認。</div>
+      <button class="hero-primary-btn" type="button" style="width:100%;margin-top:12px;" onclick="confirmHeroCrop()">✅ 確認裁切並使用</button>
+    </div>`;
+  document.body.appendChild(cropModal);
+  attachHeroCropDragHandlers();
 }
 
 function openHeroManager() {
@@ -4120,6 +4260,7 @@ function renderHeroManagerList() {
         <input type="text" value="${escapeAttr(s.subtitle || "")}" oninput="editHeroSlide(${i}, 'subtitle', this.value)" placeholder="小字說明">
       </div>
       <div class="hero-slide-actions">
+        <button class="hero-small-btn" type="button" onclick="recropHeroSlide(${i})">✂️ 裁剪</button>
         <button class="hero-small-btn" type="button" onclick="moveHeroItem(${i}, -1)">↑</button>
         <button class="hero-small-btn" type="button" onclick="moveHeroItem(${i}, 1)">↓</button>
         <button class="hero-small-btn" type="button" onclick="previewHeroItem(${i})">預覽</button>
@@ -4178,36 +4319,403 @@ function resetHeroSlides() {
   heroSlideIndex = 0;
   renderHeroCarousel();
 }
+let heroAddQueue = null;
 function addHeroSlidesFromInput() {
   const input = document.getElementById("heroAddFile");
   const titleInput = document.getElementById("heroAddTitle");
   const subInput = document.getElementById("heroAddSubtitle");
-  const files = Array.from(input?.files || []);
+  const files = Array.from(input?.files || []).filter(f => f.type.startsWith("image/"));
   if (!files.length) { alert("請先選擇照片。"); return; }
-  let done = 0;
-  files.forEach((file, idx) => {
-    if (!file.type.startsWith("image/")) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      heroSlidesData.push({
-        image: reader.result,
-        title: titleInput?.value || "오늘도 화이팅! 🌱",
-        subtitle: subInput?.value || "今天也一起學韓文吧！",
-        enabled: true
-      });
-      done++;
-      if (done === files.length) {
-        saveHeroSlides();
-        if (input) input.value = "";
-        if (titleInput) titleInput.value = "";
-        if (subInput) subInput.value = "";
-        renderHeroManagerList();
-        renderHeroCarousel();
+  heroAddQueue = {
+    files,
+    index: 0,
+    title: titleInput?.value || "오늘도 화이팅! 🌱",
+    subtitle: subInput?.value || "今天也一起學韓文吧！"
+  };
+  if (input) input.value = "";
+  if (titleInput) titleInput.value = "";
+  if (subInput) subInput.value = "";
+  processNextHeroAddCrop();
+}
+
+function processNextHeroAddCrop() {
+  if (!heroAddQueue || heroAddQueue.index >= heroAddQueue.files.length) {
+    heroAddQueue = null;
+    saveHeroSlides();
+    renderHeroManagerList();
+    renderHeroCarousel();
+    return;
+  }
+  const file = heroAddQueue.files[heroAddQueue.index];
+  const reader = new FileReader();
+  reader.onload = () => {
+    openHeroCropModal(reader.result, {
+      onDone: (croppedDataUrl) => {
+        heroSlidesData.push({
+          image: croppedDataUrl,
+          title: heroAddQueue.title,
+          subtitle: heroAddQueue.subtitle,
+          enabled: true
+        });
+        heroAddQueue.index++;
+        processNextHeroAddCrop();
       }
-    };
-    reader.readAsDataURL(file);
+    });
+  };
+  reader.readAsDataURL(file);
+}
+
+function recropHeroSlide(i) {
+  const s = heroSlidesData[i];
+  if (!s) return;
+  openHeroCropModal(s.image, {
+    onDone: (croppedDataUrl) => {
+      heroSlidesData[i].image = croppedDataUrl;
+      saveHeroSlides();
+      renderHeroManagerList();
+      renderHeroCarousel();
+    }
   });
 }
+
+/* ===== Hero photo cropper engine ===== */
+let heroCropState = null;
+let heroCropDrag = null;
+
+function attachHeroCropDragHandlers() {
+  const viewport = document.getElementById("heroCropViewport");
+  if (!viewport || viewport.dataset.bound) return;
+  viewport.dataset.bound = "1";
+  viewport.addEventListener("pointerdown", e => {
+    if (!heroCropState) return;
+    heroCropDrag = { startX: e.clientX, startY: e.clientY, offX: heroCropState.offsetX, offY: heroCropState.offsetY };
+    viewport.setPointerCapture(e.pointerId);
+  });
+  viewport.addEventListener("pointermove", e => {
+    if (!heroCropDrag || !heroCropState) return;
+    heroCropState.offsetX = heroCropDrag.offX + (e.clientX - heroCropDrag.startX);
+    heroCropState.offsetY = heroCropDrag.offY + (e.clientY - heroCropDrag.startY);
+    clampHeroCropOffset();
+    renderHeroCropTransform();
+  });
+  viewport.addEventListener("pointerup", () => { heroCropDrag = null; });
+  viewport.addEventListener("pointerleave", () => { heroCropDrag = null; });
+}
+
+function clampHeroCropOffset() {
+  const s = heroCropState;
+  if (!s) return;
+  const scale = s.baseScale * s.zoom;
+  const dispW = s.naturalW * scale, dispH = s.naturalH * scale;
+  const minX = Math.min(0, s.viewportW - dispW), maxX = 0;
+  const minY = Math.min(0, s.viewportH - dispH), maxY = 0;
+  s.offsetX = Math.min(maxX, Math.max(minX, s.offsetX));
+  s.offsetY = Math.min(maxY, Math.max(minY, s.offsetY));
+}
+
+function renderHeroCropTransform() {
+  const s = heroCropState;
+  if (!s) return;
+  const scale = s.baseScale * s.zoom;
+  s.imgEl.style.width = (s.naturalW * scale) + "px";
+  s.imgEl.style.height = (s.naturalH * scale) + "px";
+  s.imgEl.style.transform = `translate(${s.offsetX}px, ${s.offsetY}px)`;
+}
+
+function updateHeroCropZoom(value) {
+  const s = heroCropState;
+  if (!s) return;
+  const oldScale = s.baseScale * s.zoom;
+  const newZoom = Number(value);
+  const newScale = s.baseScale * newZoom;
+  const cx = s.viewportW / 2, cy = s.viewportH / 2;
+  const imgCx = (cx - s.offsetX) / oldScale;
+  const imgCy = (cy - s.offsetY) / oldScale;
+  s.zoom = newZoom;
+  s.offsetX = cx - imgCx * newScale;
+  s.offsetY = cy - imgCy * newScale;
+  clampHeroCropOffset();
+  renderHeroCropTransform();
+}
+
+function openHeroCropModal(dataUrl, opts) {
+  const mask = document.getElementById("heroCropMask");
+  const viewport = document.getElementById("heroCropViewport");
+  const imgEl = document.getElementById("heroCropImg");
+  const zoomInput = document.getElementById("heroCropZoom");
+  attachHeroCropDragHandlers();
+  imgEl.onload = () => {
+    const rect = viewport.getBoundingClientRect();
+    const naturalW = imgEl.naturalWidth, naturalH = imgEl.naturalHeight;
+    const baseScale = Math.max(rect.width / naturalW, rect.height / naturalH);
+    heroCropState = {
+      naturalW, naturalH, baseScale, zoom: 1,
+      viewportW: rect.width, viewportH: rect.height,
+      offsetX: (rect.width - naturalW * baseScale) / 2,
+      offsetY: (rect.height - naturalH * baseScale) / 2,
+      imgEl, onDone: opts.onDone
+    };
+    if (zoomInput) zoomInput.value = 1;
+    renderHeroCropTransform();
+  };
+  imgEl.src = dataUrl;
+  if (mask) mask.classList.add("show");
+}
+
+function cancelHeroCrop() {
+  const mask = document.getElementById("heroCropMask");
+  if (mask) mask.classList.remove("show");
+  heroCropState = null;
+  heroAddQueue = null;
+}
+
+function confirmHeroCrop() {
+  const s = heroCropState;
+  if (!s) return;
+  const outputW = 1600, outputH = 900;
+  const canvas = document.createElement("canvas");
+  canvas.width = outputW;
+  canvas.height = outputH;
+  const ctx = canvas.getContext("2d");
+  const scale = s.baseScale * s.zoom;
+  const srcX = -s.offsetX / scale, srcY = -s.offsetY / scale;
+  const srcW = s.viewportW / scale, srcH = s.viewportH / scale;
+  ctx.drawImage(s.imgEl, srcX, srcY, srcW, srcH, 0, 0, outputW, outputH);
+  const result = canvas.toDataURL("image/jpeg", 0.9);
+  const mask = document.getElementById("heroCropMask");
+  if (mask) mask.classList.remove("show");
+  const onDone = s.onDone;
+  heroCropState = null;
+  if (onDone) onDone(result);
+}
+
+/* ===== 歌詞讀本 (Lyrics Reader) ===== */
+const LYRICS_STORAGE_KEY = "b1a4LyricsSongs";
+let lyricsSongs = [];
+let currentSongId = null;
+
+function uid() { return "id" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
+function defaultLyricsSongs() {
+  return [{
+    id: uid(),
+    title: "Baby Good Night",
+    artist: "B1A4",
+    lines: [
+      { id: uid(), kr: "오늘도 난", zh: "今天我依然...", words: [{k:"오늘", z:"今天"}, {k:"난", z:"我"}], grammar: [{p:"도", n:"「也」"}] },
+      { id: uid(), kr: "니 생각뿐이야", zh: "滿腦子都是你", words: [{k:"생각", z:"想法"}], grammar: [{p:"뿐이야", n:"「只是⋯而已」"}] }
+    ]
+  }];
+}
+
+function loadLyricsSongs() {
+  try {
+    const raw = localStorage.getItem(LYRICS_STORAGE_KEY);
+    lyricsSongs = raw ? JSON.parse(raw) : defaultLyricsSongs();
+  } catch (e) {
+    lyricsSongs = defaultLyricsSongs();
+  }
+  if (!Array.isArray(lyricsSongs)) lyricsSongs = defaultLyricsSongs();
+}
+
+function saveLyricsSongs() {
+  localStorage.setItem(LYRICS_STORAGE_KEY, JSON.stringify(lyricsSongs));
+}
+
+function renderLyricsSongGrid() {
+  const grid = document.getElementById("lyricsSongGrid");
+  if (!grid) return;
+  if (!lyricsSongs.length) {
+    grid.innerHTML = `<div class="empty">還沒有任何歌曲。<br>點右上角「＋ 新增歌曲」開始建立你的歌詞讀本吧！</div>`;
+    return;
+  }
+  grid.innerHTML = lyricsSongs.map(s => `
+    <div class="folder card" onclick="openLyricsReader('${s.id}')">
+      <div class="folder-inner">
+        <div class="folder-title">🎵 ${esc(s.title)}</div>
+        <div class="folder-meta">${esc(s.artist || "未命名歌手")}<br>${s.lines.length} 句歌詞</div>
+      </div>
+    </div>`).join("");
+}
+
+function openSongEditor() {
+  document.getElementById("songEditorTitle").value = "";
+  document.getElementById("songEditorArtist").value = "";
+  document.getElementById("songEditorLyrics").value = "";
+  document.getElementById("songEditorMask").classList.add("show");
+}
+function closeSongEditor() {
+  document.getElementById("songEditorMask").classList.remove("show");
+}
+
+function createSongFromEditor() {
+  const title = document.getElementById("songEditorTitle").value.trim();
+  const artist = document.getElementById("songEditorArtist").value.trim();
+  const raw = document.getElementById("songEditorLyrics").value;
+  if (!title) { alert("請先輸入歌曲名稱"); return; }
+  const lines = raw.split("\n").map(l => l.trim()).filter(Boolean)
+    .map(kr => ({ id: uid(), kr, zh: "", words: [], grammar: [] }));
+  const song = { id: uid(), title, artist, lines };
+  lyricsSongs.push(song);
+  saveLyricsSongs();
+  closeSongEditor();
+  renderLyricsSongGrid();
+  openLyricsReader(song.id);
+}
+
+function openLyricsReader(songId) {
+  currentSongId = songId;
+  document.getElementById("lyricsListView").style.display = "none";
+  document.getElementById("lyricsReaderView").style.display = "block";
+  renderLyricsReader();
+}
+function closeLyricsReader() {
+  currentSongId = null;
+  document.getElementById("lyricsReaderView").style.display = "none";
+  document.getElementById("lyricsListView").style.display = "block";
+  renderLyricsSongGrid();
+}
+
+function getCurrentSong() {
+  return lyricsSongs.find(s => s.id === currentSongId) || null;
+}
+
+function pairsToText(arr, keyA, keyB) {
+  return (arr || []).map(o => `${o[keyA]}=${o[keyB]}`).join(", ");
+}
+function textToPairs(str, keyA, keyB) {
+  return String(str || "").split(",").map(s => s.trim()).filter(Boolean).map(pair => {
+    const [a, b] = pair.split("=").map(x => (x || "").trim());
+    return { [keyA]: a || "", [keyB]: b || "" };
+  }).filter(o => o[keyA]);
+}
+
+function renderLyricsReader() {
+  const song = getCurrentSong();
+  if (!song) { closeLyricsReader(); return; }
+  document.getElementById("lyricsReaderTitle").textContent = song.title;
+  document.getElementById("lyricsReaderArtist").textContent = song.artist || "";
+  const wrap = document.getElementById("lyricsLinesWrap");
+  wrap.innerHTML = song.lines.map((ln, i) => `
+    <div class="lyrics-line-card" style="cursor:default;">
+      <div class="btns" style="justify-content:space-between;margin-bottom:8px;">
+        <span style="font-weight:900;color:var(--muted);">第 ${i + 1} 句</span>
+        <div class="btns">
+          <button class="ghost" type="button" onclick="speakLyricsLine('${ln.id}')">🔊 AI 發音</button>
+          <button class="ghost" type="button" onclick="deleteLyricsLine('${ln.id}')">🗑 刪除</button>
+        </div>
+      </div>
+      <input type="text" value="${escapeAttr(ln.kr)}" placeholder="韓文歌詞"
+        style="width:100%;border:1px solid var(--line);border-radius:12px;padding:10px;font-weight:900;font-size:16px;margin-bottom:8px;"
+        oninput="updateLyricsLine('${ln.id}','kr',this.value)">
+      <input type="text" value="${escapeAttr(ln.zh)}" placeholder="中文翻譯"
+        style="width:100%;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px;color:var(--muted);"
+        oninput="updateLyricsLine('${ln.id}','zh',this.value)">
+      <input type="text" value="${escapeAttr(pairsToText(ln.words, 'k', 'z'))}" placeholder="單字，格式：韓文=中文, 韓文=中文"
+        style="width:100%;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px;font-size:13px;"
+        oninput="updateLyricsLinePairs('${ln.id}','words',this.value,'k','z')">
+      <input type="text" value="${escapeAttr(pairsToText(ln.grammar, 'p', 'n'))}" placeholder="文法，格式：文法點=說明, 文法點=說明"
+        style="width:100%;border:1px solid var(--line);border-radius:12px;padding:10px;font-size:13px;"
+        oninput="updateLyricsLinePairs('${ln.id}','grammar',this.value,'p','n')">
+    </div>`).join("");
+}
+
+function updateLyricsLine(lineId, field, value) {
+  const song = getCurrentSong();
+  if (!song) return;
+  const line = song.lines.find(l => l.id === lineId);
+  if (!line) return;
+  line[field] = value;
+  saveLyricsSongs();
+}
+function updateLyricsLinePairs(lineId, field, value, keyA, keyB) {
+  const song = getCurrentSong();
+  if (!song) return;
+  const line = song.lines.find(l => l.id === lineId);
+  if (!line) return;
+  line[field] = textToPairs(value, keyA, keyB);
+  saveLyricsSongs();
+}
+
+function addLyricsLine() {
+  const song = getCurrentSong();
+  if (!song) return;
+  song.lines.push({ id: uid(), kr: "", zh: "", words: [], grammar: [] });
+  saveLyricsSongs();
+  renderLyricsReader();
+}
+function deleteLyricsLine(lineId) {
+  const song = getCurrentSong();
+  if (!song) return;
+  if (!confirm("刪除這一句歌詞？")) return;
+  song.lines = song.lines.filter(l => l.id !== lineId);
+  saveLyricsSongs();
+  renderLyricsReader();
+}
+function deleteCurrentSong() {
+  const song = getCurrentSong();
+  if (!song) return;
+  if (!confirm(`刪除「${song.title}」這首歌？此動作無法復原。`)) return;
+  lyricsSongs = lyricsSongs.filter(s => s.id !== song.id);
+  saveLyricsSongs();
+  closeLyricsReader();
+}
+
+function speakLyricsLine(lineId) {
+  const song = getCurrentSong();
+  if (!song) return;
+  const line = song.lines.find(l => l.id === lineId);
+  if (!line || !line.kr) return;
+  speakKorean(line.kr);
+}
+
+function exportLyricsSongs() {
+  const blob = new Blob([JSON.stringify(lyricsSongs, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "bana-lyrics-songs.json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+function triggerLyricsImport() {
+  document.getElementById("lyricsImportFile").click();
+}
+function importLyricsSongs(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      const incoming = Array.isArray(parsed) ? parsed : [parsed];
+      incoming.forEach(s => {
+        if (!s || !s.title) return;
+        lyricsSongs.push({
+          id: uid(),
+          title: s.title,
+          artist: s.artist || "",
+          lines: Array.isArray(s.lines) ? s.lines.map(l => ({
+            id: uid(),
+            kr: l.kr || "",
+            zh: l.zh || "",
+            words: Array.isArray(l.words) ? l.words : [],
+            grammar: Array.isArray(l.grammar) ? l.grammar : []
+          })) : []
+        });
+      });
+      saveLyricsSongs();
+      renderLyricsSongGrid();
+      alert(`匯入完成，新增了 ${incoming.length} 首歌。`);
+    } catch (e) {
+      alert("匯入失敗，請確認這是從「匯出」下載的 JSON 檔案。");
+    }
+  };
+  reader.readAsText(file);
+  document.getElementById("lyricsImportFile").value = "";
+}
+
+loadLyricsSongs();
+renderLyricsSongGrid();
 
 setupHeroCarousel();
 
