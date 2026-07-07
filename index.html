@@ -2098,6 +2098,60 @@ textarea {
 @media (max-width:600px) {
   .field-row-2 { grid-template-columns:1fr; gap:0; }
 }
+
+/* ===== 單字花園：預覽/展開、浮動儲存、詳細預覽 ===== */
+.expand-more-btn {
+  width:100%;
+  border:2px dashed #b9dd8d;
+  background:#f4faed;
+  color:#4e8f24;
+  font-weight:1000;
+  border-radius:14px;
+  padding:10px;
+  cursor:pointer;
+  margin-top:4px;
+  transition:.15s;
+}
+.expand-more-btn:hover { background:#eaf5dd; transform:translateY(-1px); }
+
+.floating-save-btn {
+  position:fixed;
+  right:24px;
+  bottom:94px;
+  width:56px;
+  height:56px;
+  border-radius:50%;
+  border:0;
+  background:linear-gradient(135deg,#9bc95d,#6fae37);
+  color:#fff;
+  font-size:24px;
+  box-shadow:0 14px 28px rgba(111,174,55,.4);
+  cursor:pointer;
+  z-index:400;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  transition:transform .15s;
+}
+.floating-save-btn.show { display:flex; }
+.floating-save-btn:hover { transform:scale(1.08); }
+.floating-save-btn:active { transform:scale(.95); }
+@media (min-width:900px) {
+  .floating-save-btn { bottom:34px; }
+}
+
+.preview-detail-list { margin-top:14px; }
+.pd-row {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:8px 0;
+  border-top:1px solid var(--line);
+  font-size:12px;
+  font-weight:800;
+  color:var(--muted);
+}
+.pd-row b { color:#3f7a1f; font-size:12px; }
 </style>
 
 </head>
@@ -2298,7 +2352,7 @@ textarea {
         </div>
 
         <div id="editorWrap" style="display:none"><div id="editor" class="topbar" style="margin-top:28px">
-          <div style="display:flex;align-items:center;gap:12px"><h2 id="editorTitle">🌱 題庫內容</h2><button class="ghost" onclick="closeEditor()">✕ 關閉</button></div>
+          <div style="display:flex;align-items:center;gap:12px"><h2 id="editorTitle">🌿 單字花園</h2><button class="ghost" onclick="closeEditor()">✕ 關閉</button></div>
           <span id="countBadge" class="soft" style="padding:8px 14px;border-radius:999px;font-weight:900;">🍀 0 張小葉子</span>
         </div>
 
@@ -2310,10 +2364,11 @@ textarea {
 
             <div class="mascot-tip" id="editorMascotTip"><span>🦊</span> 今天也一起加油背單字吧！</div>
 
-            <label>🍀 題庫名稱</label>
-            <input id="folderName" class="cute-input" placeholder="例如：初級單字" oninput="updateEditorCountLabels()">
-
             <div class="field-row-2">
+              <div>
+                <label>🍀 題庫名稱</label>
+                <input id="folderName" class="cute-input" placeholder="例如：初級單字" oninput="updateEditorCountLabels()">
+              </div>
               <div>
                 <label>所屬分組</label>
                 <div class="group-selector">
@@ -2322,6 +2377,9 @@ textarea {
                   </select>
                 </div>
               </div>
+            </div>
+
+            <div class="field-row-2">
               <div>
                 <label>預設方向</label>
                 <select id="direction">
@@ -2329,10 +2387,14 @@ textarea {
                   <option value="definitionToTerm">中文 ➜ 韓文</option>
                 </select>
               </div>
+              <div>
+                <label>🔍 搜尋單字</label>
+                <input id="editorWordSearch" class="cute-input" placeholder="搜尋這個題庫的單字..." oninput="renderCardEditor()">
+              </div>
             </div>
 
             <label style="display:flex;justify-content:space-between;align-items:center;">
-              <span>🌱 題庫內容</span>
+              <span>🌿 單字花園（<span id="gardenCount">0</span>）</span>
               <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="toggleBatchPaste()" id="batchPasteToggleBtn">📋 批次貼上</button>
             </label>
 
@@ -2368,9 +2430,15 @@ textarea {
                 <div class="folder-meta" id="previewFolderCount">🍀 0 張小葉子</div>
               </div>
             </div>
+            <div class="preview-detail-list">
+              <div class="pd-row"><span>📈 正確率</span><b id="previewAccuracy">尚無紀錄</b></div>
+              <div class="pd-row"><span>🕒 最後更新</span><b id="previewUpdated">—</b></div>
+            </div>
           </div>
         </div></div>
       </section>
+
+      <button id="floatingSaveBtn" class="floating-save-btn" onclick="saveFolder()" title="儲存題庫">🌱</button>
 
       <section id="flash" class="page">
         <div class="topbar">
@@ -3411,12 +3479,22 @@ function goPage(id) {
   if (id === "flash") startFlash(false);
   if (id === "match" && !document.getElementById("matchBoard").innerHTML) startMatch();
   if (id === "profile") { renderLearningCalendar(); renderDetailedStats(); }
+  const floatBtn = document.getElementById("floatingSaveBtn");
+  if (floatBtn) {
+    const editorOpen = id === "library" && document.getElementById("editorWrap").style.display !== "none";
+    floatBtn.classList.toggle("show", editorOpen);
+  }
   renderGraduationPanel();
   updateFolderGraduationBadges();
   renderStudyUpgradePanel();
   decorateMasteryBadges();
   renderFolderStatsPanel();
   setTimeout(decorateSpeakButtons, 50);
+}
+
+function closeEditor() {
+  document.getElementById("editorWrap").style.display = "none";
+  document.getElementById("floatingSaveBtn")?.classList.remove("show");
 }
 
 function openFolderManager() {
@@ -3691,25 +3769,58 @@ function serializeEditorCards() {
   return text;
 }
 
+const EDITOR_PREVIEW_LIMIT = 8;
+let editorExpanded = false;
+
+function computeFolderAccuracy(idx) {
+  const rec = masteryData[idx] || {};
+  let correct = 0, wrong = 0;
+  Object.values(rec).forEach(r => { correct += (r.correct || 0); wrong += (r.wrong || 0); });
+  const attempts = correct + wrong;
+  return attempts ? Math.round((correct / attempts) * 100) + "%（共作答 " + attempts + " 次）" : "尚無紀錄";
+}
+
 function updateEditorCountLabels() {
   const count = editorCards.filter(c => c.term.trim()).length;
   const badge = document.getElementById("countBadge");
   if (badge) badge.textContent = `🍀 ${count} 張小葉子`;
+  const gardenCount = document.getElementById("gardenCount");
+  if (gardenCount) gardenCount.textContent = count;
   const previewCount = document.getElementById("previewFolderCount");
   if (previewCount) previewCount.textContent = `🍀 ${count} 張小葉子`;
   const previewName = document.getElementById("previewFolderName");
   if (previewName) previewName.textContent = document.getElementById("folderName")?.value || "第一課";
+  const previewAcc = document.getElementById("previewAccuracy");
+  if (previewAcc && current !== null) previewAcc.textContent = computeFolderAccuracy(current);
+  const previewUpdated = document.getElementById("previewUpdated");
+  if (previewUpdated && current !== null && folders[current]) previewUpdated.textContent = folders[current].updated || today();
 }
 
 function renderCardEditor(highlightId) {
   const list = document.getElementById("cardEditorList");
   if (!list) return;
+
+  const query = (document.getElementById("editorWordSearch")?.value || "").trim().toLowerCase();
+  const filtered = query
+    ? editorCards.filter(c => c.term.toLowerCase().includes(query) || c.definition.toLowerCase().includes(query))
+    : editorCards;
+
   if (!editorCards.length) {
     list.innerHTML = `<div class="empty-fox"><span class="ef-icon">🦊</span>還沒有任何單字哦～<div class="ef-sub">快新增第一個吧！</div></div>`;
     updateEditorCountLabels();
     return;
   }
-  list.innerHTML = editorCards.map(c => `
+  if (query && !filtered.length) {
+    list.innerHTML = `<div class="empty-fox"><span class="ef-icon">🍂</span>找不到符合「${esc(query)}」的單字</div>`;
+    updateEditorCountLabels();
+    return;
+  }
+
+  const showAll = editorExpanded || !!query;
+  const visible = showAll ? filtered : filtered.slice(0, EDITOR_PREVIEW_LIMIT);
+  const remaining = filtered.length - visible.length;
+
+  list.innerHTML = visible.map(c => `
     <div class="word-card${c.id === highlightId ? " card-drop-in" : ""}" data-id="${c.id}">
       <span class="wc-flag">🇰🇷</span>
       <input type="text" placeholder="韓文" value="${escapeAttr(c.term)}" oninput="updateEditorCard('${c.id}','term',this.value)">
@@ -3717,8 +3828,18 @@ function renderCardEditor(highlightId) {
       <input type="text" placeholder="中文" value="${escapeAttr(c.definition)}" oninput="updateEditorCard('${c.id}','definition',this.value)">
       <button type="button" class="wc-del" title="刪除" onclick="deleteEditorCard('${c.id}')">❌</button>
     </div>`).join("");
+
+  if (remaining > 0) {
+    list.innerHTML += `<button type="button" class="expand-more-btn" onclick="expandEditorCards()">🌳 還有 ${remaining} 個單字，點我展開</button>`;
+  } else if (editorExpanded && filtered.length > EDITOR_PREVIEW_LIMIT && !query) {
+    list.innerHTML += `<button type="button" class="expand-more-btn" onclick="collapseEditorCards()">▴ 收合單字花園</button>`;
+  }
+
   updateEditorCountLabels();
 }
+
+function expandEditorCards() { editorExpanded = true; renderCardEditor(); }
+function collapseEditorCards() { editorExpanded = false; renderCardEditor(); }
 
 function updateEditorCard(id, field, value) {
   const c = editorCards.find(x => x.id === id);
@@ -3730,6 +3851,7 @@ function updateEditorCard(id, field, value) {
 function addEditorCard() {
   const c = { id: "wc" + (editorCardSeq++), term: "", definition: "" };
   editorCards.push(c);
+  editorExpanded = true;
   serializeEditorCards();
   renderCardEditor(c.id);
   setTimeout(() => {
@@ -3787,11 +3909,15 @@ function loadFolder(i) {
   document.getElementById("folderName").value = f.name;
   document.getElementById("direction").value = f.direction || "termToDefinition";
   document.getElementById("raw").value = f.content || "";
+  const searchEl = document.getElementById("editorWordSearch");
+  if (searchEl) searchEl.value = "";
+  editorExpanded = false;
   document.getElementById("previewFolder").style.setProperty("--tab", currentColor);
   document.querySelectorAll(".color-choice").forEach(el => el.classList.toggle("active", el.dataset.color === currentColor));
   syncEditorCardsFromContent(f.content);
   renderCardEditor();
   document.getElementById("editorWrap").style.display = "block";
+  document.getElementById("floatingSaveBtn")?.classList.add("show");
   renderFolders();
   resetViews();
 }
