@@ -1875,74 +1875,77 @@ textarea {
 .folder-card-grid {
   display:grid;
   grid-template-columns:repeat(2, 1fr);
-  gap:16px;
+  gap:10px;
+}
+@media (min-width:900px) {
+  .folder-card-grid { grid-template-columns:repeat(3, 1fr); }
 }
 @media (max-width:520px) {
-  .folder-card-grid { grid-template-columns:1fr; }
+  .folder-card-grid { grid-template-columns:1fr 1fr; gap:8px; }
 }
 .forest-folder-card {
   position:relative;
   background:#fff;
-  border:2px solid var(--line);
-  border-radius:20px;
-  padding:14px;
+  border:1.5px solid var(--line);
+  border-radius:14px;
+  padding:9px 10px;
   cursor:pointer;
   transition:.15s;
-  box-shadow:0 8px 18px rgba(72,108,39,.06);
-  border-top:5px solid var(--tab, #c6e09c);
-  min-height:150px;
+  box-shadow:0 4px 10px rgba(72,108,39,.05);
+  border-top:4px solid var(--tab, #c6e09c);
+  min-height:auto;
   display:flex;
   flex-direction:column;
 }
-.forest-folder-card:hover { transform:translateY(-3px); box-shadow:0 14px 26px rgba(72,108,39,.14); }
+.forest-folder-card:hover { transform:translateY(-2px); box-shadow:0 8px 16px rgba(72,108,39,.12); }
 .forest-folder-card.active { border-color:#83b842; background:#f7fdf1; }
 .ffc-head { display:flex; justify-content:space-between; align-items:center; }
-.ffc-folder-ico { font-size:22px; }
-.ffc-mascot { font-size:18px; opacity:.85; }
+.ffc-folder-ico { font-size:16px; }
+.ffc-mascot { font-size:13px; opacity:.85; }
 .ffc-name {
   font-weight:1000;
-  font-size:14px;
+  font-size:12px;
   color:#20351f;
-  margin-top:6px;
+  margin-top:3px;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
 }
 .ffc-meta {
   display:flex;
-  gap:8px;
-  font-size:11px;
+  gap:6px;
+  font-size:10px;
   color:var(--muted);
   font-weight:800;
-  margin-top:4px;
+  margin-top:2px;
 }
 .ffc-progress-track {
-  height:6px;
+  height:4px;
   background:#eef2e6;
   border-radius:999px;
   overflow:hidden;
-  margin-top:10px;
+  margin-top:5px;
 }
 .ffc-progress-fill { height:100%; background:linear-gradient(90deg,#9bc95d,#6fae37); border-radius:999px; }
 .ffc-stage-row {
   display:flex;
   justify-content:space-between;
   align-items:center;
-  font-size:11px;
+  font-size:10px;
   font-weight:900;
   color:#4e8f24;
-  margin-top:6px;
+  margin-top:3px;
 }
-.ffc-date { font-size:10px; color:var(--muted); font-weight:700; margin-top:4px; }
+.ffc-date { font-size:9px; color:var(--muted); font-weight:700; margin-top:2px; }
 .ffc-start-btn {
   margin-top:auto;
-  padding-top:10px;
+  padding-top:5px;
   border:0;
   border-top:1px dashed var(--line);
   background:transparent;
   color:#4e8f24;
   font-weight:1000;
-  font-size:12px;
+  font-size:10px;
   cursor:pointer;
   text-align:center;
   transition:.15s;
@@ -2350,17 +2353,6 @@ textarea {
       </section>
 
       <section id="library" class="page">
-        <div class="card folder-area">
-          <div class="topbar">
-            <h2>我的題庫</h2>
-            <div style="display:flex;gap:10px;flex-wrap:wrap">
-              <button class="soft" onclick="newGroup()">📁 新增分組</button>
-              <button class="soft" onclick="newFolder()">＋ 建立題庫</button>
-            </div>
-          </div>
-          <div id="folderGrid" class="folder-grid"></div>
-        </div>
-
         <div class="dashboard">
           <div class="card panel">
             <h2>最近學習</h2>
@@ -2385,6 +2377,17 @@ textarea {
             <div class="quick-item" onclick="goPage('match')">配對 <span>›</span></div>
             <div class="quick-item" onclick="openFolderManager()">題庫管理 <span>›</span></div>
           </div>
+        </div>
+
+        <div class="card folder-area">
+          <div class="topbar">
+            <h2>我的題庫</h2>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button class="soft" onclick="newGroup()">📁 新增分組</button>
+              <button class="soft" onclick="newFolder()">＋ 建立題庫</button>
+            </div>
+          </div>
+          <div id="folderGrid" class="folder-grid"></div>
         </div>
 
         <div id="editorWrap" style="display:none"><div id="editor" class="topbar" style="margin-top:28px">
