@@ -292,13 +292,13 @@ button {
   cursor:pointer;
 }
 .editor-layout {
-  margin-top:22px;
+  margin-top:14px;
   display:grid;
   grid-template-columns:1fr 230px;
-  gap:24px;
+  gap:18px;
 }
 .editor {
-  padding:26px;
+  padding:18px;
 }
 label {
   display:block;
@@ -2078,6 +2078,26 @@ textarea {
 .save-toast-emoji { font-size:30px; }
 .save-toast-text { font-weight:1000; color:#20351f; margin-top:4px; }
 .save-toast-sub { font-size:12px; color:#5c9b36; font-weight:900; margin-top:2px; }
+
+/* ===== 題庫編輯頁：緊湊版面 ===== */
+.compact-editor { padding:18px 20px !important; }
+.compact-editor .mascot-tip { padding:8px 12px; margin-bottom:12px; font-size:13px; }
+.compact-editor .mascot-tip span { font-size:17px; }
+.compact-editor label { margin:8px 0 4px !important; font-size:13px; }
+.compact-editor label:first-of-type { margin-top:0 !important; }
+.compact-editor input, .compact-editor select, .compact-editor textarea { padding:9px 12px !important; font-size:14px; }
+.compact-editor textarea#raw { min-height:160px; }
+.field-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.compact-editor .word-card { padding:7px 10px; margin-bottom:6px; gap:6px; }
+.compact-editor .word-card input { padding:6px 8px; font-size:13px; }
+.compact-editor .add-word-btn { padding:9px; font-size:13px; }
+.compact-editor .btns { margin-top:12px !important; }
+.compact-editor .btns button { padding:10px 18px; }
+.compact-editor .empty-fox { padding:18px 10px; }
+.compact-editor .empty-fox .ef-icon { font-size:32px; margin-bottom:6px; }
+@media (max-width:600px) {
+  .field-row-2 { grid-template-columns:1fr; gap:0; }
+}
 </style>
 
 </head>
@@ -2150,7 +2170,10 @@ textarea {
               <div class="quest-mini">🎮 配對<b id="questMatch">0</b></div>
               <div class="quest-mini">🔥 練習<b id="questPractice">0</b></div>
             </div>
-            <div class="home-note-pill">🦊 🐻 🐥 🦖 오늘도 화이팅！</div>
+            <div class="btns" style="justify-content:space-between;align-items:center;margin-top:12px;">
+              <div class="home-note-pill" style="margin-top:0;">🦊 🐻 🐥 🦖 오늘도 화이팅！</div>
+              <button class="ghost" style="font-size:12px;padding:8px 14px;" onclick="clearAllPracticeData()">🗑 清除練習紀錄</button>
+            </div>
           </div>
 
           <div class="forest-card">
@@ -2252,7 +2275,7 @@ textarea {
           <div class="card panel">
             <h2>最近學習</h2>
             <div id="recentList"></div>
-            <button class="ghost" style="margin-top:10px;font-size:0.85em;" onclick="clearProgress()">🗑 清除進度</button>
+            <button class="ghost" style="margin-top:10px;font-size:0.85em;" onclick="clearAllPracticeData()">🗑 清除進度</button>
           </div>
 
           <div class="card panel">
@@ -2262,7 +2285,7 @@ textarea {
               <div class="stat"><div class="stat-icon">📖</div><div>總單字</div><div class="stat-num" id="statCards">0</div><div>個</div></div>
               <div class="stat"><div class="stat-icon">🌱</div><div>練習次數</div><div class="stat-num" id="statPractice">0</div><div>次</div></div>
             </div>
-            <button class="ghost" style="margin-top:10px;font-size:0.85em;" onclick="clearStats()">🗑 清除統計</button>
+            <button class="ghost" style="margin-top:10px;font-size:0.85em;" onclick="clearAllPracticeData()">🗑 清除統計</button>
           </div>
 
           <div class="card panel">
@@ -2280,7 +2303,7 @@ textarea {
         </div>
 
         <div class="editor-layout forest-editor">
-          <div class="card editor forest-card-editor">
+          <div class="card editor forest-card-editor compact-editor">
             <div class="leaf-float leaf-1">🍃</div>
             <div class="leaf-float leaf-2">🍃</div>
             <div class="leaf-float leaf-3">🍂</div>
@@ -2289,17 +2312,24 @@ textarea {
 
             <label>🍀 題庫名稱</label>
             <input id="folderName" class="cute-input" placeholder="例如：初級單字" oninput="updateEditorCountLabels()">
-            <label>所屬分組</label>
-            <div class="group-selector">
-              <select id="folderGroup">
-                <option value="">── 未分組 ──</option>
-              </select>
+
+            <div class="field-row-2">
+              <div>
+                <label>所屬分組</label>
+                <div class="group-selector">
+                  <select id="folderGroup">
+                    <option value="">── 未分組 ──</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label>預設方向</label>
+                <select id="direction">
+                  <option value="termToDefinition">韓文 ➜ 中文</option>
+                  <option value="definitionToTerm">中文 ➜ 韓文</option>
+                </select>
+              </div>
             </div>
-            <label>預設方向</label>
-            <select id="direction">
-              <option value="termToDefinition">韓文 ➜ 中文</option>
-              <option value="definitionToTerm">中文 ➜ 韓文</option>
-            </select>
 
             <label style="display:flex;justify-content:space-between;align-items:center;">
               <span>🌱 題庫內容</span>
@@ -2331,7 +2361,7 @@ textarea {
               <div class="color-choice" data-color="#ffe39b" onclick="setColor('#ffe39b')"><span class="dot" style="background:#ffe39b"></span><small>🌻 奶油黃</small></div>
               <div class="color-choice" data-color="#ffcba4" onclick="setColor('#ffcba4')"><span class="dot" style="background:#ffcba4"></span><small>🍑 蜜桃粉</small></div>
             </div>
-            <div class="folder card" id="previewFolder" style="--tab:#c6e09c;margin-top:22px">
+            <div class="folder card" id="previewFolder" style="--tab:#c6e09c;margin-top:14px">
               <div class="folder-inner">
                 <div class="folder-title">📂 我的資料夾</div>
                 <div class="folder-meta" id="previewFolderName">第一課</div>
@@ -2524,7 +2554,10 @@ textarea {
         </div>
 
         <div class="card" style="padding:22px;margin-bottom:18px;">
-          <div style="font-weight:1000;font-size:18px;margin-bottom:10px;">📊 詳細學習統計</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+            <div style="font-weight:1000;font-size:18px;">📊 詳細學習統計</div>
+            <button class="ghost" style="font-size:12px;padding:8px 14px;" onclick="clearAllPracticeData()">🗑 清除練習紀錄</button>
+          </div>
           <div id="detailedStatsBody"></div>
         </div>
 
@@ -3873,17 +3906,29 @@ function flipCard() { document.getElementById("flashCard").classList.toggle("fli
 function nextCard() { if(!flashCards.length)return; flashIndex=(flashIndex+1)%flashCards.length; renderFlash(); }
 function prevCard() { if(!flashCards.length)return; flashIndex=(flashIndex-1+flashCards.length)%flashCards.length; renderFlash(); }
 
-function clearStats() {
-  if (!confirm("確定要清除練習次數嗎？")) return;
+function clearAllPracticeData() {
+  if (!confirm("確定要清除所有練習紀錄嗎？（筆試/配對/練習次數、連續天數、學習日曆、正確率統計都會歸零）\n題庫內容跟單字不會被刪除。")) return;
+
   stats.practice = 0;
-  saveStorage();
-  renderDashboard();
-}
-function clearProgress() {
-  if (!confirm("確定要清除所有題庫的學習進度嗎？題庫內容不受影響。")) return;
   folders.forEach(f => f.practice = 0);
+  masteryData = {};
+  wrongBookData = {};
+  graduationData = {};
+  folderPracticeStats = {};
+  activityLog = {};
+  localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(activityLog));
+
   saveStorage();
   renderDashboard();
+  renderFolders();
+  if (typeof renderHomeQuestDesign === "function") renderHomeQuestDesign();
+  if (typeof updateHeroStats === "function") updateHeroStats();
+  if (typeof renderLearningCalendar === "function") renderLearningCalendar();
+  if (typeof renderDetailedStats === "function") renderDetailedStats();
+  if (typeof renderGraduationPanel === "function") renderGraduationPanel();
+  if (typeof renderStudyUpgradePanel === "function") renderStudyUpgradePanel();
+  if (typeof renderFolderStatsPanel === "function") renderFolderStatsPanel();
+  if (typeof showSaveToast === "function") showSaveToast();
 }
 
 // 鍵盤左右鍵切換單字卡，空白鍵翻面
