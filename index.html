@@ -1765,6 +1765,17 @@ textarea {
   transform:scale(1.1);
   box-shadow:0 6px 14px rgba(131,184,66,.35);
 }
+.bubble.wrong {
+  background:linear-gradient(135deg,#ff9db3,#e8637f) !important;
+  border-color:#e8637f;
+  color:#fff !important;
+  transform:scale(1.1);
+  box-shadow:0 6px 14px rgba(232,99,127,.35);
+}
+.bubble.current {
+  outline:3px solid #ffd166;
+  outline-offset:2px;
+}
 
 .test-summary {
   border-radius:999px !important;
@@ -2113,15 +2124,20 @@ textarea {
           <div class="card study-main">
             <div class="topbar" style="margin-top:0"><h2>請寫出對應答案</h2><button type="button" class="primary" onclick="makeTest()">產生題目</button></div>
             
-<div class="test-mode-select" style="margin-bottom:18px;display:flex;gap:10px;flex-wrap:wrap;">
+<div class="test-mode-select" id="testModeGroup" style="margin-bottom:12px;display:flex;gap:10px;flex-wrap:wrap;">
   <button class="mode-btn active" id="modeMixedBtn" onclick="setTestMode('mixed')">🔀 混合模式</button>
   <button class="mode-btn" id="modeKoBtn" onclick="setTestMode('ko')">🇰🇷 韓文→中文</button>
   <button class="mode-btn" id="modeZhBtn" onclick="setTestMode('zh')">🇹🇼 中文→韓文</button>
 </div>
 
+<div class="test-mode-select" id="testViewModeGroup" style="margin-bottom:18px;display:flex;gap:10px;flex-wrap:wrap;">
+  <button class="mode-btn active" id="viewSingleBtn" onclick="setTestViewMode('single')">📱 一題一題</button>
+  <button class="mode-btn" id="viewGridBtn" onclick="setTestViewMode('grid')">🗂 全部顯示</button>
+</div>
+
 <div id="testSummary" class="test-summary"></div>
             <div id="questions"></div>
-            <div class="btns">
+            <div class="btns" id="gridActionBtns" style="display:none;">
               <button type="button" class="primary" onclick="checkAnswers()">批改</button>
               <button type="button" class="ghost" onclick="clearAnswers()">清空答案</button>
             </div>
@@ -3264,7 +3280,7 @@ function isFuzzyCorrect(userAnswer, correctAnswer) {
 function setTestMode(mode){
   currentTestMode = mode;
 
-  document.querySelectorAll('.mode-btn').forEach(btn=>{
+  document.querySelectorAll('#testModeGroup .mode-btn').forEach(btn=>{
     btn.classList.remove('active');
   });
 
@@ -3833,6 +3849,10 @@ function answerListening(answer, btn) {
   }
 }
 
+let testViewMode = "single";
+let currentQIndex = 0;
+let testResults = [];
+
 function makeTest() {
   const cards = getCards();
   if (!cards.length) { alert("請先選擇有內容的題庫"); return; }
@@ -3876,23 +3896,186 @@ function makeTest() {
     summary.style.display = "none";
   }
 
+  testResults = new Array(testCards.length).fill(null);
+  currentQIndex = 0;
+  document.getElementById("score").textContent = "";
+  renderTestQuestions();
+}
 
+function setTestViewMode(mode) {
+  testViewMode = mode;
+  document.querySelectorAll('#testViewModeGroup .mode-btn').forEach(btn => btn.classList.remove('active'));
+  document.getElementById(mode === 'single' ? 'viewSingleBtn' : 'viewGridBtn')?.classList.add('active');
+  const gridBtns = document.getElementById('gridActionBtns');
+  if (gridBtns) gridBtns.style.display = (mode === 'grid') ? 'flex' : 'none';
+  if (testCards && testCards.length) renderTestQuestions();
+}
+
+function renderTestQuestions() {
+  if (testViewMode === 'single') renderSingleTestQuestion(currentQIndex);
+  else renderTestGrid();
+}
+
+function renderTestGrid() {
   const q = document.getElementById("questions");
+  if (!q) return;
   q.innerHTML = '<div class="questions-grid" id="questionsGrid"></div>';
   const grid = document.getElementById("questionsGrid");
 
   testCards.forEach((c,i) => {
+    const saved = testResults[i];
     grid.innerHTML += `<div class="q">
       <div>${i+1}. ${c.label}</div>
       <div class="prompt-box">${esc(c.prompt)}${/[가-힣]/.test(String(c.prompt)) ? addSpeakButtonHtml(c.prompt) : ""}</div>
-      <input id="ans-${i}" placeholder="請輸入答案...">
+      <input id="ans-${i}" placeholder="請輸入答案..." value="${saved ? escapeAttr(saved.userAnswer) : ""}">
       <div id="res-${i}"></div>
     </div>`;
   });
 
-  document.getElementById("score").textContent = "";
-  document.getElementById("testProgress").innerHTML = testCards.map((_,i)=>`<div class="bubble">${i+1}</div>`).join("");
+  document.getElementById("testProgress").innerHTML = testCards.map((_,i)=>{
+    const r = testResults[i];
+    const cls = r ? (r.ok ? "bubble done" : "bubble wrong") : "bubble";
+    return `<div class="${cls}">${i+1}</div>`;
+  }).join("");
 }
+
+/* ===== 一題一題（App 模式）===== */
+function renderSingleTestQuestion(index) {
+  if (!testCards || !testCards.length) return;
+  currentQIndex = Math.max(0, Math.min(index, testCards.length - 1));
+  const i = currentQIndex;
+  const c = testCards[i];
+  const saved = testResults[i];
+  const total = testCards.length;
+  const answeredCount = testResults.filter(r => r).length;
+  const correctCount = testResults.filter(r => r && r.ok).length;
+
+  const q = document.getElementById("questions");
+  if (!q) return;
+
+  let feedbackHtml = "";
+  let actionHtml = "";
+  if (saved) {
+    feedbackHtml = saved.ok
+      ? `<div class="result-ok" style="font-size:17px;margin-top:10px;">✔ 答對了！真棒！</div>`
+      : `<div class="result-bad" style="font-size:17px;margin-top:10px;">✘ 答錯了</div><div class="answer">正確答案：${esc(c.answer)}</div>`;
+    if (i < total - 1) {
+      actionHtml = `<button type="button" class="primary" style="width:100%;margin-top:14px;" onclick="goToNextTestQuestion()">下一題 ›</button>`;
+    } else {
+      actionHtml = `<button type="button" class="primary" style="width:100%;margin-top:14px;" onclick="finishSingleTest()">🎉 查看成績</button>`;
+    }
+  } else {
+    actionHtml = `<button type="button" class="primary" style="width:100%;margin-top:14px;" onclick="submitSingleTestAnswer()">✅ 送出答案</button>`;
+  }
+
+  q.innerHTML = `
+    <div class="q" style="max-width:520px;margin-left:auto;margin-right:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>第 ${i + 1} / ${total} 題・${esc(c.label)}</div>
+        <div style="font-size:12px;color:var(--muted);font-weight:900;">已作答 ${answeredCount}／${total}</div>
+      </div>
+      <div class="prompt-box">${esc(c.prompt)}${/[가-힣]/.test(String(c.prompt)) ? addSpeakButtonHtml(c.prompt) : ""}</div>
+      <input id="singleAns" placeholder="請輸入答案..." value="${saved ? escapeAttr(saved.userAnswer) : ""}" ${saved ? "readonly" : ""}
+        onkeydown="if(event.key==='Enter'){event.preventDefault();submitSingleTestAnswer();}">
+      ${feedbackHtml}
+      ${actionHtml}
+      <div class="btns" style="justify-content:space-between;margin-top:14px;">
+        <button type="button" class="ghost" ${i === 0 ? "disabled" : ""} onclick="renderSingleTestQuestion(${i - 1})">‹ 上一題</button>
+        <button type="button" class="ghost" ${i >= total - 1 ? "disabled" : ""} onclick="renderSingleTestQuestion(${i + 1})">下一題 ›</button>
+      </div>
+    </div>`;
+
+  document.getElementById("score").textContent = answeredCount ? `正確：${correctCount} ／ 已作答 ${answeredCount}` : "";
+
+  const prog = document.getElementById("testProgress");
+  if (prog) {
+    prog.innerHTML = testCards.map((_, idx) => {
+      const r = testResults[idx];
+      let cls = "bubble";
+      if (r) cls += r.ok ? " done" : " wrong";
+      if (idx === i) cls += " current";
+      return `<div class="${cls}" onclick="renderSingleTestQuestion(${idx})" style="cursor:pointer;">${idx + 1}</div>`;
+    }).join("");
+  }
+
+  setTimeout(() => { const el = document.getElementById("singleAns"); if (el && !saved) el.focus(); }, 30);
+}
+
+function submitSingleTestAnswer() {
+  const i = currentQIndex;
+  const c = testCards[i];
+  const input = document.getElementById("singleAns");
+  const userAnswer = input ? input.value : "";
+  const ans = c.answer || c.definition || "";
+  const ok = isFuzzyCorrect(userAnswer, ans);
+  testResults[i] = { ok, userAnswer };
+  recordAnswerResult(c, i, ok);
+  saveStorage();
+  renderSingleTestQuestion(i);
+}
+
+function goToNextTestQuestion() {
+  if (currentQIndex < testCards.length - 1) renderSingleTestQuestion(currentQIndex + 1);
+  else finishSingleTest();
+}
+
+function finishSingleTest() {
+  const total = testCards.length;
+  const correctCount = testResults.filter(r => r && r.ok).length;
+  const answeredCount = testResults.filter(r => r).length;
+  const wrongCount = answeredCount - correctCount;
+  recordTestResult(correctCount, total);
+  saveStorage();
+  renderStudyUpgradePanel();
+
+  const scoreEl = document.getElementById("score");
+  if (scoreEl) scoreEl.textContent = `正確：${correctCount} 題　錯誤：${wrongCount} 題`;
+
+  const wrongItems = testCards
+    .map((c, i) => ({ c, r: testResults[i], i }))
+    .filter(x => x.r && !x.r.ok);
+
+  const q = document.getElementById("questions");
+  const encourage = wrongCount === 0
+    ? "🎉 全部答對！你真的好棒棒！💚"
+    : correctCount / total >= 0.7
+      ? "👏 表現很不錯，再接再厲！"
+      : "🌱 沒關係，多練習幾次就會了！";
+
+  q.innerHTML = `
+    <div class="q" style="max-width:520px;margin-left:auto;margin-right:auto;text-align:center;">
+      <div style="font-size:20px;font-weight:1000;margin-bottom:6px;">${encourage}</div>
+      <div style="font-size:15px;color:var(--muted);font-weight:800;margin-bottom:14px;">正確 ${correctCount} ／ ${total} 題</div>
+      <div class="btns" style="justify-content:center;">
+        <button type="button" class="primary" onclick="makeTest()">🔁 重新測驗</button>
+        <button type="button" class="ghost" onclick="goPage('library')">‹ 返回題庫</button>
+      </div>
+    </div>
+    ${wrongItems.length ? `<div class="questions-grid" id="questionsGrid" style="margin-top:18px;"></div>` : ""}
+  `;
+
+  if (wrongItems.length) {
+    const grid = document.getElementById("questionsGrid");
+    grid.innerHTML = wrongItems.map(({c, r}, idx) => `
+      <div class="q">
+        <div>${idx + 1}. ${esc(c.label)}</div>
+        <div class="prompt-box">${esc(c.prompt)}</div>
+        <div class="result-bad">✘ 錯誤</div>
+        <div class="answer">你的答案：${esc(r.userAnswer || "未填寫")}</div>
+        <div class="answer">正確答案：${esc(c.answer)}</div>
+      </div>`).join("");
+  }
+
+  const progress = document.getElementById("testProgress");
+  if (progress) {
+    progress.innerHTML = testCards.map((_, i) => {
+      const r = testResults[i];
+      const cls = r ? (r.ok ? "bubble done" : "bubble wrong") : "bubble";
+      return `<div class="${cls}">${i + 1}</div>`;
+    }).join("");
+  }
+}
+
 function checkAnswers() {
   if (!testCards || !testCards.length) {
     alert("請先產生題目");
@@ -3974,22 +4157,10 @@ function clearAnswers() {
   }
 
   document.getElementById("score").textContent = "";
+  testResults = new Array(testCards.length).fill(null);
 
   if(testCards.length){
-    const q = document.getElementById("questions");
-    q.innerHTML = '<div class="questions-grid" id="questionsGrid"></div>';
-    const grid = document.getElementById("questionsGrid");
-
-    testCards.forEach((c,i) => {
-      grid.innerHTML += `<div class="q">
-        <div>${i+1}. ${c.label}</div>
-        <div class="prompt-box">${esc(c.prompt)}${/[가-힣]/.test(String(c.prompt)) ? addSpeakButtonHtml(c.prompt) : ""}</div>
-        <input id="ans-${i}" placeholder="請輸入答案...">
-        <div id="res-${i}"></div>
-      </div>`;
-    });
-
-    document.getElementById("testProgress").innerHTML = testCards.map((_,i)=>`<div class="bubble">${i+1}</div>`).join("");
+    renderTestGrid();
   }
 }
 
