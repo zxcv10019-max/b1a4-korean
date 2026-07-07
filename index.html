@@ -1676,6 +1676,117 @@ textarea {
 .hero-crop-viewport img { position:absolute; left:0; top:0; user-select:none; pointer-events:none; max-width:none; }
 .hero-crop-controls { display:flex; align-items:center; gap:10px; margin-top:14px; }
 .hero-crop-controls input[type=range] { flex:1; }
+
+/* ===== 測驗頁面可愛化 (cute quiz styling) ===== */
+.q {
+  background:linear-gradient(160deg,#ffffff,#f9fff2);
+  border-radius:26px !important;
+  padding:22px 22px 20px !important;
+  margin-top:18px;
+  border:2px solid #d7edb8 !important;
+  box-shadow:0 14px 30px rgba(131,184,66,.14);
+  position:relative;
+  transition:.2s;
+  overflow:visible;
+}
+.q:hover { transform:translateY(-3px); box-shadow:0 18px 36px rgba(131,184,66,.2); }
+.q::before {
+  content:"🌟";
+  position:absolute; top:-16px; right:16px;
+  font-size:26px;
+  filter:drop-shadow(0 6px 6px rgba(0,0,0,.14));
+  animation:qWiggle 3.5s ease-in-out infinite;
+}
+@keyframes qWiggle { 0%,100%{ transform:rotate(-6deg); } 50%{ transform:rotate(8deg); } }
+.questions-grid .q:nth-child(4n+1) { border-color:#ffd1e0 !important; background:linear-gradient(160deg,#fff,#fff6fa); }
+.questions-grid .q:nth-child(4n+1)::before { content:"🐰"; }
+.questions-grid .q:nth-child(4n+2) { border-color:#c9e8ff !important; background:linear-gradient(160deg,#fff,#f3fbff); }
+.questions-grid .q:nth-child(4n+2)::before { content:"🐻"; }
+.questions-grid .q:nth-child(4n+3) { border-color:#ffe9b0 !important; background:linear-gradient(160deg,#fff,#fffaf0); }
+.questions-grid .q:nth-child(4n+3)::before { content:"🐥"; }
+.questions-grid .q:nth-child(4n+4) { border-color:#d7edb8 !important; background:linear-gradient(160deg,#fff,#f6fff0); }
+.questions-grid .q:nth-child(4n+4)::before { content:"🦖"; }
+
+.q > div:first-child {
+  display:inline-block;
+  background:#fff;
+  border:2px solid #cfe6b9;
+  padding:4px 14px;
+  border-radius:999px;
+  font-weight:1000;
+  font-size:12px;
+  color:#5c9b36;
+  margin-bottom:8px;
+}
+
+.prompt-box {
+  background:linear-gradient(135deg,#eef7e4,#dff3d0) !important;
+  border-radius:20px !important;
+  padding:20px !important;
+  border:2px dashed #b9dd8d;
+  font-size:22px !important;
+}
+
+.q input {
+  border:2px solid #e3f0d2 !important;
+  border-radius:16px !important;
+  padding:12px 16px !important;
+  font-size:15px;
+  font-weight:800;
+  width:100%;
+  box-sizing:border-box;
+  transition:.15s;
+}
+.q input:focus { outline:none; border-color:#83b842 !important; box-shadow:0 0 0 4px rgba(131,184,66,.16); }
+
+.mode-btn {
+  border:2px solid transparent !important;
+  padding:10px 20px !important;
+  border-radius:999px !important;
+  font-weight:1000 !important;
+  transition:.15s;
+}
+.mode-btn:hover { transform:translateY(-2px) scale(1.03); }
+.mode-btn.active {
+  background:linear-gradient(135deg,#9bc95d,#6fae37) !important;
+  box-shadow:0 8px 18px rgba(131,184,66,.32);
+}
+
+.bubble {
+  height:42px !important; width:42px;
+  border-radius:50% !important;
+  border:2px solid #d7edb8;
+  font-size:15px;
+  transition:.15s;
+}
+.bubble.done {
+  background:linear-gradient(135deg,#9bc95d,#6fae37) !important;
+  border-color:#6fae37;
+  transform:scale(1.1);
+  box-shadow:0 6px 14px rgba(131,184,66,.35);
+}
+
+.test-summary {
+  border-radius:999px !important;
+  text-align:center;
+  font-size:15px;
+}
+
+.speak-btn {
+  border-radius:50% !important;
+  width:30px; height:30px;
+  padding:0 !important;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 4px 10px rgba(131,184,66,.2);
+}
+.speak-btn:hover { transform:scale(1.12); }
+
+.result-ok { animation:qPop .3s ease; }
+.result-bad { animation:qShake .3s ease; }
+@keyframes qPop { 0%{ transform:scale(0.8); opacity:0; } 100%{ transform:scale(1); opacity:1; } }
+@keyframes qShake { 0%,100%{ transform:translateX(0); } 25%{ transform:translateX(-4px); } 75%{ transform:translateX(4px); } }
 </style>
 
 </head>
@@ -2074,6 +2185,7 @@ textarea {
             <button class="ghost" onclick="closeLyricsReader()">‹ 返回歌單</button>
             <div class="btns">
               <button class="ghost" id="songFavBtn" onclick="toggleSongFav(currentSongId)">🤍 收藏歌曲</button>
+              <button class="ghost" onclick="autoDetectSong()">🪄 自動偵測全部單字文法</button>
               <button class="ghost" onclick="addLyricsLine()">＋ 新增一句</button>
               <button class="ghost" onclick="deleteCurrentSong()">🗑 刪除這首歌</button>
             </div>
@@ -4810,6 +4922,7 @@ function renderLyricsReader() {
       <div class="btns" style="justify-content:space-between;margin-bottom:8px;">
         <span style="font-weight:900;color:var(--muted);">第 ${i + 1} 句</span>
         <div class="btns">
+          <button class="ghost" type="button" onclick="autoDetectLine('${ln.id}')">🪄 自動偵測</button>
           <button class="ghost" type="button" onclick="speakLyricsLine('${ln.id}')">🔊 AI 發音</button>
           <button class="ghost" type="button" onclick="deleteLyricsLine('${ln.id}')">🗑 刪除</button>
         </div>
@@ -4875,6 +4988,174 @@ function deleteCurrentSong() {
   lyricsSongs = lyricsSongs.filter(s => s.id !== song.id);
   saveLyricsSongs();
   closeLyricsReader();
+}
+
+/* ===== 自動偵測單字與文法 (rule-based, on-device) =====
+   這不是雲端 AI 翻譯，是內建的常用韓文字典＋文法規則比對，
+   涵蓋常見 K-pop 歌詞用字，僅供參考，偵測結果仍可手動編輯/刪除。 */
+const KR_WORD_DICT = {
+  "오늘":"今天","내일":"明天","어제":"昨天","지금":"現在","이제":"現在／已經","항상":"總是","언제나":"永遠",
+  "다시":"再次","계속":"繼續","아직":"還／尚未","벌써":"已經","먼저":"先","나중":"之後","순간":"瞬間","시간":"時間",
+  "하루":"一天","밤":"夜晚","낮":"白天","아침":"早晨","새벽":"凌晨","오후":"下午",
+  "나":"我","난":"我(縮寫)","저":"我(謙稱)","너":"你","넌":"你(縮寫)","당신":"你／您","그대":"你（詩意）","우리":"我們",
+  "사람":"人","마음":"心","생각":"想法","꿈":"夢","눈물":"眼淚","눈":"眼睛／雪","비":"雨","별":"星星","달":"月亮","하늘":"天空","바람":"風",
+  "사랑":"愛","사랑해":"我愛你","사랑하다":"愛（動詞）","좋아하다":"喜歡","좋아해":"喜歡（口語）","행복":"幸福","행복하다":"幸福的",
+  "슬픔":"悲傷","기쁨":"喜悅","걱정":"擔心","고민":"煩惱","희망":"希望","약속":"約定","이별":"離別","만남":"相遇",
+  "시작":"開始","끝":"結束","처음":"第一次","마지막":"最後","기억":"記憶","추억":"回憶","진심":"真心","비밀":"秘密","고백":"告白",
+  "혼자":"獨自","함께":"一起","멀리":"遠遠地","가까이":"靠近","여기":"這裡","거기":"那裡","저기":"那裡（較遠）",
+  "노래":"歌","춤":"舞蹈","웃음":"笑","말":"話","이야기":"故事／話","목소리":"聲音",
+  "봄":"春天","여름":"夏天","가을":"秋天","겨울":"冬天","계절":"季節",
+  "예쁘다":"漂亮的","아름답다":"美麗的","귀엽다":"可愛的","멋있다":"帥氣的","좋다":"好的","싫다":"討厭的",
+  "크다":"大的","작다":"小的","많다":"多的","적다":"少的","빠르다":"快的","느리다":"慢的",
+  "힘들다":"辛苦的","아프다":"痛的","외롭다":"孤單的","그립다":"想念的","보고싶다":"想念（想見）",
+  "울다":"哭","웃다":"笑","걷다":"走路","달리다":"跑","기다리다":"等待","잊다":"忘記","잊지못하다":"無法忘記",
+  "알다":"知道","모르다":"不知道","보다":"看","듣다":"聽","말하다":"說","묻다":"問","대답하다":"回答",
+  "가다":"去","오다":"來","떠나다":"離開","돌아오다":"回來","머물다":"停留",
+  "잡다":"抓／握","놓다":"放開","안다":"擁抱","잡아주다":"抓住我","안아주다":"抱住我",
+  "웃어":"笑吧","울어":"哭吧","가자":"走吧","보자":"看看吧","하자":"做吧","화이팅":"加油",
+  "모든":"所有的","전부":"全部","조금":"一點點","많이":"很多","진짜":"真的","정말":"真的","너무":"太／非常",
+  "하지만":"但是","그래서":"所以","그리고":"而且","그런데":"不過","왜냐하면":"因為",
+  "너를":"你（受格）","나를":"我（受格）","니가":"你（口語主格）","내가":"我（主格）",
+  "이별하다":"分手","헤어지다":"分手","만나다":"相遇／見面","안녕":"你好／再見",
+  "빛":"光","어둠":"黑暗","길":"路","세상":"世界","인생":"人生","운명":"命運"
+};
+
+const KR_GRAMMAR_PATTERNS = [
+  { suffix:"겠습니다", label:"「將要／推測」的正式語尾" },
+  { suffix:"습니다", label:"正式尊敬語尾「是／做⋯」" },
+  { suffix:"ㅂ니다", label:"正式尊敬語尾「是／做⋯」" },
+  { suffix:"았어요", label:"過去式尊敬語尾" },
+  { suffix:"었어요", label:"過去式尊敬語尾" },
+  { suffix:"으세요", label:"尊敬命令／請求「請⋯」" },
+  { suffix:"세요", label:"尊敬命令／請求「請⋯」" },
+  { suffix:"잖아요", label:"「不是⋯嗎／你也知道」" },
+  { suffix:"거예요", label:"未來式／推測「會⋯」" },
+  { suffix:"ㄹ 거예요", label:"未來式／推測「會⋯」" },
+  { suffix:"는데요", label:"委婉語氣的連接語尾" },
+  { suffix:"은데요", label:"委婉語氣的連接語尾" },
+  { suffix:"는데", label:"「雖然⋯不過」的連接語尾" },
+  { suffix:"은데", label:"「雖然⋯不過」的連接語尾" },
+  { suffix:"니까", label:"「因為⋯所以」" },
+  { suffix:"으니까", label:"「因為⋯所以」" },
+  { suffix:"지만", label:"「雖然⋯但是」" },
+  { suffix:"려고", label:"「打算⋯」" },
+  { suffix:"으려고", label:"「打算⋯」" },
+  { suffix:"면서", label:"「一邊⋯一邊」" },
+  { suffix:"으면서", label:"「一邊⋯一邊」" },
+  { suffix:"아서", label:"「因為／然後」" },
+  { suffix:"어서", label:"「因為／然後」" },
+  { suffix:"뿐이야", label:"「只是⋯而已」" },
+  { suffix:"뿐이다", label:"「只是⋯而已」" },
+  { suffix:"같아요", label:"「好像⋯」" },
+  { suffix:"같아", label:"「好像⋯」" },
+  { suffix:"아요", label:"口語尊敬語尾" },
+  { suffix:"어요", label:"口語尊敬語尾" },
+  { suffix:"해요", label:"口語尊敬語尾（하다動詞）" },
+  { suffix:"했어", label:"過去式口語「做了⋯」" },
+  { suffix:"했다", label:"過去式書面「做了⋯」" },
+  { suffix:"에서", label:"「在⋯（地點）」" },
+  { suffix:"부터", label:"「從⋯開始」" },
+  { suffix:"까지", label:"「到⋯為止」" },
+  { suffix:"보다", label:"「比起⋯」（比較）" },
+  { suffix:"처럼", label:"「像⋯一樣」" },
+  { suffix:"만큼", label:"「跟⋯一樣（程度）」" },
+  { suffix:"이라도", label:"「即使是⋯也」" },
+  { suffix:"라도", label:"「即使是⋯也」" },
+  { suffix:"이라서", label:"「因為是⋯」" },
+  { suffix:"라서", label:"「因為是⋯」" },
+  { suffix:"이지만", label:"「雖然是⋯但是」" },
+  { suffix:"이나", label:"「或者⋯」" },
+  { suffix:"으로", label:"「往／用⋯（方向、手段）」" },
+  { suffix:"로", label:"「往／用⋯（方向、手段）」" },
+  { suffix:"에게", label:"「給⋯（人）」" },
+  { suffix:"한테", label:"「給⋯（人，口語）」" },
+  { suffix:"와", label:"「和⋯」" },
+  { suffix:"과", label:"「和⋯」" },
+  { suffix:"이랑", label:"「和⋯（口語）」" },
+  { suffix:"랑", label:"「和⋯（口語）」" },
+  { suffix:"만", label:"「只有⋯」" },
+  { suffix:"도", label:"「也⋯」" },
+  { suffix:"은", label:"主題助詞「⋯是」" },
+  { suffix:"는", label:"主題助詞「⋯是」" },
+  { suffix:"이", label:"主格助詞" },
+  { suffix:"가", label:"主格助詞" },
+  { suffix:"을", label:"受格助詞" },
+  { suffix:"를", label:"受格助詞" },
+  { suffix:"의", label:"所有格「⋯的」" }
+].sort((a, b) => b.suffix.length - a.suffix.length);
+
+function detectWordsAndGrammarFromLine(text) {
+  const foundWords = [];
+  const foundGrammar = [];
+  const seenW = new Set(), seenG = new Set();
+  const tokens = String(text || "")
+    .replace(/[.,!?~"'“”‘’()]/g, "")
+    .split(/\s+/)
+    .filter(Boolean);
+
+  tokens.forEach(token => {
+    if (KR_WORD_DICT[token] && !seenW.has(token)) {
+      foundWords.push({ k: token, z: KR_WORD_DICT[token] });
+      seenW.add(token);
+      return;
+    }
+    for (const pat of KR_GRAMMAR_PATTERNS) {
+      if (token.length > pat.suffix.length && token.endsWith(pat.suffix)) {
+        const root = token.slice(0, token.length - pat.suffix.length);
+        if (KR_WORD_DICT[root] && !seenW.has(root)) {
+          foundWords.push({ k: root, z: KR_WORD_DICT[root] });
+          seenW.add(root);
+        }
+        if (!seenG.has(pat.suffix)) {
+          foundGrammar.push({ p: pat.suffix, n: pat.label });
+          seenG.add(pat.suffix);
+        }
+        break;
+      }
+    }
+  });
+  return { words: foundWords, grammar: foundGrammar };
+}
+
+function mergeDetectedIntoLine(line, detected) {
+  line.words = line.words || [];
+  line.grammar = line.grammar || [];
+  detected.words.forEach(w => {
+    if (!line.words.some(x => x.k === w.k)) line.words.push(w);
+  });
+  detected.grammar.forEach(g => {
+    if (!line.grammar.some(x => x.p === g.p)) line.grammar.push(g);
+  });
+}
+
+function autoDetectLine(lineId) {
+  const song = getCurrentSong();
+  if (!song) return;
+  const line = song.lines.find(l => l.id === lineId);
+  if (!line || !line.kr) return;
+  const detected = detectWordsAndGrammarFromLine(line.kr);
+  if (!detected.words.length && !detected.grammar.length) {
+    alert("這句沒有偵測到內建字典裡的常用字，你可以手動輸入單字／文法。");
+    return;
+  }
+  mergeDetectedIntoLine(line, detected);
+  saveLyricsSongs();
+  renderLyricsReader();
+}
+
+function autoDetectSong() {
+  const song = getCurrentSong();
+  if (!song) return;
+  let count = 0;
+  song.lines.forEach(line => {
+    if (!line.kr) return;
+    const detected = detectWordsAndGrammarFromLine(line.kr);
+    if (detected.words.length || detected.grammar.length) count++;
+    mergeDetectedIntoLine(line, detected);
+  });
+  saveLyricsSongs();
+  renderLyricsReader();
+  alert(`偵測完成，${count} / ${song.lines.length} 句補上了單字或文法建議，記得檢查一下是否正確喔！`);
 }
 
 function speakLyricsLine(lineId) {
