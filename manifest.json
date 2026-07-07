@@ -1,0 +1,25 @@
+{
+  "name": "BANA Forest 韓文學習",
+  "short_name": "BANA Forest",
+  "description": "跟著 B1A4 一起學韓文的森林養成式學習 App",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6fff0",
+  "theme_color": "#83b842",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
