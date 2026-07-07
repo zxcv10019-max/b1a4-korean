@@ -1776,6 +1776,8 @@ textarea {
   outline:3px solid #ffd166;
   outline-offset:2px;
 }
+.home-quest-wrap { grid-template-columns:1.3fr 1fr !important; }
+@media (max-width:980px) { .home-quest-wrap { grid-template-columns:1fr !important; } }
 
 .test-summary {
   border-radius:999px !important;
@@ -1798,6 +1800,75 @@ textarea {
 .result-bad { animation:qShake .3s ease; }
 @keyframes qPop { 0%{ transform:scale(0.8); opacity:0; } 100%{ transform:scale(1); opacity:1; } }
 @keyframes qShake { 0%,100%{ transform:translateX(0); } 25%{ transform:translateX(-4px); } 75%{ transform:translateX(4px); } }
+
+/* ===== GitHub 風格學習日曆 ===== */
+.gh-cal {
+  display:grid;
+  grid-auto-flow:column;
+  grid-template-rows:repeat(7, 11px);
+  gap:3px;
+  margin-top:10px;
+  overflow-x:auto;
+  padding-bottom:6px;
+}
+.gh-cal-labels {
+  display:grid;
+  grid-auto-flow:column;
+  gap:3px;
+  font-size:10px;
+  color:var(--muted);
+  font-weight:800;
+  margin-top:12px;
+  overflow-x:auto;
+  white-space:nowrap;
+}
+.gh-cal-labels span { width:11px; }
+.gh-cell {
+  width:11px; height:11px;
+  border-radius:3px;
+  background:#ebedf0;
+  display:inline-block;
+}
+.gh-cell.lvl0 { background:#eef2e6; }
+.gh-cell.lvl1 { background:#cbe9a0; }
+.gh-cell.lvl2 { background:#9bc95d; }
+.gh-cell.lvl3 { background:#6fae37; }
+.gh-cell.lvl4 { background:#3f7a1f; }
+.gh-cell.future { background:transparent; }
+.gh-cal-legend {
+  display:flex; align-items:center; gap:4px;
+  font-size:11px; color:var(--muted); font-weight:800;
+  margin-top:8px;
+}
+.gh-cal-legend .gh-cell { width:11px; height:11px; }
+
+/* ===== 全站搜尋 ===== */
+.search-result-item {
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:12px 14px;
+  margin-bottom:8px;
+  cursor:pointer;
+  font-weight:900;
+}
+.search-result-item:hover { border-color:#83b842; background:#f4faed; }
+
+/* ===== 詳細學習統計 ===== */
+.stat-row {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:10px 0; border-bottom:1px solid var(--line);
+  font-weight:800;
+}
+.stat-row:last-child { border-bottom:0; }
+.stat-row b { color:#3f7a1f; }
+.folder-stat-item {
+  background:#fff; border:1px solid var(--line); border-radius:16px;
+  padding:12px 14px; margin-bottom:8px;
+}
+.folder-stat-item .fsi-top { display:flex; justify-content:space-between; font-weight:1000; margin-bottom:6px; }
+.folder-stat-item .fsi-bar { height:8px; border-radius:999px; background:#eef2e6; overflow:hidden; }
+.folder-stat-item .fsi-bar span { display:block; height:100%; background:linear-gradient(90deg,#9bc95d,#6fae37); }
 </style>
 
 </head>
@@ -1811,6 +1882,7 @@ textarea {
   <div class="hero-topbar">
     <div class="hero-topbar-logo">🌱 BANA Forest</div>
     <div class="hero-topbar-icons">
+      <button type="button" title="搜尋" onclick="openSiteSearch()">🔍</button>
       <button type="button" title="通知" onclick="alert('通知功能開發中')">🔔</button>
       <button type="button" title="我的" onclick="goPage('profile')">👤</button>
     </div>
@@ -1870,17 +1942,6 @@ textarea {
               <div class="quest-mini">🔥 練習<b id="questPractice">0</b></div>
             </div>
             <div class="home-note-pill">🦊 🐻 🐥 🦖 오늘도 화이팅！</div>
-          </div>
-
-          <div class="forest-card mascot-card">
-            <div class="forest-level"><span>🌿 BANA Forest 夥伴</span><span>Team</span></div>
-            <div class="mascot-row mascot-icons-only">
-              <div class="mascot-buddy" title="單字卡"><span>🦊</span><small>單字卡</small></div>
-              <div class="mascot-buddy" title="筆試"><span>🐻</span><small>筆試</small></div>
-              <div class="mascot-buddy" title="聽力"><span>🐥</span><small>聽力</small></div>
-              <div class="mascot-buddy" title="配對"><span>🦖</span><small>配對</small></div>
-            </div>
-            <div class="quest-sub" style="margin:12px 0 0">以這四個角色作為主視覺，首頁、森林和學習提示都會統一成同一組。</div>
           </div>
 
           <div class="forest-card">
@@ -2251,6 +2312,23 @@ textarea {
         </div>
 
         <div class="card" style="padding:22px;margin-bottom:18px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <div style="font-weight:1000;font-size:18px;">📅 學習日曆</div>
+            <div style="font-size:12px;color:var(--muted);font-weight:800;" id="calendarStreakText">連續 0 天・最佳 0 天</div>
+          </div>
+          <div id="learningCalendarLabels" class="gh-cal-labels"></div>
+          <div id="learningCalendar" class="gh-cal"></div>
+          <div class="gh-cal-legend">
+            少 <span class="gh-cell lvl0"></span><span class="gh-cell lvl1"></span><span class="gh-cell lvl2"></span><span class="gh-cell lvl3"></span><span class="gh-cell lvl4"></span> 多
+          </div>
+        </div>
+
+        <div class="card" style="padding:22px;margin-bottom:18px;">
+          <div style="font-weight:1000;font-size:18px;margin-bottom:10px;">📊 詳細學習統計</div>
+          <div id="detailedStatsBody"></div>
+        </div>
+
+        <div class="card" style="padding:22px;margin-bottom:18px;">
           <div style="font-weight:1000;font-size:18px;margin-bottom:4px;">💚 我的收藏</div>
           <div id="favoritesDetailWrap"></div>
         </div>
@@ -2270,6 +2348,18 @@ textarea {
       </section>
     </div>
   </main>
+
+  <div id="searchMask" class="hero-modal-mask">
+    <div class="hero-modal" style="width:min(560px,100%);max-height:80vh;">
+      <div class="hero-modal-head">
+        <div class="hero-modal-title">🔍 全站搜尋</div>
+        <button class="hero-modal-close" type="button" onclick="closeSiteSearch()">關閉</button>
+      </div>
+      <input id="siteSearchInput" type="text" placeholder="搜尋單字、歌詞、題庫..." oninput="runSiteSearch(this.value)"
+        style="width:100%;border:1px solid var(--line);border-radius:14px;padding:12px;font-size:15px;box-sizing:border-box;">
+      <div id="siteSearchResults" style="margin-top:10px;max-height:55vh;overflow:auto;"></div>
+    </div>
+  </div>
 
   <nav class="bottom-nav">
     <button data-tab="home" class="active" onclick="goBottomTab('home')"><span class="bn-ico">🏠</span>首頁</button>
@@ -2782,6 +2872,235 @@ async function uploadCloudNow() {
 let folders = JSON.parse(localStorage.getItem("b1a4_green_study_empty_v3") || "[]");
 let groups = JSON.parse(localStorage.getItem("b1a4_groups_v1") || "[]");
 let stats = JSON.parse(localStorage.getItem("b1a4_green_study_stats_v3") || "{\"practice\":0}");
+
+/* ===== 學習活動紀錄 (for streak + GitHub 風格日曆) ===== */
+const ACTIVITY_LOG_KEY = "b1a4ActivityLog";
+let activityLog = {};
+(function loadActivityLog() {
+  try { activityLog = JSON.parse(localStorage.getItem(ACTIVITY_LOG_KEY) || "{}"); }
+  catch (e) { activityLog = {}; }
+})();
+
+function dateKey(d) {
+  const dt = d || new Date();
+  return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0");
+}
+
+function logActivity(amount) {
+  const k = dateKey();
+  activityLog[k] = (activityLog[k] || 0) + (amount || 1);
+  localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(activityLog));
+  renderLearningCalendar();
+}
+
+function computeCurrentStreak() {
+  let streak = 0;
+  const cursor = new Date();
+  cursor.setHours(0, 0, 0, 0);
+  if (!activityLog[dateKey(cursor)]) cursor.setDate(cursor.getDate() - 1);
+  while (activityLog[dateKey(cursor)]) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
+function computeBestStreak() {
+  const days = Object.keys(activityLog).filter(k => activityLog[k] > 0).sort();
+  if (!days.length) return 0;
+  let best = 1, run = 1;
+  for (let i = 1; i < days.length; i++) {
+    const prev = new Date(days[i - 1]);
+    const cur = new Date(days[i]);
+    const diff = Math.round((cur - prev) / 86400000);
+    run = (diff === 1) ? run + 1 : 1;
+    best = Math.max(best, run);
+  }
+  return best;
+}
+
+/* ===== GitHub 風格學習日曆 ===== */
+function activityLevel(count) {
+  if (!count) return 0;
+  if (count >= 10) return 4;
+  if (count >= 6) return 3;
+  if (count >= 3) return 2;
+  return 1;
+}
+
+function renderLearningCalendar() {
+  const container = document.getElementById("learningCalendar");
+  const labelsContainer = document.getElementById("learningCalendarLabels");
+  const streakText = document.getElementById("calendarStreakText");
+  if (streakText) streakText.textContent = `連續 ${computeCurrentStreak()} 天・最佳 ${computeBestStreak()} 天`;
+  if (!container) return;
+
+  const weeksToShow = (window.innerWidth < 640) ? 20 : 53;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const endOfWeek = new Date(today);
+  endOfWeek.setDate(today.getDate() + (6 - today.getDay()));
+  const start = new Date(endOfWeek);
+  start.setDate(endOfWeek.getDate() - (weeksToShow * 7 - 1));
+
+  const cells = [];
+  const monthMarks = [];
+  let lastMonth = -1;
+  for (let i = 0; i < weeksToShow * 7; i++) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    const isFuture = d > today;
+    const key = dateKey(d);
+    const count = activityLog[key] || 0;
+    const lvl = activityLevel(count);
+    cells.push({ d, isFuture, count, lvl });
+    if (d.getDay() === 0) {
+      const m = d.getMonth();
+      if (m !== lastMonth) { monthMarks.push({ week: i / 7, month: m }); lastMonth = m; }
+    }
+  }
+
+  const monthNames = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+  container.innerHTML = cells.map(c => {
+    const cls = c.isFuture ? "gh-cell future" : `gh-cell lvl${c.lvl}`;
+    const title = c.isFuture ? "" : `title="${dateKey(c.d)}：${c.count} 次學習活動"`;
+    return `<div class="${cls}" ${title}></div>`;
+  }).join("");
+
+  if (labelsContainer) {
+    labelsContainer.innerHTML = Array.from({ length: weeksToShow }, (_, w) => {
+      const mark = monthMarks.find(m => Math.floor(m.week) === w);
+      return `<span>${mark ? monthNames[mark.month] : ""}</span>`;
+    }).join("");
+  }
+}
+
+/* ===== 詳細學習統計 ===== */
+function renderDetailedStats() {
+  const body = document.getElementById("detailedStatsBody");
+  if (!body) return;
+
+  const totalCards = folders.reduce((sum, f) => sum + parseCards(f.content).length, 0);
+  let totalCorrect = 0, totalWrong = 0;
+  const folderRows = folders.map((f, i) => {
+    const cardCount = parseCards(f.content).length;
+    const rec = masteryData[i] || {};
+    let correct = 0, wrong = 0;
+    Object.values(rec).forEach(r => { correct += (r.correct || 0); wrong += (r.wrong || 0); });
+    totalCorrect += correct;
+    totalWrong += wrong;
+    const attempts = correct + wrong;
+    const accuracy = attempts ? Math.round((correct / attempts) * 100) : null;
+    return { name: f.name, cardCount, accuracy, attempts };
+  });
+
+  const overallAttempts = totalCorrect + totalWrong;
+  const overallAccuracy = overallAttempts ? Math.round((totalCorrect / overallAttempts) * 100) : 0;
+  const studyDays = Object.keys(activityLog).filter(k => activityLog[k] > 0).length;
+  const totalActions = Object.values(activityLog).reduce((a, b) => a + b, 0);
+
+  let html = `
+    <div class="stat-row"><span>📁 題庫數量</span><b>${folders.length}</b></div>
+    <div class="stat-row"><span>📚 單字總數</span><b>${totalCards}</b></div>
+    <div class="stat-row"><span>✅ 整體正確率</span><b>${overallAttempts ? overallAccuracy + "%" : "尚無紀錄"}</b></div>
+    <div class="stat-row"><span>🔥 目前連續天數</span><b>${computeCurrentStreak()} 天</b></div>
+    <div class="stat-row"><span>🏆 最佳連續天數</span><b>${computeBestStreak()} 天</b></div>
+    <div class="stat-row"><span>📅 累積學習天數</span><b>${studyDays} 天</b></div>
+    <div class="stat-row"><span>⚡ 累積學習次數</span><b>${totalActions} 次</b></div>
+  `;
+
+  if (folderRows.length) {
+    html += `<div style="font-weight:1000;margin:16px 0 8px;">📁 各題庫表現</div>`;
+    html += folderRows.map(r => `
+      <div class="folder-stat-item">
+        <div class="fsi-top"><span>${esc(r.name)}</span><span style="color:var(--muted);font-weight:800;">${r.cardCount} 字</span></div>
+        <div class="fsi-bar"><span style="width:${r.accuracy === null ? 0 : r.accuracy}%"></span></div>
+        <div style="font-size:12px;color:var(--muted);font-weight:800;margin-top:4px;">
+          ${r.accuracy === null ? "尚未測驗" : `正確率 ${r.accuracy}%（共作答 ${r.attempts} 次）`}
+        </div>
+      </div>`).join("");
+  }
+
+  body.innerHTML = html;
+}
+
+/* ===== 全站搜尋 ===== */
+function openSiteSearch() {
+  const mask = document.getElementById("searchMask");
+  if (mask) mask.classList.add("show");
+  const input = document.getElementById("siteSearchInput");
+  if (input) { input.value = ""; setTimeout(() => input.focus(), 60); }
+  const results = document.getElementById("siteSearchResults");
+  if (results) results.innerHTML = `<div class="empty" style="padding:16px 0;">輸入關鍵字開始搜尋單字、題庫或歌詞</div>`;
+}
+function closeSiteSearch() {
+  document.getElementById("searchMask")?.classList.remove("show");
+}
+
+function openFolderAndGoFlash(folderIdx) {
+  closeSiteSearch();
+  loadFolder(folderIdx);
+  goPage("flash");
+  startFlash();
+}
+
+function runSiteSearch(query) {
+  const resultsEl = document.getElementById("siteSearchResults");
+  if (!resultsEl) return;
+  const q = String(query || "").trim().toLowerCase();
+  if (!q) { resultsEl.innerHTML = `<div class="empty" style="padding:16px 0;">輸入關鍵字開始搜尋單字、題庫或歌詞</div>`; return; }
+
+  const wordResults = [];
+  folders.forEach((f, fi) => {
+    parseCards(f.content).forEach(c => {
+      if ((c.term || "").toLowerCase().includes(q) || (c.definition || "").toLowerCase().includes(q)) {
+        wordResults.push({ folderIdx: fi, folderName: f.name, term: c.term, definition: c.definition });
+      }
+    });
+  });
+
+  const songResults = [];
+  const lineResults = [];
+  (typeof lyricsSongs !== "undefined" ? lyricsSongs : []).forEach(s => {
+    if ((s.title || "").toLowerCase().includes(q) || (s.artist || "").toLowerCase().includes(q)) {
+      songResults.push(s);
+    }
+    (s.lines || []).forEach(l => {
+      if ((l.kr || "").toLowerCase().includes(q) || (l.zh || "").toLowerCase().includes(q)) {
+        lineResults.push({ song: s, line: l });
+      }
+    });
+  });
+
+  let html = "";
+  if (wordResults.length) {
+    html += `<div style="font-weight:1000;margin:6px 0 8px;">📚 單字（${wordResults.length}）</div>`;
+    html += wordResults.slice(0, 20).map(r => `
+      <div class="search-result-item" onclick="openFolderAndGoFlash(${r.folderIdx})">
+        ${esc(r.term)} <span style="color:var(--muted);">— ${esc(r.definition)}</span>
+        <div style="font-size:11px;color:var(--muted);font-weight:700;">來自「${esc(r.folderName)}」</div>
+      </div>`).join("");
+  }
+  if (songResults.length) {
+    html += `<div style="font-weight:1000;margin:14px 0 8px;">🎵 歌曲（${songResults.length}）</div>`;
+    html += songResults.map(s => `
+      <div class="search-result-item" onclick="closeSiteSearch();goPage('lyrics');openLyricsReader('${s.id}')">
+        ${esc(s.title)} <span style="color:var(--muted);">— ${esc(s.artist || "")}</span>
+      </div>`).join("");
+  }
+  if (lineResults.length) {
+    html += `<div style="font-weight:1000;margin:14px 0 8px;">🎶 歌詞句子（${lineResults.length}）</div>`;
+    html += lineResults.slice(0, 20).map(r => `
+      <div class="search-result-item" onclick="closeSiteSearch();goPage('lyrics');openLyricsReader('${r.song.id}')">
+        ${esc(r.line.kr)} <span style="color:var(--muted);">— ${esc(r.line.zh || "")}</span>
+        <div style="font-size:11px;color:var(--muted);font-weight:700;">出自《${esc(r.song.title)}》</div>
+      </div>`).join("");
+  }
+  if (!wordResults.length && !songResults.length && !lineResults.length) {
+    html = `<div class="empty" style="padding:16px 0;">找不到符合「${esc(query)}」的結果</div>`;
+  }
+  resultsEl.innerHTML = html;
+}
+
 let current = folders.length ? 0 : null;
 let collapsedGroups = JSON.parse(localStorage.getItem("b1a4_collapsed_groups") || "[]");
 let currentColor = "#c6e09c";
@@ -2852,6 +3171,7 @@ function goPage(id) {
   syncDropdowns();
   if (id === "flash") startFlash(false);
   if (id === "match" && !document.getElementById("matchBoard").innerHTML) startMatch();
+  if (id === "profile") { renderLearningCalendar(); renderDetailedStats(); }
   renderGraduationPanel();
   updateFolderGraduationBadges();
   renderStudyUpgradePanel();
@@ -3131,6 +3451,7 @@ function getCards() {
 function addPractice() {
   stats.practice = (stats.practice || 0) + 1;
   if (current !== null) folders[current].practice = (folders[current].practice || 0) + 1;
+  logActivity(2);
   saveStorage();
   renderDashboard();
 }
@@ -3615,7 +3936,8 @@ function speakKorean(text) {
   speechSynthesis.speak(u);
 }
 function recordAnswerResult(card, index, ok) {
-  if(!current || !card) return;
+  if(current === null || current === undefined || !card) return;
+  logActivity(1);
   const key = normalizeCardKeyValue(card, index);
   const wrongRec = ensureWrongRecord(current);
   const masteryRec = ensureMasteryRecord(current);
@@ -4408,11 +4730,13 @@ function updateHeroStats() {
   const levelEl = document.getElementById("heroLevelText");
   const barEl = document.getElementById("heroProgressBar");
   const txtEl = document.getElementById("heroXpText");
-  if (streakEl) streakEl.textContent = "0";
-  if (xpEl) xpEl.textContent = xp + " XP";
+  const todayCount = activityLog[dateKey()] || 0;
+  if (streakEl) streakEl.textContent = String(computeCurrentStreak());
+  if (xpEl) xpEl.textContent = (todayCount * 5) + " XP";
   if (levelEl) levelEl.textContent = "Lv. " + level;
   if (barEl) barEl.style.width = Math.min(100, nowXp) + "%";
   if (txtEl) txtEl.textContent = nowXp + " / 100 XP";
+  renderLearningCalendar();
 }
 
 function setupHeroCarousel() {
@@ -5335,6 +5659,7 @@ function speakLyricsLine(lineId) {
   const line = song.lines.find(l => l.id === lineId);
   if (!line || !line.kr) return;
   speakKorean(line.kr);
+  logActivity(1);
 }
 
 function exportLyricsSongs() {
