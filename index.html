@@ -1869,6 +1869,56 @@ textarea {
 .folder-stat-item .fsi-top { display:flex; justify-content:space-between; font-weight:1000; margin-bottom:6px; }
 .folder-stat-item .fsi-bar { height:8px; border-radius:999px; background:#eef2e6; overflow:hidden; }
 .folder-stat-item .fsi-bar span { display:block; height:100%; background:linear-gradient(90deg,#9bc95d,#6fae37); }
+
+/* ===== 題庫列表：正式表格清單風格 ===== */
+#folderGrid { display:block !important; }
+.folder-table {
+  display:flex;
+  flex-direction:column;
+  border:1px solid var(--line);
+  border-radius:18px;
+  overflow:hidden;
+  background:#fff;
+  box-shadow:0 10px 26px rgba(72,108,39,.06);
+}
+.folder-table-head {
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:10px 18px;
+  background:#f2f8ea;
+  font-size:12px;
+  font-weight:1000;
+  color:#5c9b36;
+  letter-spacing:.02em;
+}
+.folder-table-head .fr-dot-spacer { width:12px; flex:0 0 auto; }
+.folder-table-head .fr-arrow-spacer { width:16px; flex:0 0 auto; }
+.folder-row {
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:14px 18px;
+  border-top:1px solid var(--line);
+  cursor:pointer;
+  transition:.15s;
+  background:#fff;
+}
+.folder-row:hover { background:#f7fbf2; }
+.folder-row.active { background:#eef8df; }
+.fr-dot { width:12px; height:12px; border-radius:50%; flex:0 0 auto; }
+.fr-main { flex:1; min-width:0; }
+.fr-name { font-weight:1000; color:#20351f; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fr-sub { font-size:11px; color:var(--muted); font-weight:700; margin-top:2px; }
+.fr-stat { width:60px; text-align:center; flex:0 0 auto; }
+.fr-stat b { display:block; font-size:15px; color:#3f7a1f; }
+.fr-stat small { font-size:10px; color:var(--muted); font-weight:800; }
+.fr-date { width:96px; text-align:center; font-size:12px; color:var(--muted); font-weight:800; flex:0 0 auto; }
+.fr-arrow { width:16px; text-align:center; color:#9db98c; font-weight:1000; flex:0 0 auto; }
+@media (max-width:720px) {
+  .folder-table-head { display:none; }
+  .fr-hide-sm { display:none; }
+}
 </style>
 
 </head>
@@ -3160,11 +3210,32 @@ function openFolderManager() {
   document.getElementById("editor").scrollIntoView({behavior:"smooth"});
 }
 
-function makeFolderCard(f, i) {
+function folderTableHeader() {
+  return `<div class="folder-table-head">
+    <span class="fr-dot-spacer"></span>
+    <span class="fr-main">題庫名稱</span>
+    <span class="fr-stat">單字</span>
+    <span class="fr-stat fr-hide-sm">練習</span>
+    <span class="fr-date fr-hide-sm">最後更新</span>
+    <span class="fr-arrow-spacer"></span>
+  </div>`;
+}
+
+function makeFolderRow(f, i) {
   const d = document.createElement("div");
-  d.className = "folder card " + (current === i ? "active" : "");
-  d.style.setProperty("--tab", f.color || "#c6e09c");
-  d.innerHTML = `<div class="folder-inner"><div class="folder-title">${esc(f.name)}</div><div class="folder-meta">${parseCards(f.content).length} 張單字<br>${f.updated || today()}</div></div>`;
+  d.className = "folder-row " + (current === i ? "active" : "");
+  const cardCount = parseCards(f.content).length;
+  const dirLabel = (f.direction === "definitionToTerm") ? "中文 ➜ 韓文" : "韓文 ➜ 中文";
+  d.innerHTML = `
+    <span class="fr-dot" style="background:${f.color || '#c6e09c'}"></span>
+    <div class="fr-main">
+      <div class="fr-name">${esc(f.name)}</div>
+      <div class="fr-sub">${dirLabel}</div>
+    </div>
+    <div class="fr-stat"><b>${cardCount}</b><small>單字</small></div>
+    <div class="fr-stat fr-hide-sm"><b>${f.practice || 0}</b><small>次</small></div>
+    <div class="fr-date fr-hide-sm">${esc(f.updated || today())}</div>
+    <span class="fr-arrow">›</span>`;
   d.onclick = () => { loadFolder(i); document.getElementById("editor").scrollIntoView({behavior:"smooth"}); };
   return d;
 }
@@ -3202,10 +3273,11 @@ function renderFolders() {
     body.id = "grpbody_" + grp.id;
 
     if (grpFolders.length) {
-      const grid = document.createElement("div");
-      grid.className = "folder-grid";
-      grpFolders.forEach(({f,i}) => grid.appendChild(makeFolderCard(f,i)));
-      body.appendChild(grid);
+      const table = document.createElement("div");
+      table.className = "folder-table";
+      table.innerHTML = folderTableHeader();
+      grpFolders.forEach(({f,i}) => table.appendChild(makeFolderRow(f,i)));
+      body.appendChild(table);
     } else {
       body.innerHTML = `<div class="empty" style="padding:18px 10px;font-size:14px">此分組尚無題庫</div>`;
     }
@@ -3230,17 +3302,19 @@ function renderFolders() {
       const body = document.createElement("div");
       body.className = "group-body" + (isCollapsed ? " collapsed" : "");
       body.id = "grpbody_ungrouped";
-      const grid = document.createElement("div");
-      grid.className = "folder-grid";
-      ungrouped.forEach(({f,i}) => grid.appendChild(makeFolderCard(f,i)));
-      body.appendChild(grid);
+      const table = document.createElement("div");
+      table.className = "folder-table";
+      table.innerHTML = folderTableHeader();
+      ungrouped.forEach(({f,i}) => table.appendChild(makeFolderRow(f,i)));
+      body.appendChild(table);
       section.appendChild(header);
       section.appendChild(body);
     } else {
-      const grid = document.createElement("div");
-      grid.className = "folder-grid";
-      ungrouped.forEach(({f,i}) => grid.appendChild(makeFolderCard(f,i)));
-      section.appendChild(grid);
+      const table = document.createElement("div");
+      table.className = "folder-table";
+      table.innerHTML = folderTableHeader();
+      ungrouped.forEach(({f,i}) => table.appendChild(makeFolderRow(f,i)));
+      section.appendChild(table);
     }
     g.appendChild(section);
   }
