@@ -1798,6 +1798,27 @@ textarea {
             <div class="heatmap" id="studyHeatmap"></div>
           </div>
         </div>
+
+        <div class="home-design-grid" style="grid-template-columns:1fr 1fr;">
+          <div class="daily-card" id="recentSongCard">
+            <div class="design-title">🎵 最近學習的歌曲</div>
+            <div id="recentSongBody" style="text-align:left;">
+              <div class="empty" style="padding:20px 0;">去「歌詞讀本」建立第一首歌吧！</div>
+            </div>
+          </div>
+
+          <div class="badge-card">
+            <div class="design-title">💚 我的收藏</div>
+            <div class="btns" style="justify-content:space-between;flex-wrap:wrap;gap:14px;margin-top:6px;">
+              <div style="text-align:center;flex:1;min-width:60px;cursor:pointer;" onclick="goPage('profile')"><div style="font-size:22px;">❤️</div><b id="favSentenceCount">0</b><div style="font-size:11px;color:var(--muted);">收藏句子</div></div>
+              <div style="text-align:center;flex:1;min-width:60px;cursor:pointer;" onclick="goPage('profile')"><div style="font-size:22px;">⭐</div><b id="favWordCount">0</b><div style="font-size:11px;color:var(--muted);">收藏單字</div></div>
+              <div style="text-align:center;flex:1;min-width:60px;cursor:pointer;" onclick="goPage('profile')"><div style="font-size:22px;">📄</div><b id="favGrammarCount">0</b><div style="font-size:11px;color:var(--muted);">收藏文法</div></div>
+              <div style="text-align:center;flex:1;min-width:60px;cursor:pointer;" onclick="goPage('profile')"><div style="font-size:22px;">🎵</div><b id="favSongCount">0</b><div style="font-size:11px;color:var(--muted);">收藏歌曲</div></div>
+            </div>
+            <button class="ghost" style="margin-top:14px;width:100%;" onclick="goPage('profile')">查看全部收藏 ›</button>
+          </div>
+        </div>
+
         <div id="graduationPanel" class="graduation-panel"></div>
 
         <div id="studyUpgradePanel" class="study-upgrade-panel">
@@ -2052,6 +2073,7 @@ textarea {
           <div class="topbar">
             <button class="ghost" onclick="closeLyricsReader()">‹ 返回歌單</button>
             <div class="btns">
+              <button class="ghost" id="songFavBtn" onclick="toggleSongFav(currentSongId)">🤍 收藏歌曲</button>
               <button class="ghost" onclick="addLyricsLine()">＋ 新增一句</button>
               <button class="ghost" onclick="deleteCurrentSong()">🗑 刪除這首歌</button>
             </div>
@@ -2072,7 +2094,11 @@ textarea {
             <div style="display:grid;gap:12px;">
               <input id="songEditorTitle" type="text" placeholder="歌曲名稱，例如：Baby Good Night" style="border:1px solid var(--line);border-radius:14px;padding:12px;font-size:15px;">
               <input id="songEditorArtist" type="text" placeholder="歌手（選填），例如：B1A4" style="border:1px solid var(--line);border-radius:14px;padding:12px;font-size:15px;">
-              <textarea id="songEditorLyrics" rows="8" placeholder="貼上韓文歌詞，一行一句" style="border:1px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;"></textarea>
+              <textarea id="songEditorLyrics" rows="8" placeholder="貼上歌詞，可以只貼韓文（一行一句），也可以「韓文一行、中文翻譯下一行」交錯貼上，例如：&#10;오늘도 난&#10;今天我依然...&#10;니 생각뿐이야&#10;滿腦子都是你" style="border:1px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;"></textarea>
+              <label style="display:flex;align-items:center;gap:8px;font-weight:900;color:#4e8f24;">
+                <input id="songEditorAutoZh" type="checkbox" checked style="width:18px;height:18px;">
+                自動辨識「韓文／中文」交錯貼上
+              </label>
               <div class="hero-help">建立後可以在歌詞讀本裡逐句補上中文翻譯、單字和文法。</div>
               <button class="primary" type="button" onclick="createSongFromEditor()">建立歌曲</button>
             </div>
@@ -2094,6 +2120,11 @@ textarea {
             <button id="loginBtn" class="login-btn" onclick="loginWithGoogle()">Google 登入同步</button>
             <button id="logoutBtn" class="logout-btn" onclick="logoutAccount()" style="display:none">登出</button>
           </div>
+        </div>
+
+        <div class="card" style="padding:22px;margin-bottom:18px;">
+          <div style="font-weight:1000;font-size:18px;margin-bottom:4px;">💚 我的收藏</div>
+          <div id="favoritesDetailWrap"></div>
         </div>
 
         <div class="card" style="padding:22px;margin-bottom:18px;">
@@ -4491,10 +4522,140 @@ function confirmHeroCrop() {
 
 /* ===== 歌詞讀本 (Lyrics Reader) ===== */
 const LYRICS_STORAGE_KEY = "b1a4LyricsSongs";
+const FAVORITES_STORAGE_KEY = "b1a4Favorites";
+const LAST_SONG_KEY = "b1a4LastSongId";
 let lyricsSongs = [];
 let currentSongId = null;
+let favorites = { sentences: [], words: [], grammar: [], songs: [] };
 
 function uid() { return "id" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
+function loadFavorites() {
+  try {
+    const raw = localStorage.getItem(FAVORITES_STORAGE_KEY);
+    favorites = raw ? JSON.parse(raw) : { sentences: [], words: [], grammar: [], songs: [] };
+  } catch (e) {
+    favorites = { sentences: [], words: [], grammar: [], songs: [] };
+  }
+  favorites.sentences = favorites.sentences || [];
+  favorites.words = favorites.words || [];
+  favorites.grammar = favorites.grammar || [];
+  favorites.songs = favorites.songs || [];
+}
+function saveFavorites() {
+  localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
+  renderFavoritesSummary();
+  renderFavoritesDetail();
+}
+
+function isSentenceFav(songId, lineId) {
+  return favorites.sentences.some(f => f.songId === songId && f.lineId === lineId);
+}
+function toggleSentenceFav(songId, lineId, kr, zh) {
+  if (isSentenceFav(songId, lineId)) {
+    favorites.sentences = favorites.sentences.filter(f => !(f.songId === songId && f.lineId === lineId));
+  } else {
+    favorites.sentences.push({ songId, lineId, kr, zh });
+  }
+  saveFavorites();
+  renderLyricsReader();
+}
+function addWordsFav(songId, lineId, words) {
+  (words || []).forEach(w => {
+    if (!w.k) return;
+    if (!favorites.words.some(f => f.k === w.k)) {
+      favorites.words.push({ k: w.k, z: w.z || "", songId, lineId });
+    }
+  });
+  saveFavorites();
+  renderLyricsReader();
+}
+function addGrammarFav(songId, lineId, grammar) {
+  (grammar || []).forEach(g => {
+    if (!g.p) return;
+    if (!favorites.grammar.some(f => f.p === g.p)) {
+      favorites.grammar.push({ p: g.p, n: g.n || "", songId, lineId });
+    }
+  });
+  saveFavorites();
+  renderLyricsReader();
+}
+function isSongFav(songId) { return favorites.songs.includes(songId); }
+function toggleSongFav(songId) {
+  if (isSongFav(songId)) favorites.songs = favorites.songs.filter(id => id !== songId);
+  else favorites.songs.push(songId);
+  saveFavorites();
+  renderLyricsReader();
+  renderLyricsSongGrid();
+}
+function removeFavSentence(i) { favorites.sentences.splice(i, 1); saveFavorites(); }
+function removeFavWord(i) { favorites.words.splice(i, 1); saveFavorites(); }
+function removeFavGrammar(i) { favorites.grammar.splice(i, 1); saveFavorites(); }
+function removeFavSong(i) { favorites.songs.splice(i, 1); saveFavorites(); renderLyricsSongGrid(); }
+
+function computeSongStats(song) {
+  const totalLines = song.lines.length;
+  const filledLines = song.lines.filter(l => l.zh && l.zh.trim()).length;
+  const wordSet = new Set();
+  const grammarSet = new Set();
+  song.lines.forEach(l => {
+    (l.words || []).forEach(w => w.k && wordSet.add(w.k));
+    (l.grammar || []).forEach(g => g.p && grammarSet.add(g.p));
+  });
+  const completion = totalLines ? Math.round((filledLines / totalLines) * 100) : 0;
+  return { totalLines, filledLines, totalWords: wordSet.size, totalGrammar: grammarSet.size, completion };
+}
+
+function renderFavoritesSummary() {
+  const setNum = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  setNum("favSentenceCount", favorites.sentences.length);
+  setNum("favWordCount", favorites.words.length);
+  setNum("favGrammarCount", favorites.grammar.length);
+  setNum("favSongCount", favorites.songs.length);
+}
+
+function renderFavoritesDetail() {
+  const wrap = document.getElementById("favoritesDetailWrap");
+  if (!wrap) return;
+  const songTitle = (songId) => (lyricsSongs.find(s => s.id === songId) || {}).title || "未知歌曲";
+
+  const sentencesHtml = favorites.sentences.length
+    ? favorites.sentences.map((f, i) => `
+      <div class="lyrics-line-card" style="cursor:default;">
+        <div class="btns" style="justify-content:space-between;">
+          <div><b>${esc(f.kr)}</b><div style="color:var(--muted);font-size:13px;">${esc(f.zh || "")} · ${esc(songTitle(f.songId))}</div></div>
+          <button class="ghost" onclick="removeFavSentence(${i})">移除</button>
+        </div>
+      </div>`).join("")
+    : `<div class="empty">還沒有收藏的句子。在歌詞讀本點「❤️ 收藏句子」試試看！</div>`;
+
+  const wordsHtml = favorites.words.length
+    ? `<div style="display:flex;flex-wrap:wrap;gap:8px;">${favorites.words.map((f, i) =>
+        `<span class="lyrics-detail-tag" style="background:var(--green-soft);color:#4e8f24;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:900;">${esc(f.k)}（${esc(f.z || "")}）<span style="cursor:pointer;margin-left:6px;" onclick="removeFavWord(${i})">✕</span></span>`
+      ).join("")}</div>`
+    : `<div class="empty">還沒有收藏的單字。</div>`;
+
+  const grammarHtml = favorites.grammar.length
+    ? `<div style="display:flex;flex-wrap:wrap;gap:8px;">${favorites.grammar.map((f, i) =>
+        `<span class="lyrics-detail-tag" style="background:var(--green-soft);color:#4e8f24;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:900;">${esc(f.p)}${f.n ? " " + esc(f.n) : ""}<span style="cursor:pointer;margin-left:6px;" onclick="removeFavGrammar(${i})">✕</span></span>`
+      ).join("")}</div>`
+    : `<div class="empty">還沒有收藏的文法。</div>`;
+
+  const songsHtml = favorites.songs.length
+    ? favorites.songs.map((sid, i) => `
+      <div class="lyrics-line-card" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="goBottomTab('lyrics');openLyricsReader('${sid}')">
+        <b>🎵 ${esc(songTitle(sid))}</b>
+        <button class="ghost" onclick="event.stopPropagation();removeFavSong(${i})">移除</button>
+      </div>`).join("")
+    : `<div class="empty">還沒有收藏的歌曲。</div>`;
+
+  wrap.innerHTML = `
+    <div style="font-weight:1000;margin:14px 0 8px;">❤️ 收藏句子</div>${sentencesHtml}
+    <div style="font-weight:1000;margin:18px 0 8px;">⭐ 收藏單字</div>${wordsHtml}
+    <div style="font-weight:1000;margin:18px 0 8px;">📄 收藏文法</div>${grammarHtml}
+    <div style="font-weight:1000;margin:18px 0 8px;">🎵 收藏歌曲</div>${songsHtml}
+  `;
+}
 
 function defaultLyricsSongs() {
   return [{
@@ -4529,32 +4690,73 @@ function renderLyricsSongGrid() {
     grid.innerHTML = `<div class="empty">還沒有任何歌曲。<br>點右上角「＋ 新增歌曲」開始建立你的歌詞讀本吧！</div>`;
     return;
   }
-  grid.innerHTML = lyricsSongs.map(s => `
+  grid.innerHTML = lyricsSongs.map(s => {
+    const stats = computeSongStats(s);
+    return `
     <div class="folder card" onclick="openLyricsReader('${s.id}')">
       <div class="folder-inner">
-        <div class="folder-title">🎵 ${esc(s.title)}</div>
-        <div class="folder-meta">${esc(s.artist || "未命名歌手")}<br>${s.lines.length} 句歌詞</div>
+        <div class="folder-title">🎵 ${esc(s.title)} ${isSongFav(s.id) ? "❤️" : ""}</div>
+        <div class="folder-meta">
+          ${esc(s.artist || "未命名歌手")}<br>
+          已學會 ${stats.totalWords} 個單字・${stats.totalGrammar} 個文法<br>
+          完成度 ${stats.completion}%
+        </div>
       </div>
-    </div>`).join("");
+    </div>`;
+  }).join("");
+  renderRecentSongCard();
 }
 
 function openSongEditor() {
   document.getElementById("songEditorTitle").value = "";
   document.getElementById("songEditorArtist").value = "";
   document.getElementById("songEditorLyrics").value = "";
+  const autoZh = document.getElementById("songEditorAutoZh");
+  if (autoZh) autoZh.checked = true;
   document.getElementById("songEditorMask").classList.add("show");
 }
 function closeSongEditor() {
   document.getElementById("songEditorMask").classList.remove("show");
 }
 
+function isKoreanLine(line) {
+  return /[\uac00-\ud7a3\u1100-\u11ff\u3130-\u318f]/.test(line);
+}
+
+function parseLyricsInput(raw, autoZh) {
+  const rawLines = raw.split("\n").map(l => l.trim()).filter(Boolean);
+  const lines = [];
+  if (!autoZh) {
+    return rawLines.map(kr => ({ id: uid(), kr, zh: "", words: [], grammar: [] }));
+  }
+  let i = 0;
+  while (i < rawLines.length) {
+    const cur = rawLines[i];
+    if (isKoreanLine(cur)) {
+      const next = rawLines[i + 1];
+      if (next && !isKoreanLine(next)) {
+        lines.push({ id: uid(), kr: cur, zh: next, words: [], grammar: [] });
+        i += 2;
+      } else {
+        lines.push({ id: uid(), kr: cur, zh: "", words: [], grammar: [] });
+        i += 1;
+      }
+    } else {
+      // No preceding Korean line to pair with — keep as its own line so nothing gets lost.
+      lines.push({ id: uid(), kr: cur, zh: "", words: [], grammar: [] });
+      i += 1;
+    }
+  }
+  return lines;
+}
+
 function createSongFromEditor() {
   const title = document.getElementById("songEditorTitle").value.trim();
   const artist = document.getElementById("songEditorArtist").value.trim();
   const raw = document.getElementById("songEditorLyrics").value;
+  const autoZh = document.getElementById("songEditorAutoZh")?.checked;
   if (!title) { alert("請先輸入歌曲名稱"); return; }
-  const lines = raw.split("\n").map(l => l.trim()).filter(Boolean)
-    .map(kr => ({ id: uid(), kr, zh: "", words: [], grammar: [] }));
+  const lines = parseLyricsInput(raw, autoZh);
   const song = { id: uid(), title, artist, lines };
   lyricsSongs.push(song);
   saveLyricsSongs();
@@ -4565,6 +4767,7 @@ function createSongFromEditor() {
 
 function openLyricsReader(songId) {
   currentSongId = songId;
+  localStorage.setItem(LAST_SONG_KEY, songId);
   document.getElementById("lyricsListView").style.display = "none";
   document.getElementById("lyricsReaderView").style.display = "block";
   renderLyricsReader();
@@ -4595,8 +4798,14 @@ function renderLyricsReader() {
   if (!song) { closeLyricsReader(); return; }
   document.getElementById("lyricsReaderTitle").textContent = song.title;
   document.getElementById("lyricsReaderArtist").textContent = song.artist || "";
+  const favBtn = document.getElementById("songFavBtn");
+  if (favBtn) favBtn.textContent = isSongFav(song.id) ? "❤️ 已收藏" : "🤍 收藏歌曲";
   const wrap = document.getElementById("lyricsLinesWrap");
-  wrap.innerHTML = song.lines.map((ln, i) => `
+  wrap.innerHTML = song.lines.map((ln, i) => {
+    const wordTags = (ln.words || []).map(w => `<span class="lyrics-detail-tag-static">${esc(w.k)}（${esc(w.z || "")}）</span>`).join(" ");
+    const grammarTags = (ln.grammar || []).map(g => `<span class="lyrics-detail-tag-static">${esc(g.p)}${g.n ? " " + esc(g.n) : ""}</span>`).join(" ");
+    const sentFav = isSentenceFav(song.id, ln.id);
+    return `
     <div class="lyrics-line-card" style="cursor:default;">
       <div class="btns" style="justify-content:space-between;margin-bottom:8px;">
         <span style="font-weight:900;color:var(--muted);">第 ${i + 1} 句</span>
@@ -4615,9 +4824,16 @@ function renderLyricsReader() {
         style="width:100%;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px;font-size:13px;"
         oninput="updateLyricsLinePairs('${ln.id}','words',this.value,'k','z')">
       <input type="text" value="${escapeAttr(pairsToText(ln.grammar, 'p', 'n'))}" placeholder="文法，格式：文法點=說明, 文法點=說明"
-        style="width:100%;border:1px solid var(--line);border-radius:12px;padding:10px;font-size:13px;"
+        style="width:100%;border:1px solid var(--line);border-radius:12px;padding:10px;font-size:13px;margin-bottom:10px;"
         oninput="updateLyricsLinePairs('${ln.id}','grammar',this.value,'p','n')">
-    </div>`).join("");
+      ${wordTags || grammarTags ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">${wordTags}${grammarTags}</div>` : ""}
+      <div class="btns">
+        <button class="ghost" type="button" onclick="addWordsFav('${song.id}','${ln.id}', ${JSON.stringify(ln.words || []).replace(/"/g, "&quot;")})">⭐ 加入單字</button>
+        <button class="ghost" type="button" onclick="addGrammarFav('${song.id}','${ln.id}', ${JSON.stringify(ln.grammar || []).replace(/"/g, "&quot;")})">📄 加入文法</button>
+        <button class="ghost" type="button" onclick="toggleSentenceFav('${song.id}','${ln.id}', ${JSON.stringify(ln.kr).replace(/"/g, "&quot;")}, ${JSON.stringify(ln.zh || "").replace(/"/g, "&quot;")})">${sentFav ? "❤️ 已收藏句子" : "🤍 收藏句子"}</button>
+      </div>
+    </div>`;
+  }).join("");
 }
 
 function updateLyricsLine(lineId, field, value) {
@@ -4714,8 +4930,35 @@ function importLyricsSongs(file) {
   document.getElementById("lyricsImportFile").value = "";
 }
 
-loadLyricsSongs();
-renderLyricsSongGrid();
+function renderRecentSongCard() {
+  const body = document.getElementById("recentSongBody");
+  if (!body) return;
+  if (!lyricsSongs.length) {
+    body.innerHTML = `<div class="empty" style="padding:20px 0;">去「歌詞讀本」建立第一首歌吧！</div>`;
+    return;
+  }
+  const lastId = localStorage.getItem(LAST_SONG_KEY);
+  const song = lyricsSongs.find(s => s.id === lastId) || lyricsSongs[lyricsSongs.length - 1];
+  const stats = computeSongStats(song);
+  body.innerHTML = `
+    <div style="font-weight:1000;font-size:17px;">${esc(song.title)}</div>
+    <div style="color:var(--muted);font-weight:800;margin-bottom:10px;">${esc(song.artist || "")}</div>
+    <div class="bar"><span style="width:${stats.completion}%"></span></div>
+    <div style="font-size:12px;color:var(--muted);margin:6px 0 12px;">學習進度 ${stats.completion}%</div>
+    <div class="btns" style="justify-content:space-between;">
+      <button class="primary" style="flex:1;" onclick="goBottomTab('lyrics');openLyricsReader('${song.id}')">▶️ 繼續學習</button>
+      <button class="ghost" onclick="toggleSongFav('${song.id}')">${isSongFav(song.id) ? "❤️" : "🤍"}</button>
+    </div>`;
+}
+
+function initFavoritesAndLyrics() {
+  loadFavorites();
+  loadLyricsSongs();
+  renderLyricsSongGrid();
+  renderFavoritesSummary();
+  renderFavoritesDetail();
+}
+initFavoritesAndLyrics();
 
 setupHeroCarousel();
 
