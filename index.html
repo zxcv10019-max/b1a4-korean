@@ -1874,17 +1874,11 @@ textarea {
 #folderGrid { display:block !important; }
 .folder-card-grid {
   display:grid;
-  grid-template-columns:repeat(4, 1fr);
-  gap:14px;
+  grid-template-columns:repeat(2, 1fr);
+  gap:16px;
 }
-@media (max-width:980px) {
-  .folder-card-grid { grid-template-columns:repeat(3, 1fr); }
-}
-@media (max-width:720px) {
-  .folder-card-grid { grid-template-columns:repeat(2, 1fr); }
-}
-@media (max-width:460px) {
-  .folder-card-grid { grid-template-columns:1fr 1fr; }
+@media (max-width:520px) {
+  .folder-card-grid { grid-template-columns:1fr; }
 }
 .forest-folder-card {
   position:relative;
@@ -2325,14 +2319,7 @@ textarea {
           </div>
         </div>
 
-        <div class="home-design-grid">
-          <div class="daily-card">
-            <div class="design-title">📖 今日一句</div>
-            <div class="daily-korean" id="dailyKorean">오늘도 열심히 공부하자.</div>
-            <div class="daily-zh" id="dailyZh">今天也認真學習吧。</div>
-            <button class="design-btn" onclick="speakKorean(document.getElementById('dailyKorean').textContent)">🔊 播放</button>
-          </div>
-
+        <div class="home-design-grid" style="grid-template-columns:1fr;">
           <div class="shortcut-card">
             <div class="design-title">⚡ 快捷開始</div>
             <div class="shortcut-grid">
@@ -2342,62 +2329,23 @@ textarea {
               <div class="shortcut-tile" onclick="goPage('listen')">🔊 聽力</div>
             </div>
           </div>
-
-          <div class="badge-card">
-            <div class="design-title">🏅 成就徽章</div>
-            <div class="badge-list">
-              <div class="ach-badge" id="badgeLogin" title="開始學習">🌱</div>
-              <div class="ach-badge" id="badgeCards" title="擁有 50 個單字">📚</div>
-              <div class="ach-badge" id="badgePractice" title="練習 10 次">🔥</div>
-              <div class="ach-badge" id="badgeForest" title="森林成長">🌳</div>
-              <div class="ach-badge" id="badgeBana" title="BANA 很棒">💚</div>
-            </div>
-            <div class="heatmap" id="studyHeatmap"></div>
-          </div>
         </div>
 
-        <div class="home-design-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="home-design-grid" style="grid-template-columns:1fr;">
           <div class="daily-card" id="recentSongCard">
             <div class="design-title">🎵 最近學習的歌曲</div>
             <div id="recentSongBody" style="text-align:left;">
               <div class="empty" style="padding:20px 0;">去「歌詞讀本」建立第一首歌吧！</div>
             </div>
           </div>
-
-          <div class="badge-card">
-            <div class="design-title">💚 我的收藏</div>
-            <div class="btns" style="justify-content:space-between;flex-wrap:wrap;gap:14px;margin-top:6px;">
-              <div style="text-align:center;flex:1;min-width:60px;cursor:pointer;" onclick="goPage('profile')"><div style="font-size:22px;">❤️</div><b id="favSentenceCount">0</b><div style="font-size:11px;color:var(--muted);">收藏句子</div></div>
-              <div style="text-align:center;flex:1;min-width:60px;cursor:pointer;" onclick="goPage('profile')"><div style="font-size:22px;">⭐</div><b id="favWordCount">0</b><div style="font-size:11px;color:var(--muted);">收藏單字</div></div>
-              <div style="text-align:center;flex:1;min-width:60px;cursor:pointer;" onclick="goPage('profile')"><div style="font-size:22px;">📄</div><b id="favGrammarCount">0</b><div style="font-size:11px;color:var(--muted);">收藏文法</div></div>
-              <div style="text-align:center;flex:1;min-width:60px;cursor:pointer;" onclick="goPage('profile')"><div style="font-size:22px;">🎵</div><b id="favSongCount">0</b><div style="font-size:11px;color:var(--muted);">收藏歌曲</div></div>
-            </div>
-            <button class="ghost" style="margin-top:14px;width:100%;" onclick="goPage('profile')">查看全部收藏 ›</button>
-          </div>
         </div>
 
         <div id="graduationPanel" class="graduation-panel"></div>
-
-        <div id="studyUpgradePanel" class="study-upgrade-panel">
-          <div class="study-upgrade-title">🌱 學習加強</div>
-          <div id="upgradeSummary" class="upgrade-grid"></div>
-          <div id="wrongBookPreview" class="wrongbook-list"></div>
-        
-        <div id="folderStatsPanel" class="folder-stats-panel">
-          <div class="folder-stats-head">
-            <div class="folder-stats-title">📊 題庫學習紀錄</div>
-            <button class="folder-stats-toggle" onclick="toggleFolderStats()">查看詳細紀錄</button>
-          </div>
-          <div id="folderStatsSummary" class="folder-stats-summary"></div>
-          <div id="folderStatsDetail" class="folder-stats-detail"></div>
-        </div>
 
         <div id="voiceSpeedPanel" class="voice-speed-panel" style="display:none">
           <input id="voiceSpeedRange" type="range" min="0.5" max="1.2" step="0.05" value="0.65" oninput="setVoiceSpeed(this.value)">
           <span id="voiceSpeedValue">0.65</span>
         </div>
-
-</div>
 
       </section>
 
@@ -2715,6 +2663,33 @@ textarea {
             <button class="ghost" style="font-size:12px;padding:8px 14px;" onclick="clearAllPracticeData()">🗑 清除練習紀錄</button>
           </div>
           <div id="detailedStatsBody"></div>
+        </div>
+
+        <div class="card" style="padding:22px;margin-bottom:18px;">
+          <div style="font-weight:1000;font-size:18px;margin-bottom:10px;">🏅 成就徽章</div>
+          <div class="badge-list">
+            <div class="ach-badge" id="badgeLogin" title="開始學習">🌱</div>
+            <div class="ach-badge" id="badgeCards" title="擁有 50 個單字">📚</div>
+            <div class="ach-badge" id="badgePractice" title="練習 10 次">🔥</div>
+            <div class="ach-badge" id="badgeForest" title="森林成長">🌳</div>
+            <div class="ach-badge" id="badgeBana" title="BANA 很棒">💚</div>
+          </div>
+          <div class="heatmap" id="studyHeatmap"></div>
+        </div>
+
+        <div id="studyUpgradePanel" class="study-upgrade-panel" style="margin-bottom:18px;">
+          <div class="study-upgrade-title">🌱 學習加強</div>
+          <div id="upgradeSummary" class="upgrade-grid"></div>
+          <div id="wrongBookPreview" class="wrongbook-list"></div>
+
+          <div id="folderStatsPanel" class="folder-stats-panel">
+            <div class="folder-stats-head">
+              <div class="folder-stats-title">📊 題庫學習紀錄</div>
+              <button class="folder-stats-toggle" onclick="toggleFolderStats()">查看詳細紀錄</button>
+            </div>
+            <div id="folderStatsSummary" class="folder-stats-summary"></div>
+            <div id="folderStatsDetail" class="folder-stats-detail"></div>
+          </div>
         </div>
 
         <div class="card" style="padding:22px;margin-bottom:18px;">
@@ -3665,10 +3640,9 @@ function makeForestFolderCard(f, i) {
       <span class="ffc-mascot">${mascot}</span>
     </div>
     <div class="ffc-name">${esc(f.name)}</div>
-    <div class="ffc-meta"><span>📖 ${cardCount} 字</span><span>🔥 ${f.practice || 0} 次</span></div>
+    <div class="ffc-meta"><span>📖 ${cardCount} 字</span></div>
     <div class="ffc-progress-track"><div class="ffc-progress-fill" style="width:${gStats.flashPercent}%"></div></div>
     <div class="ffc-stage-row"><span class="ffc-stage">${stage.icon} ${stage.label}</span><span class="ffc-percent">${gStats.flashPercent}%</span></div>
-    <div class="ffc-date">🕒 ${esc(f.updated || today())}</div>
     <button type="button" class="ffc-start-btn" onclick="event.stopPropagation();quickStartFlash(${i})">▶ 開始學習</button>`;
   d.onclick = () => { loadFolder(i); document.getElementById("editor").scrollIntoView({behavior:"smooth"}); };
   return d;
