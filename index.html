@@ -557,6 +557,7 @@ textarea {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
   padding: 12px 18px;
   background: var(--green-soft);
   border-radius: 18px;
@@ -572,12 +573,17 @@ textarea {
   transition: transform 0.25s;
   display: inline-block;
   width: 22px;
+  flex: 0 0 auto;
 }
 .group-header.collapsed .group-toggle { transform: rotate(-90deg); }
 .group-header .group-name {
   font-weight: 1000;
   font-size: 17px;
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .group-header .group-count {
   font-size: 13px;
@@ -586,10 +592,12 @@ textarea {
   padding: 4px 12px;
   border-radius: 99px;
   border: 1px solid var(--line);
+  flex: 0 0 auto;
 }
 .group-header .group-actions {
   display: flex;
   gap: 6px;
+  flex: 0 0 auto;
 }
 .group-header .group-actions button {
   padding: 6px 10px;
@@ -601,6 +609,29 @@ textarea {
   font-weight: 900;
 }
 .group-header .group-actions button:hover { background: #f0f8e8; }
+@media (max-width: 600px) {
+  .group-header {
+    justify-content: space-between;
+    padding: 10px 14px;
+    gap: 8px;
+  }
+  .group-header .group-name {
+    flex: 1 1 100% !important;
+    width: 100%;
+    order: 1;
+    font-size: 15px;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: block;
+  }
+  .group-header .group-toggle { order: 0; }
+  .group-header .group-count { order: 2; font-size: 11px; padding: 3px 9px; }
+  .group-header .group-progress { order: 3; }
+  .group-header .group-progress-track { width: 44px; }
+  .group-header .group-actions { order: 4; margin-left: auto; }
+  .group-header .group-actions button { padding: 5px 8px; font-size: 11px; }
+}
 .group-body {
   padding-left: 8px;
   transition: all 0.25s;
@@ -3111,7 +3142,7 @@ setTimeout(()=>{try{renderFlashSeenBox();renderFolderStatsPanel();renderStudyUpg
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script>
-let flashSeenData = {};
+let flashSeenData = JSON.parse(localStorage.getItem("b1a4FlashSeenData") || "{}");
 // ===== Firebase 雲端同步設定 =====
 // 使用前請到 Firebase 建立 Web App，並把下方值換成自己的設定。
 // Authentication 請啟用 Google 登入；Firestore 請建立資料庫。
@@ -3189,6 +3220,10 @@ async function logoutAccount() {
 function getCloudPayload() {
   return {
     folders, groups, stats, collapsedGroups,
+    masteryData, wrongBookData, graduationData,
+    folderPracticeStats, flashSeenData, voiceSpeed,
+    activityLog,
+    lyricsSongs, favorites,
     updatedAt: new Date().toISOString()
   };
 }
@@ -3204,14 +3239,32 @@ async function loadCloudData() {
       groups = Array.isArray(data.groups) ? data.groups : [];
       stats = data.stats || { practice:0 };
       collapsedGroups = Array.isArray(data.collapsedGroups) ? data.collapsedGroups : [];
+      masteryData = data.masteryData || masteryData || {};
+      wrongBookData = data.wrongBookData || wrongBookData || {};
+      graduationData = data.graduationData || graduationData || {};
+      activityLog = data.activityLog || activityLog || {};
+      lyricsSongs = Array.isArray(data.lyricsSongs) ? data.lyricsSongs : (lyricsSongs || []);
+      favorites = data.favorites || favorites || { sentences: [], words: [], grammar: [], songs: [] };
       current = folders.length ? 0 : null;
       writeLocalOnly();
+      localStorage.setItem("b1a4MasteryData", JSON.stringify(masteryData));
+      localStorage.setItem("b1a4WrongBookData", JSON.stringify(wrongBookData));
+      localStorage.setItem("b1a4GraduationData", JSON.stringify(graduationData));
+      localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(activityLog));
+      localStorage.setItem(LYRICS_STORAGE_KEY, JSON.stringify(lyricsSongs));
+      localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
       renderFolders();
       if (current !== null) loadFolder(current); else voiceSpeed = Number(data.voiceSpeed || voiceSpeed || 0.65);
       initVoiceSpeedUI();
       folderPracticeStats = data.folderPracticeStats || folderPracticeStats || {};
       flashSeenData = data.flashSeenData || flashSeenData || {};
       renderDashboard();
+      if (typeof renderLyricsSongGrid === "function") renderLyricsSongGrid();
+      if (typeof renderFavoritesSummary === "function") renderFavoritesSummary();
+      if (typeof renderFavoritesDetail === "function") renderFavoritesDetail();
+      if (typeof renderLearningCalendar === "function") renderLearningCalendar();
+      if (typeof renderDetailedStats === "function") renderDetailedStats();
+      if (typeof updateHeroStats === "function") updateHeroStats();
       isLoadingCloud = false;
       updateSyncUI("已登入：" + (cloudUser.email || cloudUser.displayName || "Google 帳號") + "，題庫已同步。", "已同步", true);
     } else {
@@ -3278,6 +3331,7 @@ function logActivity(category, amount) {
   localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(activityLog));
   renderLearningCalendar();
   if (typeof renderHomeQuestDesign === "function") renderHomeQuestDesign();
+  if (typeof scheduleCloudSave === "function") scheduleCloudSave();
 }
 
 function todayActivity() {
@@ -3524,11 +3578,11 @@ let current = folders.length ? 0 : null;
 let collapsedGroups = JSON.parse(localStorage.getItem("b1a4_collapsed_groups") || "[]");
 let currentColor = "#c6e09c";
 let flashCards = [], flashIndex = 0, testCards = [], matchCards = [];
-let graduationData = {};
-let wrongBookData = {};
-let masteryData = {};
-let folderPracticeStats = {};
-let voiceSpeed = 0.65;
+let graduationData = JSON.parse(localStorage.getItem("b1a4GraduationData") || "{}");
+let wrongBookData = JSON.parse(localStorage.getItem("b1a4WrongBookData") || "{}");
+let masteryData = JSON.parse(localStorage.getItem("b1a4MasteryData") || "{}");
+let folderPracticeStats = JSON.parse(localStorage.getItem("b1a4FolderPracticeStats") || "{}");
+let voiceSpeed = Number(localStorage.getItem("b1a4VoiceSpeed") || 0.65);
 let graduationConfettiShown = {};
 let leftSel = null, rightSel = null, matchDone = 0;
 
@@ -5813,6 +5867,7 @@ function saveFavorites() {
   localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
   renderFavoritesSummary();
   renderFavoritesDetail();
+  if (typeof scheduleCloudSave === "function") scheduleCloudSave();
 }
 
 function isSentenceFav(songId, lineId) {
@@ -5948,6 +6003,7 @@ function loadLyricsSongs() {
 
 function saveLyricsSongs() {
   localStorage.setItem(LYRICS_STORAGE_KEY, JSON.stringify(lyricsSongs));
+  if (typeof scheduleCloudSave === "function") scheduleCloudSave();
 }
 
 function renderLyricsSongGrid() {
