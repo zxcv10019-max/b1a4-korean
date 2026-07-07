@@ -510,64 +510,6 @@ textarea {
   color:#4d8b22;
   opacity:.72;
 }
-
-.flash-note-box{
-  margin:18px auto 0;
-  max-width:720px;
-  border:1px solid var(--line);
-  background:#fbfff7;
-  border-radius:22px;
-  padding:18px;
-  box-shadow:0 10px 24px rgba(90,120,60,.08);
-}
-.flash-note-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  font-weight:900;
-  color:var(--green-dark);
-  margin-bottom:10px;
-}
-.flash-note-view{
-  min-height:44px;
-  padding:12px 14px;
-  border-radius:16px;
-  background:#f3f9ec;
-  color:#3b4d32;
-  line-height:1.7;
-  white-space:pre-wrap;
-}
-.flash-note-empty{
-  color:var(--muted);
-  font-weight:700;
-}
-.flash-note-textarea{
-  width:100%;
-  min-height:96px;
-  resize:vertical;
-  border:1px solid var(--line);
-  border-radius:16px;
-  padding:12px 14px;
-  font-family:inherit;
-  font-size:15px;
-  line-height:1.6;
-  background:#fffef9;
-  color:var(--text);
-  outline:none;
-}
-.flash-note-textarea:focus{
-  border-color:var(--green);
-  box-shadow:0 0 0 3px rgba(131,184,66,.16);
-}
-.flash-note-actions{
-  display:flex;
-  justify-content:flex-end;
-  gap:10px;
-  margin-top:12px;
-  flex-wrap:wrap;
-}
-
 @media(max-width:1050px) {
   .app { grid-template-columns:1fr; }
   .sidebar {
@@ -999,7 +941,7 @@ textarea {
 }
 .folder-stat-grid{
   display:grid;
-  grid-template-columns:repeat(5,1fr);
+  grid-template-columns:repeat(4,1fr);
   gap:10px;
   margin-top:10px;
 }
@@ -1177,6 +1119,63 @@ textarea {
 
 .folder-stat-grid{grid-template-columns:repeat(5,1fr)!important;}
 
+
+/* ===== 單字卡看過進度 ===== */
+.flash-seen-box{
+  margin-top:12px;
+  padding:12px 14px;
+  border-radius:16px;
+  background:#fbfff6;
+  border:1px solid #d9ecc4;
+  color:#315321;
+  font-weight:900;
+  display:flex;
+  justify-content:center;
+  gap:18px;
+  flex-wrap:wrap;
+}
+.flash-seen-box span b{
+  color:#4e8f24;
+  font-size:20px;
+}
+
+
+
+/* ===== 2026 首頁養成設計：今日學習 / 森林 / 成就 ===== */
+.home-quest-wrap{display:grid;grid-template-columns:1.25fr .85fr;gap:22px;margin-bottom:24px;}
+.today-quest-card,.forest-card,.daily-card,.badge-card,.shortcut-card{position:relative;overflow:hidden;border:1px solid rgba(131,184,66,.22);background:linear-gradient(145deg,#fffffb,#f2fae9);border-radius:30px;box-shadow:0 18px 44px rgba(72,108,39,.10);padding:24px;}
+.today-quest-card:before{content:"";position:absolute;right:-52px;top:-54px;width:190px;height:190px;border-radius:50%;background:rgba(131,184,66,.16);}
+.quest-eyebrow{color:#6e8d50;font-size:14px;font-weight:900;letter-spacing:.08em;}
+.quest-title{font-size:34px;line-height:1.2;margin:7px 0 8px;color:#25491d;font-weight:1000;}
+.quest-sub{color:#6f7d66;font-weight:800;margin-bottom:18px;}
+.quest-meter{height:16px;background:#e2edd6;border-radius:999px;overflow:hidden;border:1px solid #d8e8c8;}
+.quest-meter span{display:block;height:100%;width:0%;background:linear-gradient(90deg,#83b842,#c6e48b);border-radius:999px;transition:.5s ease;}
+.quest-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px;}
+.quest-mini{background:#fff;border:1px solid #e0ecd2;border-radius:20px;padding:14px;text-align:center;font-weight:900;box-shadow:0 8px 18px rgba(93,123,68,.08);}
+.quest-mini b{display:block;font-size:22px;color:#4e8f24;margin-top:5px;}
+.forest-stage{min-height:170px;border-radius:28px;background:linear-gradient(180deg,#eaf8df,#fbfff6 72%);border:1px dashed #b8d99a;display:flex;align-items:center;justify-content:center;font-size:42px;line-height:1.55;text-align:center;padding:18px;margin-top:14px;}
+.forest-level{display:flex;justify-content:space-between;gap:10px;align-items:center;font-weight:1000;color:#355c26;}
+.home-design-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:24px;}
+.daily-card{grid-column:span 1;}
+.shortcut-card{grid-column:span 1;}
+.badge-card{grid-column:span 1;}
+.design-title{font-size:20px;font-weight:1000;color:#2f5524;margin-bottom:12px;}
+.daily-korean{font-size:26px;font-weight:1000;color:#315321;margin:10px 0 6px;}
+.daily-zh{color:#6f7d66;font-weight:800;}
+.design-btn{border:0;background:#4e8f24;color:#fff;border-radius:999px;padding:10px 15px;font-weight:1000;cursor:pointer;margin-top:14px;box-shadow:0 8px 18px rgba(78,143,36,.18);}
+.shortcut-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.shortcut-tile{border:1px solid #e1ecd3;background:#fff;border-radius:18px;padding:14px;font-weight:1000;cursor:pointer;transition:.18s;}
+.shortcut-tile:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(83,120,56,.12);}
+.badge-list{display:flex;flex-wrap:wrap;gap:10px;}
+.ach-badge{width:54px;height:54px;border-radius:18px;background:#fff;border:1px solid #e2ecd6;display:flex;align-items:center;justify-content:center;font-size:26px;filter:grayscale(1);opacity:.46;position:relative;}
+.ach-badge.on{filter:none;opacity:1;box-shadow:0 10px 20px rgba(131,184,66,.16);}
+.heatmap{display:grid;grid-template-columns:repeat(14,1fr);gap:5px;margin-top:12px;}
+.heat-cell{aspect-ratio:1;border-radius:6px;background:#e6eedb;border:1px solid #dbe8ce;}
+.heat-cell.on{background:#9bd36b;}
+.home-note-pill{display:inline-flex;align-items:center;gap:6px;background:#fff7d9;color:#6f5310;border:1px solid #f0dfa0;border-radius:999px;padding:8px 12px;font-weight:900;margin-top:12px;}
+@media (max-width:980px){.home-quest-wrap,.home-design-grid{grid-template-columns:1fr}.daily-card,.shortcut-card,.badge-card{grid-column:auto}.quest-row{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:680px){.quest-title{font-size:27px}.quest-row{grid-template-columns:1fr}.forest-stage{font-size:34px}.today-quest-card,.forest-card,.daily-card,.badge-card,.shortcut-card{border-radius:24px;padding:18px}}
+
 </style>
 
 
@@ -1188,6 +1187,43 @@ textarea {
 [class*="voice-speed"]{
     display:none !important;
 }
+
+
+/* ===== 2026 首頁養成設計：今日學習 / 森林 / 成就 ===== */
+.home-quest-wrap{display:grid;grid-template-columns:1.25fr .85fr;gap:22px;margin-bottom:24px;}
+.today-quest-card,.forest-card,.daily-card,.badge-card,.shortcut-card{position:relative;overflow:hidden;border:1px solid rgba(131,184,66,.22);background:linear-gradient(145deg,#fffffb,#f2fae9);border-radius:30px;box-shadow:0 18px 44px rgba(72,108,39,.10);padding:24px;}
+.today-quest-card:before{content:"";position:absolute;right:-52px;top:-54px;width:190px;height:190px;border-radius:50%;background:rgba(131,184,66,.16);}
+.quest-eyebrow{color:#6e8d50;font-size:14px;font-weight:900;letter-spacing:.08em;}
+.quest-title{font-size:34px;line-height:1.2;margin:7px 0 8px;color:#25491d;font-weight:1000;}
+.quest-sub{color:#6f7d66;font-weight:800;margin-bottom:18px;}
+.quest-meter{height:16px;background:#e2edd6;border-radius:999px;overflow:hidden;border:1px solid #d8e8c8;}
+.quest-meter span{display:block;height:100%;width:0%;background:linear-gradient(90deg,#83b842,#c6e48b);border-radius:999px;transition:.5s ease;}
+.quest-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px;}
+.quest-mini{background:#fff;border:1px solid #e0ecd2;border-radius:20px;padding:14px;text-align:center;font-weight:900;box-shadow:0 8px 18px rgba(93,123,68,.08);}
+.quest-mini b{display:block;font-size:22px;color:#4e8f24;margin-top:5px;}
+.forest-stage{min-height:170px;border-radius:28px;background:linear-gradient(180deg,#eaf8df,#fbfff6 72%);border:1px dashed #b8d99a;display:flex;align-items:center;justify-content:center;font-size:42px;line-height:1.55;text-align:center;padding:18px;margin-top:14px;}
+.forest-level{display:flex;justify-content:space-between;gap:10px;align-items:center;font-weight:1000;color:#355c26;}
+.home-design-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:24px;}
+.daily-card{grid-column:span 1;}
+.shortcut-card{grid-column:span 1;}
+.badge-card{grid-column:span 1;}
+.design-title{font-size:20px;font-weight:1000;color:#2f5524;margin-bottom:12px;}
+.daily-korean{font-size:26px;font-weight:1000;color:#315321;margin:10px 0 6px;}
+.daily-zh{color:#6f7d66;font-weight:800;}
+.design-btn{border:0;background:#4e8f24;color:#fff;border-radius:999px;padding:10px 15px;font-weight:1000;cursor:pointer;margin-top:14px;box-shadow:0 8px 18px rgba(78,143,36,.18);}
+.shortcut-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.shortcut-tile{border:1px solid #e1ecd3;background:#fff;border-radius:18px;padding:14px;font-weight:1000;cursor:pointer;transition:.18s;}
+.shortcut-tile:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(83,120,56,.12);}
+.badge-list{display:flex;flex-wrap:wrap;gap:10px;}
+.ach-badge{width:54px;height:54px;border-radius:18px;background:#fff;border:1px solid #e2ecd6;display:flex;align-items:center;justify-content:center;font-size:26px;filter:grayscale(1);opacity:.46;position:relative;}
+.ach-badge.on{filter:none;opacity:1;box-shadow:0 10px 20px rgba(131,184,66,.16);}
+.heatmap{display:grid;grid-template-columns:repeat(14,1fr);gap:5px;margin-top:12px;}
+.heat-cell{aspect-ratio:1;border-radius:6px;background:#e6eedb;border:1px solid #dbe8ce;}
+.heat-cell.on{background:#9bd36b;}
+.home-note-pill{display:inline-flex;align-items:center;gap:6px;background:#fff7d9;color:#6f5310;border:1px solid #f0dfa0;border-radius:999px;padding:8px 12px;font-weight:900;margin-top:12px;}
+@media (max-width:980px){.home-quest-wrap,.home-design-grid{grid-template-columns:1fr}.daily-card,.shortcut-card,.badge-card{grid-column:auto}.quest-row{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:680px){.quest-title{font-size:27px}.quest-row{grid-template-columns:1fr}.forest-stage{font-size:34px}.today-quest-card,.forest-card,.daily-card,.badge-card,.shortcut-card{border-radius:24px;padding:18px}}
+
 </style>
 
 </head>
@@ -1245,6 +1281,59 @@ textarea {
 
     <div class="content">
       <section id="home" class="page active">
+
+        <div class="home-quest-wrap">
+          <div class="today-quest-card">
+            <div class="quest-eyebrow">TODAY STUDY</div>
+            <div class="quest-title">영이 안녕！今天也一起加油 🌱</div>
+            <div class="quest-sub">完成今日任務，讓你的 BANA 森林繼續長大。</div>
+            <div class="quest-meter"><span id="todayQuestBar"></span></div>
+            <div class="quest-row">
+              <div class="quest-mini">📚 單字<b id="questWords">0</b></div>
+              <div class="quest-mini">📝 筆試<b id="questTest">0</b></div>
+              <div class="quest-mini">🎮 配對<b id="questMatch">0</b></div>
+              <div class="quest-mini">🔥 練習<b id="questPractice">0</b></div>
+            </div>
+            <div class="home-note-pill">🐻 오늘도 화이팅！</div>
+          </div>
+
+          <div class="forest-card">
+            <div class="forest-level"><span>🌳 我的學習森林</span><span id="forestLevel">Lv.1</span></div>
+            <div class="forest-stage" id="forestStage">🌱<br>🐻</div>
+            <div class="quest-sub" id="forestHint" style="margin:12px 0 0">新增題庫後森林會開始長大。</div>
+          </div>
+        </div>
+
+        <div class="home-design-grid">
+          <div class="daily-card">
+            <div class="design-title">📖 今日一句</div>
+            <div class="daily-korean" id="dailyKorean">오늘도 열심히 공부하자.</div>
+            <div class="daily-zh" id="dailyZh">今天也認真學習吧。</div>
+            <button class="design-btn" onclick="speakKorean(document.getElementById('dailyKorean').textContent)">🔊 播放</button>
+          </div>
+
+          <div class="shortcut-card">
+            <div class="design-title">⚡ 快捷開始</div>
+            <div class="shortcut-grid">
+              <div class="shortcut-tile" onclick="goPage('flash')">▤ 單字卡</div>
+              <div class="shortcut-tile" onclick="goPage('test')">✎ 筆試</div>
+              <div class="shortcut-tile" onclick="goPage('match')">⌘ 配對</div>
+              <div class="shortcut-tile" onclick="goPage('listen')">🔊 聽力</div>
+            </div>
+          </div>
+
+          <div class="badge-card">
+            <div class="design-title">🏅 成就徽章</div>
+            <div class="badge-list">
+              <div class="ach-badge" id="badgeLogin" title="開始學習">🌱</div>
+              <div class="ach-badge" id="badgeCards" title="擁有 50 個單字">📚</div>
+              <div class="ach-badge" id="badgePractice" title="練習 10 次">🔥</div>
+              <div class="ach-badge" id="badgeForest" title="森林成長">🌳</div>
+              <div class="ach-badge" id="badgeBana" title="BANA 很棒">💚</div>
+            </div>
+            <div class="heatmap" id="studyHeatmap"></div>
+          </div>
+        </div>
         <div id="graduationPanel" class="graduation-panel"></div>
 
         <div id="studyUpgradePanel" class="study-upgrade-panel">
@@ -1389,7 +1478,8 @@ textarea {
         <div class="topbar">
           <button class="ghost" onclick="goPage('library')">‹ 返回題庫</button>
           <select id="flashSelect" onchange="selectFromDropdown(this.value)"></select>
-          <span id="flashInfo" class="soft" style="padding:8px 14px;border-radius:999px;font-weight:900;">0 / 0</span>
+          <div id="flashSeenBox" class="flash-seen-box"></div>
+<span id="flashInfo" class="soft" style="padding:8px 14px;border-radius:999px;font-weight:900;">0 / 0</span>
         </div>
         <div class="study-shell">
           <div class="card study-main">
@@ -1407,20 +1497,6 @@ textarea {
                 <button class="primary" onclick="flipCard()">翻面 ⟳</button>
                 <button class="ghost" onclick="nextCard()">下一張 ›</button>
                 <button class="soft" onclick="startFlash(true)">隨機播放</button>
-              </div>
-              <div class="flash-note-box" onclick="event.stopPropagation();">
-                <div class="flash-note-head">
-                  <span>📝 我的備註</span>
-                  <button class="soft" id="flashNoteToggleBtn" onclick="toggleFlashNoteEditor()">編輯備註</button>
-                </div>
-                <div id="flashNoteView" class="flash-note-view flash-note-empty">這張單字卡還沒有備註。</div>
-                <div id="flashNoteEditor" style="display:none;">
-                  <textarea id="flashNoteInput" class="flash-note-textarea" placeholder="可以記發音、文法、容易搞混的地方..."></textarea>
-                  <div class="flash-note-actions">
-                    <button class="ghost" onclick="cancelFlashNoteEdit()">取消</button>
-                    <button class="primary" onclick="saveFlashNote()">儲存備註</button>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -1632,12 +1708,12 @@ function renderFolderStatsPanel() {
     const cards=(data && (data.cards||data.words)) || [];
     const s=ensureFolderPracticeStats(id);
     const total=(Number(s.flashcard)||0)+(Number(s.test)||0)+(Number(s.match)||0)+(Number(s.listen)||0);
-    const completion=Math.min(100,total*10);
+    const completion = getFourPartCompletion(id);
     const grad=completion>=100?"🏆 已畢業":completion>=80?"🌟 即將畢業":"🌱 學習中";
     return `<div class="folder-stat-row">
       <div class="folder-stat-row-title"><span>${data.name||data.title||"未命名題庫"}</span><span>${grad}</span></div>
       <div class="folder-stat-grid">
-        <div class="folder-stat-mini">單字卡<b>${Number(s.flashcard)||0}</b></div>
+        <div class="folder-stat-mini">單字卡<b>${getFlashSeenStats(id).seenCount}/${getFlashSeenStats(id).total}</b></div>
         <div class="folder-stat-mini">筆試<b>${Number(s.test)||0}</b></div>
         <div class="folder-stat-mini">配對<b>${Number(s.match)||0}</b></div>
         <div class="folder-stat-mini">聽力<b>${Number(s.listen)||0}</b></div>
@@ -1736,12 +1812,12 @@ function renderFolderStatsPanel() {
   detail.innerHTML = list.map(({id,data})=>{
     const s=ensureFolderPracticeStats(id);
     const total=(Number(s.flashcard)||0)+(Number(s.test)||0)+(Number(s.match)||0)+(Number(s.listen)||0);
-    const completion=Math.min(100,total*10);
+    const completion = getFourPartCompletion(id);
     const grad=completion>=100?"🏆 已畢業":completion>=80?"🌟 即將畢業":"🌱 學習中";
     return `<div class="folder-stat-row">
       <div class="folder-stat-row-title"><span>${data.name||data.title||"未命名題庫"}</span><span>${grad}</span></div>
       <div class="folder-stat-grid">
-        <div class="folder-stat-mini">單字卡<b>${Number(s.flashcard)||0}</b></div>
+        <div class="folder-stat-mini">單字卡<b>${getFlashSeenStats(id).seenCount}/${getFlashSeenStats(id).total}</b></div>
         <div class="folder-stat-mini">筆試<b>${Number(s.test)||0}</b></div>
         <div class="folder-stat-mini">配對<b>${Number(s.match)||0}</b></div>
         <div class="folder-stat-mini">聽力<b>${Number(s.listen)||0}</b></div>
@@ -1781,10 +1857,84 @@ function toggleFolderStats(){
 
 // 最終初始化：學習進度刷新
 setTimeout(()=>{try{renderFolderStatsPanel();renderStudyUpgradePanel();}catch(e){}},1000);
+
+/* ===== 單字卡看過進度 + 四項完成度 ===== */
+function getFlashCardKey(card, index) {
+  return String((card && (card.id || card.term || card.definition)) || index);
+}
+function ensureFlashSeenRecord(folderId) {
+  if(!folderId && typeof current !== "undefined") folderId = current;
+  if(!folderId) return [];
+  if(!flashSeenData) flashSeenData = {};
+  if(!Array.isArray(flashSeenData[folderId])) flashSeenData[folderId] = [];
+  return flashSeenData[folderId];
+}
+function markCurrentFlashSeen() {
+  const fid = (typeof current !== "undefined") ? current : null;
+  if(!fid) return;
+  const cards = (typeof getCards === "function") ? getCards() : [];
+  const idx = (typeof flashIndex !== "undefined") ? flashIndex : 0;
+  const card = cards[idx];
+  if(!card) return;
+
+  const seen = ensureFlashSeenRecord(fid);
+  const key = getFlashCardKey(card, idx);
+  if(!seen.includes(key)) {
+    seen.push(key);
+    try { localStorage.setItem("b1a4FlashSeenData", JSON.stringify(flashSeenData || {})); } catch(e) {}
+    try { if(typeof saveStorage === "function") saveStorage(); } catch(e) {}
+    try { if(typeof saveCloudData === "function" && typeof cloudUser !== "undefined" && cloudUser) saveCloudData(); } catch(e) {}
+  }
+  renderFlashSeenBox();
+  renderFolderStatsPanel();
+  renderStudyUpgradePanel();
+}
+function getFlashSeenStats(folderId) {
+  const fid = folderId || ((typeof current !== "undefined") ? current : null);
+  const cards = (typeof getCardsByFolderId === "function") ? getCardsByFolderId(fid) : ((typeof getCards === "function") ? getCards() : []);
+  const total = cards.length || 0;
+  const seen = ensureFlashSeenRecord(fid);
+  const seenCount = total ? cards.filter((c,i)=>seen.includes(getFlashCardKey(c,i))).length : 0;
+  const unseenCount = Math.max(0, total - seenCount);
+  const completed = total > 0 && seenCount >= total;
+  return {total, seenCount, unseenCount, completed};
+}
+function renderFlashSeenBox() {
+  const box = document.getElementById("flashSeenBox");
+  if(!box) return;
+  const s = getFlashSeenStats();
+  box.innerHTML = `
+    <span>已看過 <b>${s.seenCount}</b> / ${s.total}</span>
+    <span>未看過 <b>${s.unseenCount}</b></span>
+    <span>${s.completed ? "✅ 單字卡完成" : "🌱 學習中"}</span>
+  `;
+}
+function isModeCompleted(folderId, type) {
+  const s = ensureFolderPracticeStats(folderId);
+  if(!s) return false;
+  if(type === "flashcard") return getFlashSeenStats(folderId).completed;
+  if(type === "test") return (Number(s.test) || 0) > 0;
+  if(type === "match") return (Number(s.match) || 0) > 0;
+  if(type === "listen") return (Number(s.listen) || 0) > 0;
+  return false;
+}
+function getFourPartCompletion(folderId) {
+  let score = 0;
+  if(isModeCompleted(folderId, "flashcard")) score += 25;
+  if(isModeCompleted(folderId, "test")) score += 25;
+  if(isModeCompleted(folderId, "match")) score += 25;
+  if(isModeCompleted(folderId, "listen")) score += 25;
+  return score;
+}
+
+
+// 四項完成度初始化
+setTimeout(()=>{try{renderFlashSeenBox();renderFolderStatsPanel();renderStudyUpgradePanel();}catch(e){}},1000);
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script>
+let flashSeenData = {};
 // ===== Firebase 雲端同步設定 =====
 // 使用前請到 Firebase 建立 Web App，並把下方值換成自己的設定。
 // Authentication 請啟用 Google 登入；Firestore 請建立資料庫。
@@ -1883,6 +2033,7 @@ async function loadCloudData() {
       if (current !== null) loadFolder(current); else voiceSpeed = Number(data.voiceSpeed || voiceSpeed || 0.65);
       initVoiceSpeedUI();
       folderPracticeStats = data.folderPracticeStats || folderPracticeStats || {};
+      flashSeenData = data.flashSeenData || flashSeenData || {};
       renderDashboard();
       isLoadingCloud = false;
       updateSyncUI("已登入：" + (cloudUser.email || cloudUser.displayName || "Google 帳號") + "，題庫已同步。", "已同步", true);
@@ -1942,6 +2093,7 @@ function saveStorage() {
   localStorage.setItem("b1a4MasteryData", JSON.stringify(masteryData || {}));
   localStorage.setItem("b1a4FolderPracticeStats", JSON.stringify(folderPracticeStats || {}));
   localStorage.setItem("b1a4VoiceSpeed", String(voiceSpeed || 0.65));
+  try { localStorage.setItem("b1a4FlashSeenData", JSON.stringify(flashSeenData || {})); } catch(e) {}
 }
 function parseCards(t) {
   return String(t || "").split(/\n+/).map(x => x.trim()).filter(Boolean).map(line => {
@@ -1962,7 +2114,7 @@ function goPage(id) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.getElementById(id).classList.add("active");
   document.querySelectorAll(".nav button").forEach(b => b.classList.remove("active"));
-  const map = { home:0, library:1, flash:2, test:3, match:4 };
+  const map = { home:0, library:1, flash:2, test:3, match:4, listen:5 };
   document.querySelectorAll(".nav button")[map[id]].classList.add("active");
   syncDropdowns();
   if (id === "flash") startFlash(false);
@@ -2079,6 +2231,68 @@ function renderFolders() {
   decorateMasteryBadges();
   renderFolderStatsPanel();
 }
+
+
+/* ===== 2026 首頁養成資料渲染 ===== */
+function renderHomeQuestDesign(){
+  try{
+    const totalCards = folders.reduce((sum,f)=>sum + parseCards(f.content).length, 0);
+    const totalPractice = stats.practice || 0;
+    const folderPractice = folders.reduce((sum,f)=>sum + (f.practice || 0), 0);
+    const wordsDone = Math.min(totalCards, folderPractice || totalPractice || 0);
+    const percent = totalCards ? Math.min(100, Math.round((wordsDone / totalCards) * 100)) : 0;
+    const bar = document.getElementById('todayQuestBar');
+    if(bar) bar.style.width = percent + '%';
+    const setText = (id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val; };
+    setText('questWords', totalCards);
+    setText('questTest', Math.floor(totalPractice/3));
+    setText('questMatch', Math.floor(totalPractice/4));
+    setText('questPractice', totalPractice);
+
+    let level = Math.max(1, Math.floor(totalCards / 50) + 1);
+    if(totalPractice >= 30) level += 1;
+    setText('forestLevel', 'Lv.' + level);
+    const forests = [
+      '🌱<br>🐻',
+      '🌱 🌱<br>🐻 🐥',
+      '🌳 🌱 🌱<br>🐻 🐥 🦖',
+      '🌳 🌳 🌱<br>🐻 🐥 🦖 🐿️',
+      '🌳 🌳 🌳<br>🐻 🐥 🦖 🐿️ 🦌',
+      '🌳 🌳 🌳 🌳<br>🐻 🐥 🦖 🐿️ 🦌 💚'
+    ];
+    const stage = document.getElementById('forestStage');
+    if(stage) stage.innerHTML = forests[Math.min(forests.length-1, level-1)];
+    const hint = document.getElementById('forestHint');
+    if(hint) hint.textContent = totalCards ? `目前有 ${totalCards} 個單字，累積練習 ${totalPractice} 次。` : '新增題庫後森林會開始長大。';
+
+    const badges = {
+      badgeLogin: totalCards > 0 || totalPractice > 0,
+      badgeCards: totalCards >= 50,
+      badgePractice: totalPractice >= 10,
+      badgeForest: level >= 3,
+      badgeBana: totalCards >= 100 || totalPractice >= 30
+    };
+    Object.entries(badges).forEach(([id,on])=>{ const el=document.getElementById(id); if(el) el.classList.toggle('on', !!on); });
+
+    const heat = document.getElementById('studyHeatmap');
+    if(heat){
+      const filled = Math.min(14, Math.ceil((percent/100)*14) || (totalPractice ? Math.min(14,totalPractice) : 0));
+      heat.innerHTML = Array.from({length:14},(_,i)=>`<div class="heat-cell ${i<filled?'on':''}"></div>`).join('');
+    }
+
+    const daily = [
+      ['오늘도 열심히 공부하자.','今天也認真學習吧。'],
+      ['천천히 해도 괜찮아.','慢慢來也沒關係。'],
+      ['잘하고 있어.','你做得很好。'],
+      ['포기하지 말자.','不要放棄。'],
+      ['오늘도 화이팅!','今天也加油！']
+    ];
+    const pick = daily[new Date().getDate() % daily.length];
+    setText('dailyKorean', pick[0]);
+    setText('dailyZh', pick[1]);
+  }catch(e){ console.log(e); }
+}
+
 function renderDashboard() {
   const totalCards = folders.reduce((sum,f) => sum + parseCards(f.content).length, 0);
   document.getElementById("statFolders").textContent = folders.length;
@@ -2102,9 +2316,10 @@ function renderDashboard() {
     }).join("");
   if (recent) recent.innerHTML = recentHTML;
   if (homeRecent) homeRecent.innerHTML = recentHTML;
+  renderHomeQuestDesign();
 }
 function syncDropdowns() {
-  ["flashSelect","testSelect","matchSelect"].forEach(id => {
+  ["flashSelect","testSelect","matchSelect","listenSelect"].forEach(id => {
     const s = document.getElementById(id);
     if (!s) return;
     if (!folders.length) {
@@ -2115,38 +2330,7 @@ function syncDropdowns() {
   });
 }
 function selectFromDropdown(v) {
-  if (!folders.length) return;
-  const next = Number(v);
-  if (Number.isNaN(next) || !folders[next]) return;
-
-  // 切換目前題庫
-  loadFolder(next);
-  syncDropdowns();
-
-  // 依目前所在頁面，立刻重新載入對應內容
-  if (document.getElementById("flash")?.classList.contains("active")) {
-    flashIndex = 0;
-    flipped = false;
-    startFlash(false);
-  }
-
-  if (document.getElementById("test")?.classList.contains("active")) {
-    document.getElementById("score").textContent = "";
-    makeTest();
-  }
-
-  if (document.getElementById("match")?.classList.contains("active")) {
-    startMatch();
-  }
-
-  if (document.getElementById("listen")?.classList.contains("active")) {
-    listenCards = [];
-    listenIndex = 0;
-    document.getElementById("listenPrompt").textContent = "按「開始聽力」產生題目";
-    document.getElementById("listenOptions").innerHTML = "";
-    document.getElementById("listenScore").textContent = "";
-  }
-
+  if (folders.length) loadFolder(Number(v));
   renderGraduationPanel();
   updateFolderGraduationBadges();
   renderStudyUpgradePanel();
@@ -2225,70 +2409,6 @@ function resetViews() {
   document.getElementById("matchScore").textContent = "";
 }
 
-
-function loadFlashNotes(){
-  try { return JSON.parse(localStorage.getItem("banaFlashNotes") || "{}"); }
-  catch(e){ return {}; }
-}
-function saveFlashNotes(notes){
-  localStorage.setItem("banaFlashNotes", JSON.stringify(notes || {}));
-}
-function getFlashCardNoteKey(){
-  if(current === null || !flashCards.length) return "";
-  const c = flashCards[flashIndex] || {};
-  const term = String(c.term || "").trim();
-  const definition = String(c.definition || "").trim();
-  return "bana_note_v2::folder_" + current + "::card_" + flashIndex + "::" + term + "::" + definition;
-}
-function renderFlashNote(){
-  const view = document.getElementById("flashNoteView");
-  const editor = document.getElementById("flashNoteEditor");
-  const input = document.getElementById("flashNoteInput");
-  const btn = document.getElementById("flashNoteToggleBtn");
-  if(!view || !input) return;
-
-  view.textContent = "這張單字卡還沒有備註。";
-  view.classList.add("flash-note-empty");
-  input.value = "";
-  if(editor) editor.style.display = "none";
-  if(btn) btn.textContent = "編輯備註";
-
-  const key = getFlashCardNoteKey();
-  const notes = loadFlashNotes();
-  const note = key ? String(notes[key] || "") : "";
-
-  if(note.trim()){
-    view.textContent = note;
-    view.classList.remove("flash-note-empty");
-    input.value = note;
-  }
-}
-function toggleFlashNoteEditor(){
-  const editor = document.getElementById("flashNoteEditor");
-  const input = document.getElementById("flashNoteInput");
-  const btn = document.getElementById("flashNoteToggleBtn");
-  if(!editor) return;
-  const open = editor.style.display !== "none";
-  editor.style.display = open ? "none" : "block";
-  if(btn) btn.textContent = open ? "編輯備註" : "收合備註";
-  if(!open && input) input.focus();
-}
-function cancelFlashNoteEdit(){
-  renderFlashNote();
-}
-function saveFlashNote(){
-  const input = document.getElementById("flashNoteInput");
-  if(!input) return;
-  const key = getFlashCardNoteKey();
-  if(!key) return;
-  const notes = loadFlashNotes();
-  const value = input.value.trim();
-  if(value) notes[key] = value;
-  else delete notes[key];
-  saveFlashNotes(notes);
-  renderFlashNote();
-}
-
 function startFlash(random) {
   const cards = getCards();
   if (!cards.length) {
@@ -2298,8 +2418,7 @@ function startFlash(random) {
     document.getElementById("flashProgress").innerHTML = "";
     return;
   }
-  if (random) flashCards = shuffle(cards);
-  else flashCards = [...cards];
+  if (random || !flashCards.length) flashCards = shuffle(cards);
   flashIndex = 0;
   addPractice();
   renderFlash();
@@ -2339,8 +2458,8 @@ function renderFlash() {
     recordFolderPractice("flashcard");
   }
 
-  // 每次切換單字卡時，重新載入該張卡自己的備註
-  renderFlashNote();
+  markCurrentFlashSeen();
+  renderFlashSeenBox();
 }
 function flipCard() { document.getElementById("flashCard").classList.toggle("flipped"); }
 function nextCard() { if(!flashCards.length)return; flashIndex=(flashIndex+1)%flashCards.length; renderFlash(); }
@@ -2602,39 +2721,16 @@ function recordFolderPractice(type) {
   saveStorage();
   renderFolderStatsPanel();
 }
-function getFolderDetailProgress(folderId) {
-  const f = folders && folders[folderId] ? folders[folderId] : null;
-  const cards = f ? ((f.cards || f.words) || []) : [];
-  const totalCards = cards.length || 0;
-  const s = ensureFolderPracticeStats(folderId) || {};
-
-  let viewedCount = 0;
+function getFolderCompletionPercent(folderId) {
   try {
     if(typeof getGraduationStats === "function") {
       const g = getGraduationStats(folderId);
-      viewedCount = Number(g.viewedCount || 0);
+      return Math.round(((g.flashPercent || 0) + (g.testPercent || 0) + (g.matchPercent || 0)) / 3);
     }
   } catch(e) {}
-
-  if(!viewedCount && typeof graduationData !== "undefined" && graduationData && graduationData[folderId] && Array.isArray(graduationData[folderId].viewed)) {
-    try {
-      viewedCount = totalCards ? cards.filter((c,i)=>graduationData[folderId].viewed.includes(getCardKey(c,i))).length : 0;
-    } catch(e) {
-      viewedCount = graduationData[folderId].viewed.length || 0;
-    }
-  }
-
-  const flashDone = totalCards > 0 && viewedCount >= totalCards;
-  const testDone = Number(s.test || 0) > 0;
-  const matchDone = Number(s.match || 0) > 0;
-  const listenDone = Number(s.listen || 0) > 0;
-  const completion = (flashDone ? 25 : 0) + (testDone ? 25 : 0) + (matchDone ? 25 : 0) + (listenDone ? 25 : 0);
-
-  return { totalCards, viewedCount, flashDone, testDone, matchDone, listenDone, completion };
-}
-function getFolderCompletionPercent(folderId) {
-  const p = getFolderDetailProgress(folderId);
-  return p ? p.completion : 0;
+  const s = ensureFolderPracticeStats(folderId);
+  if(!s) return 0;
+  return Math.min(100, Math.round(((s.flashcard || 0) + (s.test || 0) + (s.match || 0)) / 3 * 20));
 }
 function getLastTypeLabel(type) {
   if(type === "flashcard") return "單字卡";
@@ -2687,9 +2783,9 @@ function renderFolderStatsPanel() {
   detail.innerHTML = ids.map(id=>{
     const f = folders[id];
     const s = ensureFolderPracticeStats(id);
-    const p = getFolderDetailProgress(id);
-    const completion = p.completion;
-    const grad = completion >= 100 ? "🏆 已完成" : "🌱 學習中";
+    const total = (s.flashcard || 0) + (s.test || 0) + (s.match || 0) + (s.listen || 0);
+    const completion = getFolderCompletionPercent(id);
+    const grad = completion >= 100 ? "🏆 已畢業" : completion >= 80 ? "🌟 即將畢業" : "🌱 學習中";
 
     return `
       <div class="folder-stat-row">
@@ -2698,18 +2794,17 @@ function renderFolderStatsPanel() {
           <span>${grad}</span>
         </div>
         <div class="folder-stat-grid">
-          <div class="folder-stat-mini">單字卡<b>${p.viewedCount}/${p.totalCards}</b></div>
-          <div class="folder-stat-mini">筆試<b>${p.testDone ? "完成" : "未完成"}</b></div>
-          <div class="folder-stat-mini">配對<b>${p.matchDone ? "完成" : "未完成"}</b></div>
-          <div class="folder-stat-mini">聽力<b>${p.listenDone ? "完成" : "未完成"}</b></div>
-          <div class="folder-stat-mini">總計<b>${completion}%</b></div>
+          <div class="folder-stat-mini">單字卡<b>${getFlashSeenStats(id).seenCount}/${getFlashSeenStats(id).total}</b></div>
+          <div class="folder-stat-mini">筆試<b>${s.test || 0}</b></div>
+          <div class="folder-stat-mini">配對<b>${s.match || 0}</b></div>
+          <div class="folder-stat-mini">聽力<b>${s.listen || 0}</b></div>
+          <div class="folder-stat-mini">總計<b>${total}</b></div>
         </div>
         <div class="folder-progress-line">
           <div class="folder-progress-label"><span>完成度</span><span>${completion}%</span></div>
           <div class="folder-progress-track"><div class="folder-progress-fill ${completion>=100 ? "gold" : ""}" style="width:${completion}%"></div></div>
         </div>
         <div style="margin-top:10px;color:#74816c;font-weight:800;font-size:13px;">
-          單字卡完成占 25%　｜　筆試完成占 25%　｜　配對完成占 25%　｜　聽力完成占 25%<br>
           最後學習：${formatStudyDate(s.lastStudy)}　｜　最後模式：${getLastTypeLabel(s.lastType)}
         </div>
       </div>
@@ -3374,909 +3469,5 @@ renderFolders();
 if (current !== null) loadFolder(current);
 else renderDashboard();
 </script>
-
-
-<script>
-/* ===== 最終修正：保留原本詳細進度版面，只修單字卡已看數量 ===== */
-(function(){
-  function safeHtml(v){
-    return String(v == null ? "" : v)
-      .replace(/&/g,"&amp;")
-      .replace(/</g,"&lt;")
-      .replace(/>/g,"&gt;")
-      .replace(/"/g,"&quot;")
-      .replace(/'/g,"&#39;");
-  }
-
-  window.getCurrentFolderIdForStats = function(){
-    if(typeof current !== "undefined" && current !== null && current !== "") return String(current);
-    if(typeof currentFolder !== "undefined" && currentFolder !== null && currentFolder !== "") return String(currentFolder);
-    return null;
-  };
-
-  window.getFolderPairsForStats = function(){
-    if(typeof folders === "undefined" || !folders) return [];
-    if(Array.isArray(folders)) return folders.map(function(f,i){ return {id:String(i), data:f}; });
-    return Object.keys(folders).map(function(id){ return {id:String(id), data:folders[id]}; });
-  };
-
-  window.getFolderCardsForStats = function(folderId){
-    try{
-      if(typeof folders === "undefined" || !folders || folderId == null) return [];
-      var f = Array.isArray(folders) ? folders[Number(folderId)] : folders[folderId];
-      return (f && (f.cards || f.words)) || [];
-    }catch(e){ return []; }
-  };
-
-  window.ensureFolderPracticeStats = function(folderId){
-    if(folderId == null || folderId === "") folderId = getCurrentFolderIdForStats();
-    if(folderId == null || folderId === "") return null;
-    folderId = String(folderId);
-    if(typeof folderPracticeStats === "undefined" || !folderPracticeStats) window.folderPracticeStats = {};
-    if(!folderPracticeStats[folderId]) {
-      folderPracticeStats[folderId] = {flashcard:0,test:0,match:0,listen:0,total:0,lastStudy:"",lastType:"",viewedCards:[]};
-    }
-    if(!Array.isArray(folderPracticeStats[folderId].viewedCards)) folderPracticeStats[folderId].viewedCards = [];
-    return folderPracticeStats[folderId];
-  };
-
-  window.getStableCardKeyForStats = function(card, index){
-    if(!card) return String(index);
-    return String(card.id || (String(card.term || "") + "||" + String(card.definition || "")) || index);
-  };
-
-  window.saveStatsEverywhere = function(){
-    try{ localStorage.setItem("b1a4FolderPracticeStats", JSON.stringify(folderPracticeStats || {})); }catch(e){}
-    try{ if(typeof saveStorage === "function") saveStorage(); }catch(e){}
-    try{ if(typeof saveCloudData === "function" && typeof cloudUser !== "undefined" && cloudUser) saveCloudData(); }catch(e){}
-  };
-
-  window.markFlashcardViewed = function(index){
-    var fid = getCurrentFolderIdForStats();
-    if(!fid) return;
-    var s = ensureFolderPracticeStats(fid);
-    if(!s) return;
-
-    var card = null;
-    if(typeof flashCards !== "undefined" && flashCards && flashCards.length) card = flashCards[index];
-    if(!card) {
-      var cards = getFolderCardsForStats(fid);
-      card = cards[index];
-    }
-    if(!card) return;
-
-    var key = getStableCardKeyForStats(card, index);
-    if(!s.viewedCards.includes(key)) s.viewedCards.push(key);
-
-    // 同步給原本畢業進度使用，避免兩套進度不同步
-    try{
-      if(typeof ensureGraduationRecord === "function") {
-        var rec = ensureGraduationRecord(fid);
-        if(rec && Array.isArray(rec.viewed) && !rec.viewed.includes(key)) rec.viewed.push(key);
-      }
-    }catch(e){}
-
-    s.lastStudy = new Date().toISOString();
-    s.lastType = "flashcard";
-    saveStatsEverywhere();
-    try{ renderFolderStatsPanel(); }catch(e){}
-    try{ renderGraduationPanel(); }catch(e){}
-    try{ updateFolderGraduationBadges(); }catch(e){}
-  };
-
-  window.recordFolderPractice = function(type){
-    var fid = getCurrentFolderIdForStats();
-    if(!fid) return;
-    var s = ensureFolderPracticeStats(fid);
-    if(!s) return;
-
-    // 單字卡不再用練習次數當已看數；已看數由 markFlashcardViewed() 紀錄
-    if(type === "test") s.test = (Number(s.test) || 0) + 1;
-    else if(type === "match") s.match = (Number(s.match) || 0) + 1;
-    else if(type === "listen") s.listen = (Number(s.listen) || 0) + 1;
-
-    s.flashcard = Array.isArray(s.viewedCards) ? s.viewedCards.length : (Number(s.flashcard) || 0);
-    s.total = (Number(s.flashcard)||0) + (Number(s.test)||0) + (Number(s.match)||0) + (Number(s.listen)||0);
-    s.lastStudy = new Date().toISOString();
-    s.lastType = type;
-    saveStatsEverywhere();
-    try{ renderFolderStatsPanel(); }catch(e){}
-    try{ renderStudyUpgradePanel(); }catch(e){}
-    try{ renderDashboard(); }catch(e){}
-  };
-
-  window.getFolderDetailProgress = function(folderId){
-    var cards = getFolderCardsForStats(folderId);
-    var totalCards = cards.length || 0;
-    var s = ensureFolderPracticeStats(folderId) || {};
-    var viewedSet = new Set(Array.isArray(s.viewedCards) ? s.viewedCards : []);
-
-    // 相容舊的 graduationData.viewed
-    try{
-      if(typeof graduationData !== "undefined" && graduationData && graduationData[folderId] && Array.isArray(graduationData[folderId].viewed)) {
-        graduationData[folderId].viewed.forEach(function(k){ viewedSet.add(k); });
-      }
-    }catch(e){}
-
-    var viewedCount = totalCards ? cards.filter(function(c,i){ return viewedSet.has(getStableCardKeyForStats(c,i)); }).length : 0;
-    if(!viewedCount && Number(s.flashcard) > 0 && totalCards) viewedCount = Math.min(Number(s.flashcard)||0, totalCards);
-
-    var flashDone = totalCards > 0 && viewedCount >= totalCards;
-    var testDone = Number(s.test || 0) > 0;
-    var matchDone = Number(s.match || 0) > 0;
-    var listenDone = Number(s.listen || 0) > 0;
-    var completion = (flashDone ? 25 : 0) + (testDone ? 25 : 0) + (matchDone ? 25 : 0) + (listenDone ? 25 : 0);
-    return {totalCards:totalCards, viewedCount:viewedCount, flashDone:flashDone, testDone:testDone, matchDone:matchDone, listenDone:listenDone, completion:completion};
-  };
-
-  window.getLastTypeLabel = function(type){
-    if(type === "flashcard") return "單字卡";
-    if(type === "test") return "筆試";
-    if(type === "match") return "配對";
-    if(type === "listen") return "聽力";
-    return "尚未學習";
-  };
-
-  window.renderFolderStatsPanel = function(){
-    var summary = document.getElementById("folderStatsSummary");
-    var detail = document.getElementById("folderStatsDetail");
-    if(!summary || !detail) return;
-
-    var list = getFolderPairsForStats();
-    var totalWords = 0;
-    var totalPractice = 0;
-    var activeFolder = "尚無紀錄";
-    var maxPractice = -1;
-
-    list.forEach(function(pair){
-      var cards = getFolderCardsForStats(pair.id);
-      totalWords += cards.length;
-      var s = ensureFolderPracticeStats(pair.id) || {};
-      var p = getFolderDetailProgress(pair.id);
-      var total = p.viewedCount + (Number(s.test)||0) + (Number(s.match)||0) + (Number(s.listen)||0);
-      totalPractice += total;
-      if(total > maxPractice){
-        maxPractice = total;
-        activeFolder = (pair.data && (pair.data.name || pair.data.title)) || "未命名題庫";
-      }
-    });
-
-    summary.innerHTML = '<div class="folder-stat-card">題庫數<div class="folder-stat-num">'+list.length+'</div></div>' +
-      '<div class="folder-stat-card">總單字<div class="folder-stat-num">'+totalWords+'</div></div>' +
-      '<div class="folder-stat-card">總練習<div class="folder-stat-num">'+totalPractice+'</div><div style="font-size:12px;color:#74816c;">最常練：'+safeHtml(activeFolder)+'</div></div>';
-
-    if(!list.length){
-      detail.innerHTML = '<div class="folder-stat-row">目前還沒有題庫</div>';
-      return;
-    }
-
-    detail.innerHTML = list.map(function(pair){
-      var f = pair.data || {};
-      var s = ensureFolderPracticeStats(pair.id) || {};
-      var p = getFolderDetailProgress(pair.id);
-      var grad = p.completion >= 100 ? "🏆 已完成" : "🌱 學習中";
-      return '<div class="folder-stat-row">' +
-        '<div class="folder-stat-row-title"><span>'+safeHtml(f.name || f.title || "未命名題庫")+'</span><span>'+grad+'</span></div>' +
-        '<div class="folder-stat-grid">' +
-          '<div class="folder-stat-mini">單字卡<b>'+p.viewedCount+'/'+p.totalCards+'</b></div>' +
-          '<div class="folder-stat-mini">筆試<b>'+(p.testDone ? "完成" : "未完成")+'</b></div>' +
-          '<div class="folder-stat-mini">配對<b>'+(p.matchDone ? "完成" : "未完成")+'</b></div>' +
-          '<div class="folder-stat-mini">聽力<b>'+(p.listenDone ? "完成" : "未完成")+'</b></div>' +
-          '<div class="folder-stat-mini">總計<b>'+p.completion+'%</b></div>' +
-        '</div>' +
-        '<div class="folder-progress-line"><div class="folder-progress-label"><span>完成度</span><span>'+p.completion+'%</span></div><div class="folder-progress-track"><div class="folder-progress-fill '+(p.completion>=100 ? "gold" : "")+'" style="width:'+p.completion+'%"></div></div></div>' +
-        '<div style="margin-top:10px;color:#74816c;font-weight:800;font-size:13px;">單字卡完成占 25%　｜　筆試完成占 25%　｜　配對完成占 25%　｜　聽力完成占 25%<br>最後學習：'+(typeof formatStudyDate === "function" ? formatStudyDate(s.lastStudy) : (s.lastStudy || "尚未學習"))+'　｜　最後模式：'+getLastTypeLabel(s.lastType)+'</div>' +
-      '</div>';
-    }).join("");
-  };
-
-  window.toggleFolderStats = function(){
-    var box = document.getElementById("folderStatsDetail");
-    if(!box) return;
-    box.classList.toggle("show");
-    var btn = document.querySelector(".folder-stats-toggle");
-    if(btn) btn.textContent = box.classList.contains("show") ? "收合詳細紀錄" : "查看詳細紀錄";
-  };
-
-  setTimeout(function(){ try{ renderFolderStatsPanel(); }catch(e){} }, 300);
-})();
-</script>
-
-
-
-<script>
-/* === 2026-05-29 修正：單字卡進度改為「已學會/總單字數」 ===
-   說明：原本「看過」容易只切換畫面但沒有穩定寫入統計，所以這裡改成手動標記：
-   每張單字卡可點「已學會」或「還在學習中」，詳細進度用已學會數量計算。
-*/
-(function(){
-  const MASTER_KEY = "b1a4MasteredCardsByFolder_v1";
-
-  function loadMastered(){
-    try { return JSON.parse(localStorage.getItem(MASTER_KEY) || "{}"); }
-    catch(e){ return {}; }
-  }
-  function saveMastered(data){
-    try { localStorage.setItem(MASTER_KEY, JSON.stringify(data || {})); } catch(e){}
-  }
-  function currentFolderId(){
-    try { if (typeof getCurrentFolderIdForStats === "function") return String(getCurrentFolderIdForStats()); } catch(e){}
-    try { if (typeof current !== "undefined" && current !== null && current !== "") return String(current); } catch(e){}
-    return "0";
-  }
-  function folderCards(folderId){
-    try { if (typeof getFolderCardsForStats === "function") return getFolderCardsForStats(folderId) || []; } catch(e){}
-    try {
-      const f = Array.isArray(folders) ? folders[Number(folderId)] : folders[folderId];
-      return (f && (f.cards || f.words)) || [];
-    } catch(e){ return []; }
-  }
-  function cardKey(card, index){
-    try { if (typeof getStableCardKeyForStats === "function") return getStableCardKeyForStats(card, index); } catch(e){}
-    if(!card) return String(index);
-    return String(card.id || (String(card.term || "") + "||" + String(card.definition || "")) || index);
-  }
-  function currentCardInfo(){
-    let card = null;
-    let idx = 0;
-    try { idx = Number(flashIndex) || 0; } catch(e){}
-    try { if (typeof flashCards !== "undefined" && flashCards && flashCards.length) card = flashCards[idx]; } catch(e){}
-    if(!card){
-      const fid = currentFolderId();
-      card = folderCards(fid)[idx];
-    }
-    return { card, idx, key: cardKey(card, idx) };
-  }
-  function getLearnedSet(folderId){
-    const data = loadMastered();
-    const arr = Array.isArray(data[String(folderId)]) ? data[String(folderId)] : [];
-    return new Set(arr);
-  }
-  function setLearnedSet(folderId, set){
-    const data = loadMastered();
-    data[String(folderId)] = Array.from(set);
-    saveMastered(data);
-  }
-  function learnedCount(folderId){
-    const cards = folderCards(folderId);
-    const set = getLearnedSet(folderId);
-    return cards.filter((c,i)=>set.has(cardKey(c,i))).length;
-  }
-  function updatePracticeFlashcardCount(folderId){
-    try{
-      if (typeof ensureFolderPracticeStats === "function") {
-        const s = ensureFolderPracticeStats(folderId);
-        if(s){
-          s.flashcard = learnedCount(folderId);
-          s.lastStudy = new Date().toISOString();
-          s.lastType = "flashcard";
-          if (typeof saveStatsEverywhere === "function") saveStatsEverywhere();
-          else localStorage.setItem("b1a4FolderPracticeStats", JSON.stringify(folderPracticeStats || {}));
-        }
-      }
-    }catch(e){}
-  }
-
-  window.setCurrentFlashcardLearningStatus = function(isLearned){
-    const fid = currentFolderId();
-    const info = currentCardInfo();
-    if(!info.card) return;
-
-    const set = getLearnedSet(fid);
-    if(isLearned) set.add(info.key);
-    else set.delete(info.key);
-    setLearnedSet(fid, set);
-    updatePracticeFlashcardCount(fid);
-
-    updateFlashcardLearningButtons();
-    try { renderFolderStatsPanel(); } catch(e){}
-    try { renderDashboard(); } catch(e){}
-  };
-
-  window.updateFlashcardLearningButtons = function(){
-    const box = document.getElementById("flashLearningStatusBox");
-    const status = document.getElementById("flashLearningStatusText");
-    const learnedBtn = document.getElementById("flashLearnedBtn");
-    const learningBtn = document.getElementById("flashLearningBtn");
-    if(!box || !status || !learnedBtn || !learningBtn) return;
-
-    const fid = currentFolderId();
-    const info = currentCardInfo();
-    const set = getLearnedSet(fid);
-    const learned = info.card && set.has(info.key);
-    const total = folderCards(fid).length;
-    const count = learnedCount(fid);
-
-    status.textContent = learned ? "狀態：已學會" : "狀態：還在學習中";
-    learnedBtn.classList.toggle("active", !!learned);
-    learningBtn.classList.toggle("active", !learned);
-
-    const counter = document.getElementById("flashLearningCounter");
-    if(counter) counter.textContent = `已學會 ${count}/${total}`;
-  };
-
-  function ensureFlashLearningControls(){
-    const flashBox = document.getElementById("flashBox");
-    if(!flashBox || document.getElementById("flashLearningStatusBox")) return;
-
-    const controls = document.createElement("div");
-    controls.id = "flashLearningStatusBox";
-    controls.className = "flash-learning-status-box";
-    controls.innerHTML = `
-      <div class="flash-learning-status-top">
-        <span id="flashLearningStatusText">狀態：還在學習中</span>
-        <span id="flashLearningCounter">已學會 0/0</span>
-      </div>
-      <div class="flash-learning-status-actions">
-        <button type="button" id="flashLearningBtn" onclick="setCurrentFlashcardLearningStatus(false)">還在學習中</button>
-        <button type="button" id="flashLearnedBtn" onclick="setCurrentFlashcardLearningStatus(true)">已學會</button>
-      </div>
-    `;
-    flashBox.appendChild(controls);
-  }
-
-  const style = document.createElement("style");
-  style.textContent = `
-    .flash-learning-status-box{
-      margin:18px auto 0;
-      padding:16px 18px;
-      max-width:520px;
-      border:1px solid #dce9cc;
-      border-radius:22px;
-      background:#fffef9;
-      box-shadow:0 10px 28px rgba(90,120,70,.10);
-    }
-    .flash-learning-status-top{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      color:#315321;
-      font-weight:900;
-      margin-bottom:12px;
-      flex-wrap:wrap;
-    }
-    .flash-learning-status-top span:last-child{color:#74816c;font-size:14px;}
-    .flash-learning-status-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
-    .flash-learning-status-actions button{
-      border:0;
-      border-radius:999px;
-      padding:10px 18px;
-      font-weight:900;
-      cursor:pointer;
-      background:#eef6e4;
-      color:#315321;
-    }
-    .flash-learning-status-actions button.active{
-      background:#83b842;
-      color:white;
-      box-shadow:0 8px 18px rgba(131,184,66,.25);
-    }
-  `;
-  document.head.appendChild(style);
-
-  // 覆蓋詳細進度：單字卡 = 已學會/總單字數，完成才佔 25%
-  window.getFolderDetailProgress = function(folderId){
-    const cards = folderCards(folderId);
-    const totalCards = cards.length || 0;
-    const learned = learnedCount(folderId);
-    let s = {};
-    try { s = (typeof ensureFolderPracticeStats === "function" ? ensureFolderPracticeStats(folderId) : {}) || {}; } catch(e) { s = {}; }
-
-    const flashDone = totalCards > 0 && learned >= totalCards;
-    const testDone = Number(s.test || 0) > 0;
-    const matchDone = Number(s.match || 0) > 0;
-    const listenDone = Number(s.listen || 0) > 0;
-    const completion = (flashDone ? 25 : 0) + (testDone ? 25 : 0) + (matchDone ? 25 : 0) + (listenDone ? 25 : 0);
-    return { totalCards, viewedCount: learned, learnedCount: learned, flashDone, testDone, matchDone, listenDone, completion };
-  };
-
-  const oldRenderFolderStatsPanel = window.renderFolderStatsPanel;
-  window.renderFolderStatsPanel = function(){
-    const summary = document.getElementById("folderStatsSummary");
-    const detail = document.getElementById("folderStatsDetail");
-    if(!summary || !detail){
-      if(typeof oldRenderFolderStatsPanel === "function") return oldRenderFolderStatsPanel();
-      return;
-    }
-
-    let list = [];
-    try { list = typeof getFolderPairsForStats === "function" ? getFolderPairsForStats() : []; } catch(e){ list = []; }
-    let totalWords = 0, totalPractice = 0, activeFolder = "尚無紀錄", maxPractice = -1;
-
-    list.forEach(function(pair){
-      const cards = folderCards(pair.id);
-      totalWords += cards.length;
-      let s = {};
-      try { s = (typeof ensureFolderPracticeStats === "function" ? ensureFolderPracticeStats(pair.id) : {}) || {}; } catch(e){}
-      const p = window.getFolderDetailProgress(pair.id);
-      const total = p.learnedCount + (Number(s.test)||0) + (Number(s.match)||0) + (Number(s.listen)||0);
-      totalPractice += total;
-      if(total > maxPractice){
-        maxPractice = total;
-        activeFolder = (pair.data && (pair.data.name || pair.data.title)) || "未命名題庫";
-      }
-    });
-
-    const safe = (typeof safeHtml === "function") ? safeHtml : (v)=>String(v ?? "");
-    summary.innerHTML = '<div class="folder-stat-card">題庫數<div class="folder-stat-num">'+list.length+'</div></div>' +
-      '<div class="folder-stat-card">總單字<div class="folder-stat-num">'+totalWords+'</div></div>' +
-      '<div class="folder-stat-card">總練習<div class="folder-stat-num">'+totalPractice+'</div><div style="font-size:12px;color:#74816c;">最常練：'+safe(activeFolder)+'</div></div>';
-
-    if(!list.length){
-      detail.innerHTML = '<div class="folder-stat-row">目前還沒有題庫</div>';
-      return;
-    }
-
-    detail.innerHTML = list.map(function(pair){
-      const f = pair.data || {};
-      let s = {};
-      try { s = (typeof ensureFolderPracticeStats === "function" ? ensureFolderPracticeStats(pair.id) : {}) || {}; } catch(e){}
-      const p = window.getFolderDetailProgress(pair.id);
-      const grad = p.completion >= 100 ? "🏆 已完成" : "🌱 學習中";
-      const lastDate = (typeof formatStudyDate === "function") ? formatStudyDate(s.lastStudy) : (s.lastStudy || "尚未學習");
-      const lastType = (typeof getLastTypeLabel === "function") ? getLastTypeLabel(s.lastType) : (s.lastType || "尚未學習");
-      return '<div class="folder-stat-row">' +
-        '<div class="folder-stat-row-title"><span>'+safe(f.name || f.title || "未命名題庫")+'</span><span>'+grad+'</span></div>' +
-        '<div class="folder-stat-grid">' +
-          '<div class="folder-stat-mini">單字卡<b>'+p.learnedCount+'/'+p.totalCards+'</b></div>' +
-          '<div class="folder-stat-mini">筆試<b>'+(p.testDone ? "完成" : "未完成")+'</b></div>' +
-          '<div class="folder-stat-mini">配對<b>'+(p.matchDone ? "完成" : "未完成")+'</b></div>' +
-          '<div class="folder-stat-mini">聽力<b>'+(p.listenDone ? "完成" : "未完成")+'</b></div>' +
-          '<div class="folder-stat-mini">總計<b>'+p.completion+'%</b></div>' +
-        '</div>' +
-        '<div class="folder-progress-line"><div class="folder-progress-label"><span>完成度</span><span>'+p.completion+'%</span></div><div class="folder-progress-track"><div class="folder-progress-fill '+(p.completion>=100 ? "gold" : "")+'" style="width:'+p.completion+'%"></div></div></div>' +
-        '<div style="margin-top:10px;color:#74816c;font-weight:800;font-size:13px;">單字卡：已學會/總單字數，全部已學會占 25%　｜　筆試完成占 25%　｜　配對完成占 25%　｜　聽力完成占 25%<br>最後學習：'+lastDate+'　｜　最後模式：'+lastType+'</div>' +
-      '</div>';
-    }).join("");
-  };
-
-  // 包住原本 renderFlash：每次換卡時更新「已學會/還在學習中」按鈕狀態
-  const originalRenderFlash = window.renderFlash;
-  window.renderFlash = function(){
-    if(typeof originalRenderFlash === "function") originalRenderFlash.apply(this, arguments);
-    ensureFlashLearningControls();
-    updateFlashcardLearningButtons();
-  };
-
-  // 包住原本 startFlash，避免第一次進單字卡頁時控制列沒出現
-  const originalStartFlash = window.startFlash;
-  window.startFlash = function(){
-    const ret = (typeof originalStartFlash === "function") ? originalStartFlash.apply(this, arguments) : undefined;
-    ensureFlashLearningControls();
-    updateFlashcardLearningButtons();
-    return ret;
-  };
-
-  setTimeout(function(){
-    try { renderFolderStatsPanel(); } catch(e){}
-    try { ensureFlashLearningControls(); updateFlashcardLearningButtons(); } catch(e){}
-  }, 500);
-})();
-</script>
-
-
-<script>
-/* === 最終修正：已學會按鈕直接統計，不再抓成 0/0 === */
-(function(){
-  function parseCardsSafe(text){
-    try {
-      if (typeof parseCards === "function") return parseCards(text);
-    } catch(e) {}
-    return String(text || "").split(/\n+/).map(function(x){ return x.trim(); }).filter(Boolean).map(function(line){
-      var p;
-      if (line.indexOf("\t") >= 0) p = line.split("\t");
-      else if (line.indexOf(" - ") >= 0) p = line.split(" - ");
-      else if (line.indexOf(",") >= 0) p = line.split(",");
-      else p = line.split(/\s{2,}/);
-      return { term:(p[0] || "").trim(), definition:p.slice(1).join(" ").trim() };
-    }).filter(function(x){ return x.term && x.definition; });
-  }
-
-  // 這裡是關鍵：你的題庫單字存在 f.content，不是 f.cards / f.words。
-  window.getFolderCardsForStats = function(folderId){
-    try{
-      if (folderId == null || folderId === "") {
-        if (typeof current !== "undefined" && current !== null && current !== "") folderId = current;
-        else if (typeof currentFolder !== "undefined" && currentFolder !== null && currentFolder !== "") folderId = currentFolder;
-      }
-      if (typeof folders === "undefined" || !folders || folderId == null || folderId === "") return [];
-      var f = Array.isArray(folders) ? folders[Number(folderId)] : folders[folderId];
-      if (!f) return [];
-      if (Array.isArray(f.cards)) return f.cards;
-      if (Array.isArray(f.words)) return f.words;
-      if (typeof f.content === "string") return parseCardsSafe(f.content);
-      return [];
-    }catch(e){ return []; }
-  };
-
-  window.getFolderPairsForStats = function(){
-    try{
-      if (typeof folders === "undefined" || !folders) return [];
-      if (Array.isArray(folders)) return folders.map(function(f,i){ return {id:String(i), data:f}; });
-      return Object.keys(folders).map(function(id){ return {id:String(id), data:folders[id]}; });
-    }catch(e){ return []; }
-  };
-
-  window.getCurrentFolderIdForStats = function(){
-    try { if (typeof current !== "undefined" && current !== null && current !== "") return String(current); } catch(e){}
-    try { if (typeof currentFolder !== "undefined" && currentFolder !== null && currentFolder !== "") return String(currentFolder); } catch(e){}
-    return "0";
-  };
-
-  window.getStableCardKeyForStats = function(card, index){
-    if(!card) return String(index);
-    return String(card.id || ((card.term || "") + "||" + (card.definition || "")) || index);
-  };
-
-  function getMasterData(){
-    try { return JSON.parse(localStorage.getItem("b1a4MasteredCardsByFolder_v1") || "{}"); }
-    catch(e){ return {}; }
-  }
-  function saveMasterData(data){
-    try { localStorage.setItem("b1a4MasteredCardsByFolder_v1", JSON.stringify(data || {})); } catch(e){}
-  }
-  function learnedSet(fid){
-    var data = getMasterData();
-    return new Set(Array.isArray(data[String(fid)]) ? data[String(fid)] : []);
-  }
-  function saveLearnedSet(fid, set){
-    var data = getMasterData();
-    data[String(fid)] = Array.from(set);
-    saveMasterData(data);
-  }
-  function learnedCount(fid){
-    var cards = window.getFolderCardsForStats(fid);
-    var set = learnedSet(fid);
-    return cards.filter(function(c,i){ return set.has(window.getStableCardKeyForStats(c,i)); }).length;
-  }
-
-  window.setCurrentFlashcardLearningStatus = function(isLearned){
-    var fid = window.getCurrentFolderIdForStats();
-    var idx = 0;
-    try { idx = Number(flashIndex) || 0; } catch(e){}
-
-    var card = null;
-    try { if (typeof flashCards !== "undefined" && flashCards && flashCards.length) card = flashCards[idx]; } catch(e){}
-    if(!card) card = window.getFolderCardsForStats(fid)[idx];
-    if(!card) return;
-
-    var key = window.getStableCardKeyForStats(card, idx);
-    var set = learnedSet(fid);
-    if(isLearned) set.add(key);
-    else set.delete(key);
-    saveLearnedSet(fid, set);
-
-    try{
-      if (typeof ensureFolderPracticeStats === "function") {
-        var s = ensureFolderPracticeStats(fid);
-        if(s){
-          s.flashcard = learnedCount(fid);
-          s.total = (Number(s.flashcard)||0) + (Number(s.test)||0) + (Number(s.match)||0) + (Number(s.listen)||0);
-          s.lastStudy = new Date().toISOString();
-          s.lastType = "flashcard";
-        }
-      }
-      localStorage.setItem("b1a4FolderPracticeStats", JSON.stringify(folderPracticeStats || {}));
-      if(typeof saveStorage === "function") saveStorage();
-    }catch(e){}
-
-    try { updateFlashcardLearningButtons(); } catch(e){}
-    try { renderFolderStatsPanel(); } catch(e){}
-    try { renderDashboard(); } catch(e){}
-  };
-
-  window.updateFlashcardLearningButtons = function(){
-    var status = document.getElementById("flashLearningStatusText");
-    var learnedBtn = document.getElementById("flashLearnedBtn");
-    var learningBtn = document.getElementById("flashLearningBtn");
-    var counter = document.getElementById("flashLearningCounter");
-    if(!status || !learnedBtn || !learningBtn) return;
-
-    var fid = window.getCurrentFolderIdForStats();
-    var idx = 0;
-    try { idx = Number(flashIndex) || 0; } catch(e){}
-    var card = null;
-    try { if (typeof flashCards !== "undefined" && flashCards && flashCards.length) card = flashCards[idx]; } catch(e){}
-    if(!card) card = window.getFolderCardsForStats(fid)[idx];
-
-    var key = window.getStableCardKeyForStats(card, idx);
-    var set = learnedSet(fid);
-    var isDone = !!(card && set.has(key));
-    var total = window.getFolderCardsForStats(fid).length;
-    var count = learnedCount(fid);
-
-    status.textContent = isDone ? "狀態：已學會" : "狀態：還在學習中";
-    learnedBtn.classList.toggle("active", isDone);
-    learningBtn.classList.toggle("active", !isDone);
-    if(counter) counter.textContent = "已學會 " + count + "/" + total;
-  };
-
-  window.getFolderDetailProgress = function(folderId){
-    var totalCards = window.getFolderCardsForStats(folderId).length;
-    var learned = learnedCount(folderId);
-    var s = {};
-    try { s = (typeof ensureFolderPracticeStats === "function" ? ensureFolderPracticeStats(folderId) : {}) || {}; } catch(e){}
-    if(s) s.flashcard = learned;
-    var flashDone = totalCards > 0 && learned >= totalCards;
-    var testDone = Number(s.test || 0) > 0;
-    var matchDone = Number(s.match || 0) > 0;
-    var listenDone = Number(s.listen || 0) > 0;
-    var completion = (flashDone ? 25 : 0) + (testDone ? 25 : 0) + (matchDone ? 25 : 0) + (listenDone ? 25 : 0);
-    return { totalCards:totalCards, learnedCount:learned, flashDone:flashDone, testDone:testDone, matchDone:matchDone, listenDone:listenDone, completion:completion };
-  };
-
-  function safe(v){
-    return String(v == null ? "" : v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;").replace(/'/g,"&#39;");
-  }
-
-  window.renderFolderStatsPanel = function(){
-    var summary = document.getElementById("folderStatsSummary");
-    var detail = document.getElementById("folderStatsDetail");
-    if(!summary || !detail) return;
-    var list = window.getFolderPairsForStats();
-    var totalWords = 0, totalPractice = 0, activeFolder = "尚無紀錄", maxPractice = -1;
-    list.forEach(function(pair){
-      var p = window.getFolderDetailProgress(pair.id);
-      totalWords += p.totalCards;
-      var s = {};
-      try { s = ensureFolderPracticeStats(pair.id) || {}; } catch(e){}
-      var total = p.learnedCount + (Number(s.test)||0) + (Number(s.match)||0) + (Number(s.listen)||0);
-      totalPractice += total;
-      if(total > maxPractice){ maxPractice = total; activeFolder = (pair.data && (pair.data.name || pair.data.title)) || "未命名題庫"; }
-    });
-    summary.innerHTML = '<div class="folder-stat-card">題庫數<div class="folder-stat-num">'+list.length+'</div></div>'+
-      '<div class="folder-stat-card">總單字<div class="folder-stat-num">'+totalWords+'</div></div>'+
-      '<div class="folder-stat-card">總練習<div class="folder-stat-num">'+totalPractice+'</div><div style="font-size:12px;color:#74816c;">最常練：'+safe(activeFolder)+'</div></div>';
-
-    detail.innerHTML = list.map(function(pair){
-      var data = pair.data || {};
-      var p = window.getFolderDetailProgress(pair.id);
-      var s = {};
-      try { s = ensureFolderPracticeStats(pair.id) || {}; } catch(e){}
-      var grad = p.completion >= 100 ? "🏆 已畢業" : (p.completion >= 75 ? "🌟 快完成" : "🌱 學習中");
-      var lastDate = (typeof formatStudyDate === "function") ? formatStudyDate(s.lastStudy) : (s.lastStudy || "尚未學習");
-      var lastType = (typeof getPracticeTypeLabel === "function") ? getPracticeTypeLabel(s.lastType) : (s.lastType || "尚未學習");
-      return '<div class="folder-stat-row">'+
-        '<div class="folder-stat-row-title"><span>'+safe(data.name || data.title || "未命名題庫")+'</span><span>'+grad+'</span></div>'+
-        '<div class="folder-stat-grid">'+
-          '<div class="folder-stat-mini">單字卡<b>'+p.learnedCount+'/'+p.totalCards+'</b></div>'+
-          '<div class="folder-stat-mini">筆試<b>'+(p.testDone ? "完成" : "未完成")+'</b></div>'+
-          '<div class="folder-stat-mini">配對<b>'+(p.matchDone ? "完成" : "未完成")+'</b></div>'+
-          '<div class="folder-stat-mini">聽力<b>'+(p.listenDone ? "完成" : "未完成")+'</b></div>'+
-          '<div class="folder-stat-mini">總計<b>'+p.completion+'%</b></div>'+
-        '</div>'+
-        '<div class="folder-progress-line"><div class="folder-progress-label"><span>完成度</span><span>'+p.completion+'%</span></div><div class="folder-progress-track"><div class="folder-progress-fill '+(p.completion>=100 ? "gold" : "")+'" style="width:'+p.completion+'%"></div></div></div>'+
-        '<div style="margin-top:10px;color:#74816c;font-weight:800;font-size:13px;">最後學習：'+lastDate+'　｜　最後模式：'+lastType+'</div>'+
-      '</div>';
-    }).join("");
-  };
-
-  setTimeout(function(){
-    try { updateFlashcardLearningButtons(); } catch(e){}
-    try { renderFolderStatsPanel(); } catch(e){}
-  }, 200);
-})();
-</script>
-
-
-<script>
-/* ===== 完成後才統計進度：修正版 =====
-   - 單字卡：按「已學會」才累計 learnedCount/totalCards
-   - 筆試：按檢查答案完成結算後才算完成
-   - 配對：全部配對成功後才算完成
-   - 聽力：題庫本輪全部答過後才算完成
-*/
-(function(){
-  function getCurrentFolderId(){
-    try{
-      if(typeof current !== "undefined" && current !== null && current !== "") return current;
-      if(typeof currentFolder !== "undefined" && currentFolder !== null && currentFolder !== "") return currentFolder;
-    }catch(e){}
-    return null;
-  }
-
-  function getCardsForFolder(folderId){
-    try{
-      if(typeof folders !== "undefined" && folders){
-        var f = folders[folderId];
-        if(!f && !isNaN(Number(folderId))) f = folders[Number(folderId)];
-        if(f){
-          if(Array.isArray(f.cards)) return f.cards;
-          if(Array.isArray(f.words)) return f.words;
-          if(Array.isArray(f.items)) return f.items;
-          if(typeof f.content === "string" && f.content.trim()){
-            if(typeof parseCards === "function") return parseCards(f.content);
-          }
-        }
-      }
-    }catch(e){}
-    try{
-      if(folderId === getCurrentFolderId() && typeof getCards === "function"){
-        var cards = getCards();
-        if(Array.isArray(cards)) return cards;
-      }
-    }catch(e){}
-    return [];
-  }
-
-  function ensureStats(folderId){
-    if(!folderId && folderId !== 0) folderId = getCurrentFolderId();
-    if(folderId === null || folderId === undefined || folderId === "") return null;
-    try{
-      if(typeof folderPracticeStats === "undefined" || !folderPracticeStats) window.folderPracticeStats = {};
-      if(!folderPracticeStats[folderId]) folderPracticeStats[folderId] = {};
-      var s = folderPracticeStats[folderId];
-      if(typeof s.flashcard !== "number") s.flashcard = Number(s.flashcard) || 0;
-      if(typeof s.test !== "number") s.test = Number(s.test) || 0;
-      if(typeof s.match !== "number") s.match = Number(s.match) || 0;
-      if(typeof s.listen !== "number") s.listen = Number(s.listen) || 0;
-      if(typeof s.testCompleted === "undefined") s.testCompleted = false;
-      if(typeof s.matchCompleted === "undefined") s.matchCompleted = false;
-      if(typeof s.listenCompleted === "undefined") s.listenCompleted = false;
-      return s;
-    }catch(e){ return null; }
-  }
-
-  function saveStats(){
-    try{ localStorage.setItem("b1a4FolderPracticeStats", JSON.stringify(folderPracticeStats || {})); }catch(e){}
-    try{ if(typeof saveStorage === "function") saveStorage(); }catch(e){}
-    try{ if(typeof saveCloudData === "function" && typeof cloudUser !== "undefined" && cloudUser) saveCloudData(); }catch(e){}
-    try{ if(typeof renderFolderStatsPanel === "function") renderFolderStatsPanel(); }catch(e){}
-  }
-
-  function learnedCount(folderId){
-    var cards = getCardsForFolder(folderId);
-    var total = cards.length;
-    var count = 0;
-
-    try{
-      if(typeof learnedSet === "function"){
-        var set = learnedSet(folderId);
-        if(set && typeof set.has === "function"){
-          cards.forEach(function(card, idx){
-            var key = (typeof getStableCardKeyForStats === "function")
-              ? getStableCardKeyForStats(card, idx)
-              : ((typeof getCardKey === "function") ? getCardKey(card, idx) : String(idx));
-            if(set.has(key)) count++;
-          });
-          return Math.min(count, total);
-        }
-      }
-    }catch(e){}
-
-    try{
-      if(typeof graduationData !== "undefined" && graduationData && graduationData[folderId] && Array.isArray(graduationData[folderId].learned)){
-        var arr = graduationData[folderId].learned;
-        cards.forEach(function(card, idx){
-          var key = (typeof getCardKey === "function") ? getCardKey(card, idx) : String(idx);
-          if(arr.indexOf(key) >= 0) count++;
-        });
-        return Math.min(count, total);
-      }
-    }catch(e){}
-
-    try{
-      var s = ensureStats(folderId) || {};
-      return Math.min(Number(s.flashcard) || 0, total);
-    }catch(e){}
-
-    return 0;
-  }
-
-  function markCompleted(type){
-    var fid = getCurrentFolderId();
-    var s = ensureStats(fid);
-    if(!s) return;
-
-    if(type === "test"){
-      s.testCompleted = true;
-      s.test = 1;
-    }else if(type === "match"){
-      s.matchCompleted = true;
-      s.match = 1;
-    }else if(type === "listen"){
-      s.listenCompleted = true;
-      s.listen = 1;
-    }
-
-    s.lastStudy = new Date().toISOString();
-    s.lastType = type;
-    s.total = (learnedCount(fid) || 0) + (s.testCompleted ? 1 : 0) + (s.matchCompleted ? 1 : 0) + (s.listenCompleted ? 1 : 0);
-    saveStats();
-  }
-
-  // 阻止「一進入筆試/配對/聽力」就被算完成。
-  window.recordFolderPractice = function(type, forceComplete){
-    var fid = getCurrentFolderId();
-    var s = ensureStats(fid);
-    if(!s) return;
-
-    if(type === "flashcard"){
-      // 單字卡統計由「已學會」按鈕/learnedSet 負責，這裡只更新最後學習資訊。
-      s.flashcard = learnedCount(fid);
-      s.lastStudy = new Date().toISOString();
-      s.lastType = "flashcard";
-      saveStats();
-      return;
-    }
-
-    if(forceComplete === true){
-      markCompleted(type);
-      return;
-    }
-
-    // 非完成狀態，不做任何進度統計。
-  };
-
-  window.getFolderDetailProgress = function(folderId){
-    var cards = getCardsForFolder(folderId);
-    var totalCards = cards.length;
-    var learned = learnedCount(folderId);
-    var s = ensureStats(folderId) || {};
-    s.flashcard = learned;
-
-    var flashDone = totalCards > 0 && learned >= totalCards;
-    var testDone = !!s.testCompleted;
-    var matchDone = !!s.matchCompleted;
-    var listenDone = !!s.listenCompleted;
-    var completion = (flashDone ? 25 : 0) + (testDone ? 25 : 0) + (matchDone ? 25 : 0) + (listenDone ? 25 : 0);
-
-    return {
-      totalCards: totalCards,
-      learnedCount: learned,
-      flashDone: flashDone,
-      testDone: testDone,
-      matchDone: matchDone,
-      listenDone: listenDone,
-      completion: completion
-    };
-  };
-
-  // 筆試：檢查答案/結算後才完成
-  var oldCheckAnswers = window.checkAnswers;
-  if(typeof oldCheckAnswers === "function"){
-    window.checkAnswers = function(){
-      var result = oldCheckAnswers.apply(this, arguments);
-      try{
-        if(typeof testCards !== "undefined" && Array.isArray(testCards) && testCards.length){
-          markCompleted("test");
-        }
-      }catch(e){}
-      return result;
-    };
-  }
-
-  // 配對：全部完成後才完成
-  var oldRecordMatchCompleted = window.recordMatchCompleted;
-  window.recordMatchCompleted = function(){
-    try{ if(typeof oldRecordMatchCompleted === "function") oldRecordMatchCompleted.apply(this, arguments); }catch(e){}
-    markCompleted("match");
-  };
-
-  // 聽力：本輪題庫全部答過才完成
-  var oldAnswerListening = window.answerListening;
-  if(typeof oldAnswerListening === "function"){
-    window.answerListening = function(){
-      var result = oldAnswerListening.apply(this, arguments);
-      try{
-        var cards = (typeof getCards === "function") ? getCards() : [];
-        var total = Array.isArray(cards) ? cards.length : 0;
-        if(total > 0 && typeof listeningTotal !== "undefined" && Number(listeningTotal) >= total){
-          markCompleted("listen");
-        }
-      }catch(e){}
-      return result;
-    };
-  }
-
-  // 開始新測驗時不清除已完成紀錄，只是不提早加進度。
-  setTimeout(function(){
-    try{ if(typeof renderFolderStatsPanel === "function") renderFolderStatsPanel(); }catch(e){}
-    try{ if(typeof updateFlashcardLearningButtons === "function") updateFlashcardLearningButtons(); }catch(e){}
-  }, 100);
-})();
-</script>
-
 </body>
 </html>
