@@ -1911,6 +1911,22 @@ textarea {
 
 /* ===== 題庫列表：森林資料夾卡 ===== */
 #folderGrid { display:block !important; }
+.folder-search-input {
+  width:100%;
+  box-sizing:border-box;
+  border:2px solid #e3f0d2;
+  border-radius:16px;
+  padding:12px 16px;
+  font-size:14px;
+  font-weight:800;
+  margin-bottom:16px;
+  transition:.2s;
+}
+.folder-search-input:focus {
+  outline:none;
+  border-color:#83b842;
+  box-shadow:0 0 0 4px rgba(131,184,66,.16);
+}
 .folder-card-grid {
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -1933,46 +1949,70 @@ textarea {
   display:flex;
   flex-direction:column;
 }
-.forest-folder-card:hover { transform:translateY(-2px); box-shadow:0 8px 16px rgba(72,108,39,.12); }
+.forest-folder-card:hover {
+  transform:translateY(-5px) scale(1.03);
+  box-shadow:0 18px 30px rgba(72,108,39,.22);
+  border-color:#9bc95d;
+}
+.forest-folder-card:hover .ffc-start-btn {
+  color:#fff;
+  background:linear-gradient(135deg,#9bc95d,#6fae37);
+  border-top-color:transparent;
+  border-radius:10px;
+}
 .forest-folder-card.active { border-color:#83b842; background:#f7fdf1; }
-.ffc-head { display:flex; justify-content:space-between; align-items:center; }
-.ffc-folder-ico { font-size:16px; }
-.ffc-mascot { font-size:13px; opacity:.85; }
-.ffc-name {
+.ffc-head { display:flex; align-items:center; gap:6px; }
+.ffc-folder-ico { font-size:15px; flex:0 0 auto; }
+.ffc-name-inline {
   font-weight:1000;
   font-size:12px;
   color:#20351f;
-  margin-top:3px;
+  flex:1;
+  min-width:0;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
 }
+.ffc-mascot { font-size:13px; opacity:.85; flex:0 0 auto; }
+
+.ffc-hero {
+  margin-top:8px;
+  background:#f4faed;
+  border-radius:12px;
+  padding:8px 10px;
+  text-align:center;
+}
+.ffc-progress-track {
+  height:8px;
+  background:#e2edd6;
+  border-radius:999px;
+  overflow:hidden;
+}
+.ffc-progress-fill { height:100%; background:linear-gradient(90deg,#9bc95d,#6fae37); border-radius:999px; }
+.ffc-percent-big {
+  font-size:22px;
+  font-weight:1000;
+  color:#3f7a1f;
+  line-height:1.2;
+  margin-top:4px;
+}
+.ffc-percent-big small { font-size:12px; font-weight:900; margin-left:1px; }
+.ffc-stage {
+  font-size:10px;
+  font-weight:900;
+  color:#5c9b36;
+  margin-top:1px;
+}
+
 .ffc-meta {
   display:flex;
-  gap:6px;
+  gap:8px;
   font-size:10px;
   color:var(--muted);
   font-weight:800;
-  margin-top:2px;
+  margin-top:8px;
 }
-.ffc-progress-track {
-  height:4px;
-  background:#eef2e6;
-  border-radius:999px;
-  overflow:hidden;
-  margin-top:5px;
-}
-.ffc-progress-fill { height:100%; background:linear-gradient(90deg,#9bc95d,#6fae37); border-radius:999px; }
-.ffc-stage-row {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  font-size:10px;
-  font-weight:900;
-  color:#4e8f24;
-  margin-top:3px;
-}
-.ffc-date { font-size:9px; color:var(--muted); font-weight:700; margin-top:2px; }
+.ffc-date { font-size:9px; color:var(--muted); font-weight:700; margin-top:4px; }
 .ffc-start-btn {
   margin-top:auto;
   padding-top:5px;
@@ -2247,6 +2287,80 @@ textarea {
 }
 .pd-row b { color:#3f7a1f; font-size:12px; }
 
+/* ===== 🌸 文法森林 ===== */
+.grammar-level-summary {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin:14px 0;
+}
+.grammar-level-tile {
+  background:#fff; border:1px solid var(--line); border-radius:16px;
+  padding:12px 8px; text-align:center;
+}
+.grammar-level-tile .glt-ico { font-size:20px; display:block; margin-bottom:4px; }
+.grammar-level-tile b { display:block; font-size:18px; color:#3f7a1f; }
+.grammar-level-tile small { font-size:11px; color:var(--muted); font-weight:800; }
+
+.grammar-card-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
+  gap:14px;
+}
+.grammar-card { perspective:1200px; height:230px; cursor:pointer; }
+.grammar-card-inner {
+  position:relative; width:100%; height:100%;
+  transition:transform .5s; transform-style:preserve-3d;
+}
+.grammar-card.flipped .grammar-card-inner { transform:rotateY(180deg); }
+.grammar-card-front, .grammar-card-back {
+  position:absolute; inset:0;
+  backface-visibility:hidden;
+  border-radius:20px;
+  border:2px solid #ffd7e8;
+  background:linear-gradient(160deg,#fff,#fff6fa);
+  padding:14px;
+  box-shadow:0 8px 20px rgba(72,108,39,.08);
+  overflow-y:auto;
+}
+.grammar-card-back { transform:rotateY(180deg); border-color:#d7edb8; background:linear-gradient(160deg,#fff,#f6fff0); }
+.gram-top-row { display:flex; justify-content:space-between; align-items:center; }
+.gram-level-badge {
+  font-size:11px; font-weight:900; color:#5c9b36;
+  background:#eef8df; border-radius:999px; padding:3px 10px;
+}
+.gram-fav-btn, .gram-icon-btn { border:0; background:transparent; font-size:16px; cursor:pointer; }
+.gram-title { font-weight:1000; font-size:17px; color:#20351f; margin-top:10px; }
+.gram-meaning { font-size:13px; color:var(--muted); font-weight:800; margin-top:4px; }
+.gram-mastery-track { height:6px; background:#eef2e6; border-radius:999px; overflow:hidden; margin-top:14px; }
+.gram-mastery-fill { height:100%; background:linear-gradient(90deg,#9bc95d,#6fae37); border-radius:999px; }
+.gram-mastery-label { font-size:11px; color:#4e8f24; font-weight:900; margin-top:4px; }
+.gram-flip-hint { font-size:11px; color:var(--muted); font-weight:700; margin-top:14px; text-align:center; }
+.gram-section-label { font-size:11px; font-weight:1000; color:#4e8f24; margin-top:10px; margin-bottom:4px; }
+.gram-rule { font-size:13px; font-weight:700; color:#3f5634; line-height:1.5; }
+.gram-example { background:#fff; border:1px solid var(--line); border-radius:12px; padding:8px 10px; margin-bottom:6px; }
+.gram-example-kr { font-weight:900; font-size:13px; display:flex; align-items:center; gap:6px; }
+.gram-example-zh { font-size:12px; color:var(--muted); font-weight:700; margin-top:2px; }
+.gram-note { font-size:12px; color:#7a5c00; background:#fff8e0; border-radius:10px; padding:8px 10px; font-weight:700; }
+
+.gram-example-row {
+  display:flex; gap:6px; margin-bottom:8px;
+}
+.gram-example-row input {
+  flex:1; border:2px solid #e3f0d2; border-radius:12px; padding:9px 10px; font-size:13px;
+}
+
+.gram-quiz-options { display:grid; gap:10px; margin-top:6px; }
+.gram-quiz-option {
+  border:2px solid var(--line); background:#fff; border-radius:14px;
+  padding:12px 14px; font-weight:900; font-size:14px; cursor:pointer; text-align:left;
+  transition:.15s;
+}
+.gram-quiz-option:hover { border-color:#83b842; background:#f4faed; }
+.gram-quiz-option.picked { border-color:#83b842; background:#eef8df; }
+.gram-quiz-option.correct-reveal { border-color:#6fae37; background:#eaf6dc; color:#3f7a1f; }
+
+
 /* ===== 首頁：今日目標（狐狸陪伴） ===== */
 .fox-goal-line {
   display:flex; align-items:center; gap:8px;
@@ -2331,6 +2445,7 @@ textarea {
       <div id="vocabSubnav" class="vocab-subnav">
         <button data-page="library" onclick="goPage('library')">▣ 題庫</button>
         <button data-page="flash" onclick="goPage('flash')">▤ 單字卡</button>
+        <button data-page="grammar" onclick="goPage('grammar')">🌸 文法</button>
         <button data-page="match" onclick="goPage('match')">⌘ 配對</button>
         <button data-page="listen" onclick="goPage('listen')">🔊 聽力</button>
       </div>
@@ -2436,6 +2551,8 @@ textarea {
               <button class="soft" onclick="newFolder()">＋ 建立題庫</button>
             </div>
           </div>
+          <input id="folderSearchInput" class="folder-search-input" type="text" placeholder="🔍 搜尋題庫..." oninput="filterFolderCards(this.value)">
+          <div id="folderSearchEmpty" class="empty" style="display:none;">找不到符合的題庫</div>
           <div id="folderGrid" class="folder-grid"></div>
         </div>
 
@@ -2612,6 +2729,56 @@ textarea {
           <div class="btns" style="justify-content:center;margin-top:20px;">
             <button class="primary" onclick="startListening()">開始聽力</button>
             <button class="ghost" onclick="nextListeningQuestion()">下一題</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="grammar" class="page">
+        <div class="topbar">
+          <h2>📖 文法森林</h2>
+          <div class="btns">
+            <button class="ghost" onclick="startGrammarQuiz()">🧠 文法測驗</button>
+            <button class="primary" onclick="openGrammarEditor(null)">＋ 新增文法</button>
+          </div>
+        </div>
+
+        <div id="grammarListView">
+          <input id="grammarSearchInput" class="folder-search-input" type="text" placeholder="🔍 搜尋文法，例如：으세요" oninput="renderGrammarList()">
+          <div id="grammarLevelSummary" class="grammar-level-summary"></div>
+          <div id="grammarCardGrid" class="grammar-card-grid"></div>
+        </div>
+
+        <div id="grammarQuizView" style="display:none;">
+          <div class="topbar">
+            <button class="ghost" onclick="closeGrammarQuiz()">‹ 返回文法列表</button>
+            <span id="grammarQuizScore" class="score"></span>
+          </div>
+          <div id="grammarQuizBody"></div>
+        </div>
+
+        <div id="grammarEditorMask" class="hero-modal-mask">
+          <div class="hero-modal" style="width:min(600px,100%);max-height:85vh;overflow:auto;">
+            <div class="hero-modal-head">
+              <div class="hero-modal-title" id="grammarEditorTitle">🌸 新增文法</div>
+              <button class="hero-modal-close" type="button" onclick="closeGrammarEditor()">關閉</button>
+            </div>
+            <div style="display:grid;gap:12px;">
+              <input id="gramTitle" type="text" placeholder="文法名稱，例如：V-(으)세요" class="cute-input">
+              <input id="gramMeaning" type="text" placeholder="簡短意思，例如：請～" class="cute-input">
+              <select id="gramLevel" style="border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px;">
+                <option value="beginner">🌱 初級</option>
+                <option value="intermediate">🌿 中級</option>
+                <option value="advanced">🌳 高級</option>
+              </select>
+              <textarea id="gramRule" rows="2" placeholder="使用規則，例如：有收尾子音加 으세요，沒有收尾子音加 세요" style="border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;"></textarea>
+              <div>
+                <label style="font-weight:900;color:#4e8f24;display:block;margin-bottom:8px;">💬 例句</label>
+                <div id="gramExamplesWrap"></div>
+                <button type="button" class="ghost" style="width:100%;" onclick="addGrammarExampleRow()">➕ 新增例句</button>
+              </div>
+              <textarea id="gramNote" rows="2" placeholder="💡 備註（選填），例如：正式禮貌用語" style="border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;"></textarea>
+              <button class="primary cute-btn" type="button" onclick="saveGrammarPoint()">🌸 儲存文法</button>
+            </div>
           </div>
         </div>
       </section>
@@ -3236,7 +3403,7 @@ function getCloudPayload() {
     masteryData, wrongBookData, graduationData,
     folderPracticeStats, flashSeenData, voiceSpeed,
     activityLog,
-    lyricsSongs, favorites,
+    lyricsSongs, favorites, grammarPoints,
     updatedAt: new Date().toISOString()
   };
 }
@@ -3258,6 +3425,7 @@ async function loadCloudData() {
       activityLog = data.activityLog || activityLog || {};
       lyricsSongs = Array.isArray(data.lyricsSongs) ? data.lyricsSongs : (lyricsSongs || []);
       favorites = data.favorites || favorites || { sentences: [], words: [], grammar: [], songs: [] };
+      grammarPoints = Array.isArray(data.grammarPoints) ? data.grammarPoints : (grammarPoints || []);
       current = folders.length ? 0 : null;
       writeLocalOnly();
       localStorage.setItem("b1a4MasteryData", JSON.stringify(masteryData));
@@ -3266,6 +3434,7 @@ async function loadCloudData() {
       localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(activityLog));
       localStorage.setItem(LYRICS_STORAGE_KEY, JSON.stringify(lyricsSongs));
       localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
+      localStorage.setItem(GRAMMAR_STORAGE_KEY, JSON.stringify(grammarPoints));
       renderFolders();
       if (current !== null) loadFolder(current); else voiceSpeed = Number(data.voiceSpeed || voiceSpeed || 0.65);
       initVoiceSpeedUI();
@@ -3275,6 +3444,7 @@ async function loadCloudData() {
       if (typeof renderLyricsSongGrid === "function") renderLyricsSongGrid();
       if (typeof renderFavoritesSummary === "function") renderFavoritesSummary();
       if (typeof renderFavoritesDetail === "function") renderFavoritesDetail();
+      if (typeof renderGrammarList === "function") renderGrammarList();
       if (typeof renderLearningCalendar === "function") renderLearningCalendar();
       if (typeof renderDetailedStats === "function") renderDetailedStats();
       if (typeof updateHeroStats === "function") updateHeroStats();
@@ -3557,6 +3727,10 @@ function runSiteSearch(query) {
     });
   });
 
+  const grammarResults = (typeof grammarPoints !== "undefined" ? grammarPoints : []).filter(g =>
+    (g.title || "").toLowerCase().includes(q) || (g.meaning || "").toLowerCase().includes(q)
+  );
+
   let html = "";
   if (wordResults.length) {
     html += `<div style="font-weight:1000;margin:6px 0 8px;">📚 單字（${wordResults.length}）</div>`;
@@ -3564,6 +3738,13 @@ function runSiteSearch(query) {
       <div class="search-result-item" onclick="openFolderAndGoFlash(${r.folderIdx})">
         ${esc(r.term)} <span style="color:var(--muted);">— ${esc(r.definition)}</span>
         <div style="font-size:11px;color:var(--muted);font-weight:700;">來自「${esc(r.folderName)}」</div>
+      </div>`).join("");
+  }
+  if (grammarResults.length) {
+    html += `<div style="font-weight:1000;margin:14px 0 8px;">🌸 文法（${grammarResults.length}）</div>`;
+    html += grammarResults.slice(0, 20).map(g => `
+      <div class="search-result-item" onclick="closeSiteSearch();goPage('grammar');">
+        ${esc(g.title)} <span style="color:var(--muted);">— ${esc(g.meaning || "")}</span>
       </div>`).join("");
   }
   if (songResults.length) {
@@ -3581,7 +3762,7 @@ function runSiteSearch(query) {
         <div style="font-size:11px;color:var(--muted);font-weight:700;">出自《${esc(r.song.title)}》</div>
       </div>`).join("");
   }
-  if (!wordResults.length && !songResults.length && !lineResults.length) {
+  if (!wordResults.length && !grammarResults.length && !songResults.length && !lineResults.length) {
     html = `<div class="empty" style="padding:16px 0;">找不到符合「${esc(query)}」的結果</div>`;
   }
   resultsEl.innerHTML = html;
@@ -3624,8 +3805,8 @@ function esc(s) { return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;
 function norm(v) { return String(v||"").trim().toLowerCase().replace(/[，。！？、,.!?]/g,"").replace(/\s+/g," "); }
 function today() { return new Date().toISOString().slice(0,10).replaceAll("-","/"); }
 
-const BOTTOM_TAB_MAP = { home:"home", library:"vocab", flash:"vocab", match:"vocab", listen:"vocab", test:"test", lyrics:"lyrics", profile:"profile" };
-const VOCAB_PAGES = ["library","flash","match","listen"];
+const BOTTOM_TAB_MAP = { home:"home", library:"vocab", flash:"vocab", grammar:"vocab", match:"vocab", listen:"vocab", test:"test", lyrics:"lyrics", profile:"profile" };
+const VOCAB_PAGES = ["library","flash","grammar","match","listen"];
 
 function updateBottomNav(id) {
   document.querySelectorAll(".bottom-nav button").forEach(b => b.classList.remove("active"));
@@ -3658,6 +3839,7 @@ function goPage(id) {
   if (id === "flash") startFlash(false);
   if (id === "match" && !document.getElementById("matchBoard").innerHTML) startMatch();
   if (id === "profile") { renderLearningCalendar(); renderDetailedStats(); }
+  if (id === "grammar" && typeof renderGrammarList === "function") renderGrammarList();
   const floatBtn = document.getElementById("floatingSaveBtn");
   if (floatBtn) {
     const editorOpen = id === "library" && document.getElementById("editorWrap").style.display !== "none";
@@ -3701,26 +3883,65 @@ function groupProgressBar(grpFolders) {
   return `<div class="group-progress"><div class="group-progress-track"><div class="group-progress-fill" style="width:${avg}%"></div></div><span>${avg}%</span></div>`;
 }
 
+function formatRelativeStudyDate(iso) {
+  if (!iso) return "尚未學習";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "尚未學習";
+  const now = new Date();
+  const startOfDay = (dt) => new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+  const diffDays = Math.round((startOfDay(now) - startOfDay(d)) / 86400000);
+  if (diffDays <= 0) return "今天";
+  if (diffDays === 1) return "昨天";
+  if (diffDays < 7) return diffDays + " 天前";
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getDate()).padStart(2,"0")}`;
+}
+
 function makeForestFolderCard(f, i) {
   const d = document.createElement("div");
   d.className = "forest-folder-card " + (current === i ? "active" : "");
+  d.dataset.name = f.name.toLowerCase();
   d.style.setProperty("--tab", f.color || "#c6e09c");
   const cardCount = parseCards(f.content).length;
   const gStats = getGraduationStats(i);
   const stage = getFolderStage(gStats.flashPercent, gStats.graduated);
   const mascot = FOLDER_MASCOTS[i % FOLDER_MASCOTS.length];
+  const pStats = (folderPracticeStats && folderPracticeStats[i]) || {};
+  const lastStudy = formatRelativeStudyDate(pStats.lastStudy);
   d.innerHTML = `
     <div class="ffc-head">
       <span class="ffc-folder-ico">📂</span>
+      <span class="ffc-name-inline">${esc(f.name)}</span>
       <span class="ffc-mascot">${mascot}</span>
     </div>
-    <div class="ffc-name">${esc(f.name)}</div>
-    <div class="ffc-meta"><span>📖 ${cardCount} 字</span></div>
-    <div class="ffc-progress-track"><div class="ffc-progress-fill" style="width:${gStats.flashPercent}%"></div></div>
-    <div class="ffc-stage-row"><span class="ffc-stage">${stage.icon} ${stage.label}</span><span class="ffc-percent">${gStats.flashPercent}%</span></div>
+    <div class="ffc-hero">
+      <div class="ffc-progress-track"><div class="ffc-progress-fill" style="width:${gStats.flashPercent}%"></div></div>
+      <div class="ffc-percent-big">${gStats.flashPercent}<small>%</small></div>
+      <div class="ffc-stage">${stage.icon} ${stage.label}</div>
+    </div>
+    <div class="ffc-meta"><span>📖 ${cardCount} 個單字</span><span>🔥 練習 ${pStats.total || 0} 次</span></div>
+    <div class="ffc-date">🕒 上次學習：${lastStudy}</div>
     <button type="button" class="ffc-start-btn" onclick="event.stopPropagation();quickStartFlash(${i})">▶ 開始學習</button>`;
   d.onclick = () => { loadFolder(i); document.getElementById("editor").scrollIntoView({behavior:"smooth"}); };
   return d;
+}
+
+function filterFolderCards(query) {
+  const q = String(query || "").trim().toLowerCase();
+  const cards = document.querySelectorAll(".forest-folder-card");
+  let anyVisible = false;
+  cards.forEach(card => {
+    const match = !q || (card.dataset.name || "").includes(q);
+    card.style.display = match ? "" : "none";
+    if (match) anyVisible = true;
+  });
+
+  document.querySelectorAll(".group-section").forEach(section => {
+    const visibleInSection = Array.from(section.querySelectorAll(".forest-folder-card")).some(c => c.style.display !== "none");
+    section.style.display = (q && !visibleInSection) ? "none" : "";
+  });
+
+  const emptyMsg = document.getElementById("folderSearchEmpty");
+  if (emptyMsg) emptyMsg.style.display = (q && !anyVisible) ? "block" : "none";
 }
 
 function quickStartFlash(i) {
@@ -3814,6 +4035,7 @@ function renderFolders() {
   renderStudyUpgradePanel();
   decorateMasteryBadges();
   renderFolderStatsPanel();
+  filterFolderCards(document.getElementById("folderSearchInput")?.value || "");
 }
 
 
@@ -3859,7 +4081,8 @@ function renderHomeQuestDesign(){
     const stage = document.getElementById('forestStage');
     if(stage) stage.innerHTML = forests[Math.min(forests.length-1, level-1)];
     const hint = document.getElementById('forestHint');
-    if(hint) hint.textContent = totalCards ? `目前有 ${totalCards} 個單字，累積練習 ${totalPractice} 次。` : '完成學習任務後森林會開始長大。';
+    const gramCount = (typeof grammarPoints !== "undefined" && Array.isArray(grammarPoints)) ? grammarPoints.length : 0;
+    if(hint) hint.textContent = totalCards ? `🍃 ${totalCards} 片葉子（單字）・🌸 ${gramCount} 朵花（文法）・累積練習 ${totalPractice} 次` : '完成學習任務後森林會開始長大。';
 
     const badges = {
       badgeLogin: totalCards > 0 || totalPractice > 0,
@@ -4488,7 +4711,7 @@ function formatStudyDate(iso) {
   return `${y}/${m}/${day} ${hh}:${mm}`;
 }
 function recordFolderPractice(type) {
-  if(!current || !folders || !folders[current]) return;
+  if(current === null || current === undefined || !folders || !folders[current]) return;
   const s = ensureFolderPracticeStats(current);
   if(!s) return;
 
@@ -6457,12 +6680,374 @@ function renderRecentSongCard() {
     </div>`;
 }
 
+/* ===== 🌸 文法森林 (Grammar) ===== */
+const GRAMMAR_STORAGE_KEY = "b1a4GrammarPoints";
+let grammarPoints = [];
+let grammarFlipped = {};
+
+function defaultGrammarPoints() {
+  return [{
+    id: uid(), title: "V-(으)세요", meaning: "請～（禮貌命令/建議）", level: "beginner",
+    rule: "動詞語幹有收尾子音時加「으세요」；沒有收尾子音時加「세요」。",
+    examples: [
+      { kr: "앉으세요.", zh: "請坐。" },
+      { kr: "기다리세요.", zh: "請稍等。" }
+    ],
+    note: "正式禮貌用語，常用於長輩、服務業或公開場合。",
+    favorite: false, mastery: { correct: 0, wrong: 0 }
+  }];
+}
+
+function loadGrammarPoints() {
+  try { grammarPoints = JSON.parse(localStorage.getItem(GRAMMAR_STORAGE_KEY) || "null") || defaultGrammarPoints(); }
+  catch (e) { grammarPoints = defaultGrammarPoints(); }
+  if (!Array.isArray(grammarPoints)) grammarPoints = defaultGrammarPoints();
+  grammarPoints.forEach(g => {
+    if (!g.mastery) g.mastery = { correct: 0, wrong: 0 };
+    if (typeof g.favorite !== "boolean") g.favorite = false;
+    if (!Array.isArray(g.examples)) g.examples = [];
+  });
+}
+
+function saveGrammarPoints() {
+  localStorage.setItem(GRAMMAR_STORAGE_KEY, JSON.stringify(grammarPoints));
+  if (typeof scheduleCloudSave === "function") scheduleCloudSave();
+  if (typeof updateHeroStats === "function") updateHeroStats();
+}
+
+function grammarLevelMeta(level) {
+  if (level === "advanced") return { icon: "🌳", label: "高級" };
+  if (level === "intermediate") return { icon: "🌿", label: "中級" };
+  return { icon: "🌱", label: "初級" };
+}
+
+function computeGrammarMastery(g) {
+  const c = (g.mastery && g.mastery.correct) || 0;
+  const w = (g.mastery && g.mastery.wrong) || 0;
+  const total = c + w;
+  return total ? Math.round((c / total) * 100) : 0;
+}
+
+function renderGrammarList() {
+  const grid = document.getElementById("grammarCardGrid");
+  const summary = document.getElementById("grammarLevelSummary");
+  if (!grid) return;
+
+  const counts = { beginner: 0, intermediate: 0, advanced: 0 };
+  grammarPoints.forEach(g => { counts[g.level || "beginner"] = (counts[g.level || "beginner"] || 0) + 1; });
+  if (summary) {
+    summary.innerHTML = ["beginner","intermediate","advanced"].map(lv => {
+      const m = grammarLevelMeta(lv);
+      return `<div class="grammar-level-tile"><span class="glt-ico">${m.icon}</span><b>${counts[lv] || 0}</b><small>${m.label}</small></div>`;
+    }).join("");
+  }
+
+  const q = (document.getElementById("grammarSearchInput")?.value || "").trim().toLowerCase();
+  const filtered = q
+    ? grammarPoints.filter(g => (g.title||"").toLowerCase().includes(q) || (g.meaning||"").toLowerCase().includes(q))
+    : grammarPoints;
+
+  if (!grammarPoints.length) {
+    grid.innerHTML = `<div class="empty-fox" style="grid-column:1/-1;"><span class="ef-icon">🌸</span>還沒有任何文法哦～<div class="ef-sub">按右上角「＋ 新增文法」開始建立吧！</div></div>`;
+    return;
+  }
+  if (q && !filtered.length) {
+    grid.innerHTML = `<div class="empty-fox" style="grid-column:1/-1;"><span class="ef-icon">🍂</span>找不到符合「${esc(q)}」的文法</div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(g => makeGrammarCardHtml(g)).join("");
+}
+
+function makeGrammarCardHtml(g) {
+  const lv = grammarLevelMeta(g.level);
+  const flipped = grammarFlipped[g.id];
+  const mastery = computeGrammarMastery(g);
+  const examplesHtml = (g.examples || []).map(ex => `
+    <div class="gram-example">
+      <div class="gram-example-kr">${esc(ex.kr)} <button type="button" class="speak-btn" onclick="event.stopPropagation();speakKorean('${String(ex.kr).replace(/'/g,"\\'")}')">🔊</button></div>
+      <div class="gram-example-zh">${esc(ex.zh)}</div>
+    </div>`).join("");
+
+  return `
+    <div class="grammar-card ${flipped ? "flipped" : ""}" data-id="${g.id}" onclick="toggleGrammarCard('${g.id}')">
+      <div class="grammar-card-inner">
+        <div class="grammar-card-front">
+          <div class="gram-top-row">
+            <span class="gram-level-badge">${lv.icon} ${lv.label}</span>
+            <button type="button" class="gram-fav-btn" onclick="event.stopPropagation();toggleGrammarFavorite('${g.id}')">${g.favorite ? "⭐" : "☆"}</button>
+          </div>
+          <div class="gram-title">🌸 ${esc(g.title)}</div>
+          <div class="gram-meaning">${esc(g.meaning)}</div>
+          <div class="gram-mastery-track"><div class="gram-mastery-fill" style="width:${mastery}%"></div></div>
+          <div class="gram-mastery-label">熟練度 ${mastery}%</div>
+          <div class="gram-flip-hint">點一下查看規則與例句 ›</div>
+        </div>
+        <div class="grammar-card-back">
+          <div class="gram-top-row">
+            <span class="gram-level-badge">${lv.icon} ${lv.label}</span>
+            <div class="btns" onclick="event.stopPropagation();">
+              <button type="button" class="gram-icon-btn" onclick="openGrammarEditor('${g.id}')">✏️</button>
+              <button type="button" class="gram-icon-btn" onclick="deleteGrammarPointConfirm('${g.id}')">🗑</button>
+            </div>
+          </div>
+          <div class="gram-title" style="font-size:15px;">${esc(g.title)}</div>
+          <div class="gram-section-label">📖 用法</div>
+          <div class="gram-rule">${esc(g.rule || "（尚未填寫）")}</div>
+          ${examplesHtml ? `<div class="gram-section-label">💬 例句</div>${examplesHtml}` : ""}
+          ${g.note ? `<div class="gram-section-label">💡 注意</div><div class="gram-note">${esc(g.note)}</div>` : ""}
+        </div>
+      </div>
+    </div>`;
+}
+
+function toggleGrammarCard(id) {
+  grammarFlipped[id] = !grammarFlipped[id];
+  renderGrammarList();
+}
+
+function toggleGrammarFavorite(id) {
+  const g = grammarPoints.find(x => x.id === id);
+  if (!g) return;
+  g.favorite = !g.favorite;
+  saveGrammarPoints();
+  renderGrammarList();
+}
+
+function deleteGrammarPointConfirm(id) {
+  if (!confirm("確定要刪除這個文法點嗎？此動作無法復原。")) return;
+  grammarPoints = grammarPoints.filter(g => g.id !== id);
+  saveGrammarPoints();
+  renderGrammarList();
+}
+
+let grammarEditingId = null;
+
+function openGrammarEditor(id) {
+  grammarEditingId = id;
+  const title = document.getElementById("grammarEditorTitle");
+  if (id) {
+    const g = grammarPoints.find(x => x.id === id);
+    if (!g) return;
+    title.textContent = "✏️ 編輯文法";
+    document.getElementById("gramTitle").value = g.title || "";
+    document.getElementById("gramMeaning").value = g.meaning || "";
+    document.getElementById("gramLevel").value = g.level || "beginner";
+    document.getElementById("gramRule").value = g.rule || "";
+    document.getElementById("gramNote").value = g.note || "";
+    renderGrammarExampleRows(g.examples && g.examples.length ? g.examples : [{ kr: "", zh: "" }]);
+  } else {
+    title.textContent = "🌸 新增文法";
+    document.getElementById("gramTitle").value = "";
+    document.getElementById("gramMeaning").value = "";
+    document.getElementById("gramLevel").value = "beginner";
+    document.getElementById("gramRule").value = "";
+    document.getElementById("gramNote").value = "";
+    renderGrammarExampleRows([{ kr: "", zh: "" }]);
+  }
+  document.getElementById("grammarEditorMask").classList.add("show");
+}
+function closeGrammarEditor() {
+  document.getElementById("grammarEditorMask").classList.remove("show");
+}
+
+function renderGrammarExampleRows(examples) {
+  const wrap = document.getElementById("gramExamplesWrap");
+  wrap.innerHTML = examples.map((ex, i) => `
+    <div class="gram-example-row" data-idx="${i}">
+      <input type="text" placeholder="韓文例句" value="${escapeAttr(ex.kr || "")}" class="gram-ex-kr">
+      <input type="text" placeholder="中文翻譯" value="${escapeAttr(ex.zh || "")}" class="gram-ex-zh">
+      <button type="button" class="wc-del" onclick="removeGrammarExampleRow(${i})">❌</button>
+    </div>`).join("");
+}
+function addGrammarExampleRow() {
+  const rows = Array.from(document.querySelectorAll("#gramExamplesWrap .gram-example-row")).map(r => ({
+    kr: r.querySelector(".gram-ex-kr").value,
+    zh: r.querySelector(".gram-ex-zh").value
+  }));
+  rows.push({ kr: "", zh: "" });
+  renderGrammarExampleRows(rows);
+}
+function removeGrammarExampleRow(idx) {
+  const rows = Array.from(document.querySelectorAll("#gramExamplesWrap .gram-example-row")).map(r => ({
+    kr: r.querySelector(".gram-ex-kr").value,
+    zh: r.querySelector(".gram-ex-zh").value
+  }));
+  rows.splice(idx, 1);
+  renderGrammarExampleRows(rows.length ? rows : [{ kr: "", zh: "" }]);
+}
+
+function saveGrammarPoint() {
+  const title = document.getElementById("gramTitle").value.trim();
+  if (!title) { alert("請先輸入文法名稱"); return; }
+  const meaning = document.getElementById("gramMeaning").value.trim();
+  const level = document.getElementById("gramLevel").value;
+  const rule = document.getElementById("gramRule").value.trim();
+  const note = document.getElementById("gramNote").value.trim();
+  const examples = Array.from(document.querySelectorAll("#gramExamplesWrap .gram-example-row"))
+    .map(r => ({ kr: r.querySelector(".gram-ex-kr").value.trim(), zh: r.querySelector(".gram-ex-zh").value.trim() }))
+    .filter(ex => ex.kr || ex.zh);
+
+  if (grammarEditingId) {
+    const g = grammarPoints.find(x => x.id === grammarEditingId);
+    if (g) { Object.assign(g, { title, meaning, level, rule, note, examples }); }
+  } else {
+    grammarPoints.push({ id: uid(), title, meaning, level, rule, note, examples, favorite: false, mastery: { correct: 0, wrong: 0 } });
+  }
+  saveGrammarPoints();
+  closeGrammarEditor();
+  renderGrammarList();
+}
+
+/* ===== 文法測驗 (3 種題型) ===== */
+let grammarQuizQuestions = [];
+let grammarQuizIndex = 0;
+let grammarQuizResults = [];
+
+function buildGrammarQuizQuestions() {
+  const eligible = grammarPoints.filter(g => g.title && g.meaning && g.examples && g.examples.length && g.examples[0].kr);
+  if (eligible.length < 2) return [];
+  const questions = [];
+  eligible.forEach(g => {
+    const ex = g.examples[Math.floor(Math.random() * g.examples.length)];
+    const otherTitles = shuffle(eligible.filter(x => x.id !== g.id).map(x => x.title)).slice(0, 2);
+    if (otherTitles.length === 2) {
+      questions.push({
+        type: "pattern", gramId: g.id,
+        prompt: ex.kr, hint: ex.zh,
+        label: "這句用了哪個文法？",
+        correct: g.title, options: shuffle([g.title, ...otherTitles])
+      });
+    }
+    questions.push({
+      type: "translate", gramId: g.id,
+      prompt: ex.zh, label: "請寫出對應的韓文句子",
+      correct: ex.kr
+    });
+    const otherMeanings = shuffle(eligible.filter(x => x.id !== g.id).map(x => x.meaning)).slice(0, 2);
+    if (otherMeanings.length === 2) {
+      questions.push({
+        type: "meaning", gramId: g.id,
+        prompt: g.title, label: "這個文法的意思是？",
+        correct: g.meaning, options: shuffle([g.meaning, ...otherMeanings])
+      });
+    }
+  });
+  return shuffle(questions).slice(0, 15);
+}
+
+function startGrammarQuiz() {
+  grammarQuizQuestions = buildGrammarQuizQuestions();
+  if (!grammarQuizQuestions.length) {
+    alert("至少需要 2 個文法點（且都要有例句）才能產生測驗，先去新增幾個文法吧！");
+    return;
+  }
+  grammarQuizIndex = 0;
+  grammarQuizResults = new Array(grammarQuizQuestions.length).fill(null);
+  document.getElementById("grammarListView").style.display = "none";
+  document.getElementById("grammarQuizView").style.display = "block";
+  renderGrammarQuizQuestion(0);
+}
+function closeGrammarQuiz() {
+  document.getElementById("grammarQuizView").style.display = "none";
+  document.getElementById("grammarListView").style.display = "block";
+  renderGrammarList();
+}
+
+function renderGrammarQuizQuestion(i) {
+  grammarQuizIndex = i;
+  const q = grammarQuizQuestions[i];
+  const saved = grammarQuizResults[i];
+  const total = grammarQuizQuestions.length;
+  const body = document.getElementById("grammarQuizBody");
+
+  let inputHtml = "";
+  if (q.type === "translate") {
+    inputHtml = `<input id="gramQuizAns" placeholder="請輸入韓文..." value="${saved ? escapeAttr(saved.userAnswer) : ""}" ${saved ? "readonly" : ""}
+      onkeydown="if(event.key==='Enter'){event.preventDefault();submitGrammarQuizAnswer();}">`;
+  } else {
+    inputHtml = q.options.map(opt => `
+      <button type="button" class="gram-quiz-option ${saved ? (opt === saved.userAnswer ? "picked" : "") : ""} ${saved && opt === q.correct ? "correct-reveal" : ""}"
+        ${saved ? "disabled" : ""} onclick="submitGrammarQuizAnswer('${escapeAttr(opt).replace(/'/g,"\\'")}')">${esc(opt)}</button>`).join("");
+  }
+
+  let feedbackHtml = "";
+  let actionHtml = "";
+  if (saved) {
+    feedbackHtml = saved.ok
+      ? `<div class="result-ok" style="font-size:16px;margin-top:10px;">✔ 答對了！</div>`
+      : `<div class="result-bad" style="font-size:16px;margin-top:10px;">✘ 答錯了，正確答案：${esc(q.correct)}</div>`;
+    actionHtml = (i < total - 1)
+      ? `<button type="button" class="primary" style="width:100%;margin-top:14px;" onclick="renderGrammarQuizQuestion(${i+1})">下一題 ›</button>`
+      : `<button type="button" class="primary" style="width:100%;margin-top:14px;" onclick="finishGrammarQuiz()">🎉 查看成績</button>`;
+  } else if (q.type === "translate") {
+    actionHtml = `<button type="button" class="primary" style="width:100%;margin-top:14px;" onclick="submitGrammarQuizAnswer()">✅ 送出答案</button>`;
+  }
+
+  body.innerHTML = `
+    <div class="q" style="max-width:520px;margin-left:auto;margin-right:auto;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);font-weight:900;">
+        <span>第 ${i+1} / ${total} 題</span><span>${esc(q.label)}</span>
+      </div>
+      <div class="prompt-box">${esc(q.prompt)}${q.hint ? `<div style="font-size:13px;color:var(--muted);margin-top:6px;">${esc(q.hint)}</div>` : ""}</div>
+      ${q.type === "translate" ? inputHtml : `<div class="gram-quiz-options">${inputHtml}</div>`}
+      ${feedbackHtml}
+      ${actionHtml}
+    </div>`;
+
+  const scoreEl = document.getElementById("grammarQuizScore");
+  const answered = grammarQuizResults.filter(r => r).length;
+  const correct = grammarQuizResults.filter(r => r && r.ok).length;
+  if (scoreEl) scoreEl.textContent = answered ? `正確：${correct} ／ 已作答 ${answered}` : "";
+
+  if (q.type === "translate") setTimeout(() => { const el = document.getElementById("gramQuizAns"); if (el && !saved) el.focus(); }, 30);
+}
+
+function submitGrammarQuizAnswer(pickedOption) {
+  const i = grammarQuizIndex;
+  const q = grammarQuizQuestions[i];
+  let userAnswer = pickedOption;
+  if (q.type === "translate") {
+    const el = document.getElementById("gramQuizAns");
+    userAnswer = el ? el.value : "";
+  }
+  const ok = q.type === "translate" ? isFuzzyCorrect(userAnswer, q.correct) : (userAnswer === q.correct);
+  grammarQuizResults[i] = { ok, userAnswer };
+
+  const g = grammarPoints.find(x => x.id === q.gramId);
+  if (g) {
+    if (ok) g.mastery.correct = (g.mastery.correct || 0) + 1;
+    else g.mastery.wrong = (g.mastery.wrong || 0) + 1;
+    saveGrammarPoints();
+  }
+  renderGrammarQuizQuestion(i);
+}
+
+function finishGrammarQuiz() {
+  const total = grammarQuizQuestions.length;
+  const correct = grammarQuizResults.filter(r => r && r.ok).length;
+  const body = document.getElementById("grammarQuizBody");
+  const encourage = correct === total ? "🎉 全部答對！文法都掌握了！" : correct / total >= 0.7 ? "👏 表現很不錯！" : "🌱 再多練習幾次就會了！";
+  body.innerHTML = `
+    <div class="q" style="max-width:520px;margin-left:auto;margin-right:auto;text-align:center;">
+      <div style="font-size:20px;font-weight:1000;margin-bottom:6px;">${encourage}</div>
+      <div style="font-size:15px;color:var(--muted);font-weight:800;margin-bottom:14px;">正確 ${correct} ／ ${total} 題</div>
+      <div class="btns" style="justify-content:center;">
+        <button type="button" class="primary" onclick="startGrammarQuiz()">🔁 重新測驗</button>
+        <button type="button" class="ghost" onclick="closeGrammarQuiz()">‹ 返回文法列表</button>
+      </div>
+    </div>`;
+  if (typeof logActivity === "function") logActivity("grammar", total);
+}
+
 function initFavoritesAndLyrics() {
   loadFavorites();
   loadLyricsSongs();
+  loadGrammarPoints();
   renderLyricsSongGrid();
   renderFavoritesSummary();
   renderFavoritesDetail();
+  renderGrammarList();
 }
 initFavoritesAndLyrics();
 
