@@ -4311,9 +4311,9 @@ function renderCardEditor(highlightId) {
   list.innerHTML = visible.map(c => `
     <div class="word-card${c.id === highlightId ? " card-drop-in" : ""}" data-id="${c.id}">
       <span class="wc-flag">🇰🇷</span>
-      <input type="text" placeholder="韓文" value="${escapeAttr(c.term)}" oninput="updateEditorCard('${c.id}','term',this.value)">
+      <input type="text" placeholder="韓文" value="${escapeAttr(c.term)}" oninput="updateEditorCard('${c.id}','term',this.value)" onkeydown="handleWordCardEnter(event)">
       <span class="wc-flag">🇹🇼</span>
-      <input type="text" placeholder="中文" value="${escapeAttr(c.definition)}" oninput="updateEditorCard('${c.id}','definition',this.value)">
+      <input type="text" placeholder="中文" value="${escapeAttr(c.definition)}" oninput="updateEditorCard('${c.id}','definition',this.value)" onkeydown="handleWordCardEnter(event)">
       <button type="button" class="wc-del" title="刪除" onclick="deleteEditorCard('${c.id}')">❌</button>
     </div>`).join("");
 
@@ -4334,6 +4334,26 @@ function updateEditorCard(id, field, value) {
   if (!c) return;
   c[field] = value;
   serializeEditorCards();
+}
+
+function handleWordCardEnter(e) {
+  if (e.key !== "Enter") return;
+  e.preventDefault();
+  const card = e.target.closest(".word-card");
+  if (!card) return;
+  const inputs = card.querySelectorAll("input");
+  if (e.target === inputs[0]) {
+    inputs[1].focus();
+    return;
+  }
+  const allCards = Array.from(document.querySelectorAll("#cardEditorList .word-card"));
+  const idx = allCards.indexOf(card);
+  if (idx === allCards.length - 1) {
+    addEditorCard();
+  } else {
+    const nextInput = allCards[idx + 1].querySelector("input");
+    if (nextInput) nextInput.focus();
+  }
 }
 
 function addEditorCard() {
