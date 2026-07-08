@@ -6748,7 +6748,7 @@ function renderGrammarList() {
     : grammarPoints;
 
   if (!grammarPoints.length) {
-    grid.innerHTML = `<div class="empty-fox" style="grid-column:1/-1;"><span class="ef-icon">🌸</span>還沒有任何文法哦～<div class="ef-sub">按右上角「＋ 新增文法」開始建立吧！</div></div>`;
+    grid.innerHTML = `<div class="empty-fox" style="grid-column:1/-1;"><span class="ef-icon">🌸</span>還沒有任何文法哦～<div class="ef-sub">建立你的第一個文法點吧！</div><button type="button" class="primary cute-btn" style="margin-top:14px;" onclick="openGrammarEditor(null)">＋ 新增文法</button></div>`;
     return;
   }
   if (q && !filtered.length) {
@@ -6756,7 +6756,8 @@ function renderGrammarList() {
     return;
   }
 
-  grid.innerHTML = filtered.map(g => makeGrammarCardHtml(g)).join("");
+  grid.innerHTML = filtered.map(g => makeGrammarCardHtml(g)).join("")
+    + `<button type="button" class="add-word-btn" style="grid-column:1/-1;" onclick="openGrammarEditor(null)">➕ 新增文法</button>`;
 }
 
 function makeGrammarCardHtml(g) {
