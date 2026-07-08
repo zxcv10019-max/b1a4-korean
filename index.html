@@ -2048,6 +2048,19 @@ textarea {
 }
 
 #cardEditorList { margin-top:10px; }
+@media (min-width:820px) {
+  #cardEditorList {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px 14px;
+    align-items:start;
+  }
+  #cardEditorList .word-card { margin-bottom:0; }
+  #cardEditorList .empty-fox,
+  #cardEditorList .expand-more-btn {
+    grid-column:1 / -1;
+  }
+}
 .word-card {
   display:flex;
   align-items:center;
