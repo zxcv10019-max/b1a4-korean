@@ -2014,7 +2014,10 @@ textarea {
 }
 .ffc-meta span {
   text-align:center;
-  padding:4px 0;
+  padding:4px 2px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 .ffc-meta span:first-child {
   border-right:1px solid var(--line);
@@ -3926,7 +3929,7 @@ function makeForestFolderCard(f, i) {
       <div class="ffc-percent-big">${gStats.flashPercent}<small>%</small></div>
       <div class="ffc-stage">${stage.icon} ${stage.label}</div>
     </div>
-    <div class="ffc-meta"><span>📖 ${cardCount} 個單字</span><span>🔥 練習 ${pStats.total || 0} 次</span></div>
+    <div class="ffc-meta"><span>📖 ${cardCount} 字</span><span>🔥 ${pStats.total || 0} 次</span></div>
     <div class="ffc-date">🕒 上次學習：${lastStudy}</div>
     <button type="button" class="ffc-start-btn" onclick="event.stopPropagation();quickStartFlash(${i})">▶ 開始學習</button>`;
   d.onclick = () => { loadFolder(i); document.getElementById("editor").scrollIntoView({behavior:"smooth"}); };
