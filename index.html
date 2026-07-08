@@ -2005,15 +2005,21 @@ textarea {
 }
 
 .ffc-meta {
-  display:flex;
-  justify-content:space-between;
-  gap:8px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
   font-size:10px;
   color:var(--muted);
   font-weight:800;
-  margin-top:8px;
+  margin-top:10px;
 }
-.ffc-date { font-size:9px; color:var(--muted); font-weight:700; margin-top:4px; text-align:center; }
+.ffc-meta span {
+  text-align:center;
+  padding:4px 0;
+}
+.ffc-meta span:first-child {
+  border-right:1px solid var(--line);
+}
+.ffc-date { font-size:9px; color:var(--muted); font-weight:700; margin-top:6px; text-align:center; }
 .ffc-start-btn {
   margin-top:auto;
   padding-top:5px;
