@@ -2445,7 +2445,6 @@ textarea {
       <div id="vocabSubnav" class="vocab-subnav">
         <button data-page="library" onclick="goPage('library')">▣ 題庫</button>
         <button data-page="flash" onclick="goPage('flash')">▤ 單字卡</button>
-        <button data-page="grammar" onclick="goPage('grammar')">🌸 文法</button>
         <button data-page="match" onclick="goPage('match')">⌘ 配對</button>
         <button data-page="listen" onclick="goPage('listen')">🔊 聽力</button>
       </div>
@@ -2953,6 +2952,7 @@ textarea {
   <nav class="bottom-nav">
     <button data-tab="home" class="active" onclick="goBottomTab('home')"><span class="bn-ico">🏠</span>首頁</button>
     <button data-tab="vocab" onclick="goBottomTab('vocab')"><span class="bn-ico">📚</span>單字</button>
+    <button data-tab="grammar" onclick="goBottomTab('grammar')"><span class="bn-ico">🌸</span>文法</button>
     <button data-tab="lyrics" onclick="goBottomTab('lyrics')"><span class="bn-ico">🎵</span>歌詞</button>
     <button data-tab="test" onclick="goBottomTab('test')"><span class="bn-ico">📝</span>測驗</button>
     <button data-tab="profile" onclick="goBottomTab('profile')"><span class="bn-ico">👤</span>我的</button>
@@ -3805,8 +3805,8 @@ function esc(s) { return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;
 function norm(v) { return String(v||"").trim().toLowerCase().replace(/[，。！？、,.!?]/g,"").replace(/\s+/g," "); }
 function today() { return new Date().toISOString().slice(0,10).replaceAll("-","/"); }
 
-const BOTTOM_TAB_MAP = { home:"home", library:"vocab", flash:"vocab", grammar:"vocab", match:"vocab", listen:"vocab", test:"test", lyrics:"lyrics", profile:"profile" };
-const VOCAB_PAGES = ["library","flash","grammar","match","listen"];
+const BOTTOM_TAB_MAP = { home:"home", library:"vocab", flash:"vocab", match:"vocab", listen:"vocab", grammar:"grammar", test:"test", lyrics:"lyrics", profile:"profile" };
+const VOCAB_PAGES = ["library","flash","match","listen"];
 
 function updateBottomNav(id) {
   document.querySelectorAll(".bottom-nav button").forEach(b => b.classList.remove("active"));
@@ -3824,6 +3824,7 @@ function updateBottomNav(id) {
 function goBottomTab(tab) {
   if (tab === "home") return goPage("home");
   if (tab === "vocab") return goPage(VOCAB_PAGES.includes(current_vocab_page) ? current_vocab_page : "flash");
+  if (tab === "grammar") return goPage("grammar");
   if (tab === "lyrics") return goPage("lyrics");
   if (tab === "test") return goPage("test");
   if (tab === "profile") return goPage("profile");
