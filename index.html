@@ -3170,9 +3170,9 @@ function getCurrentFolderIdSafe() {
 }
 function getCardsByFolderId(fid) {
   try {
-    if(!fid || !folders) return [];
+    if(fid === null || fid === undefined || !folders) return [];
     const f = Array.isArray(folders) ? folders[Number(fid)] : folders[fid];
-    return (f && (f.cards || f.words)) || [];
+    return f ? parseCards(f.content) : [];
   } catch(e) { return []; }
 }
 function getPracticeTypeLabel(type) {
