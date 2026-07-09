@@ -4215,6 +4215,9 @@ function syncDropdowns() {
 }
 function selectFromDropdown(v) {
   if (folders.length) loadFolder(Number(v));
+  if (document.getElementById("flash")?.classList.contains("active")) startFlash(false);
+  if (document.getElementById("match")?.classList.contains("active")) startMatch();
+  if (document.getElementById("listen")?.classList.contains("active") && typeof startListening === "function") startListening();
   renderGraduationPanel();
   updateFolderGraduationBadges();
   renderStudyUpgradePanel();
