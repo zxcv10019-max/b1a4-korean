@@ -4620,15 +4620,7 @@ function isFuzzyCorrect(userAnswer, correctAnswer) {
   return answers.some(ans => {
     const target = normalizeAnswerText(ans);
     if (!target) return false;
-    if (user === target) return true;
-    if (user.includes(target) || target.includes(user)) {
-      const minLen = Math.min(user.length, target.length);
-      if (minLen >= 2) return true;
-    }
-    const dist = levenshteinDistance(user, target);
-    const maxLen = Math.max(user.length, target.length);
-    const allowed = maxLen <= 4 ? 1 : Math.ceil(maxLen * 0.2);
-    return dist <= allowed;
+    return user === target;
   });
 }
 
