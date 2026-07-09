@@ -3280,15 +3280,15 @@ function getFlashCardKey(card, index) {
   return String((card && (card.id || card.term || card.definition)) || index);
 }
 function ensureFlashSeenRecord(folderId) {
-  if(!folderId && typeof current !== "undefined") folderId = current;
-  if(!folderId) return [];
+  if((folderId === null || folderId === undefined) && typeof current !== "undefined") folderId = current;
+  if(folderId === null || folderId === undefined) return [];
   if(!flashSeenData) flashSeenData = {};
   if(!Array.isArray(flashSeenData[folderId])) flashSeenData[folderId] = [];
   return flashSeenData[folderId];
 }
 function markCurrentFlashSeen() {
   const fid = (typeof current !== "undefined") ? current : null;
-  if(!fid) return;
+  if(fid === null || fid === undefined) return;
   const cards = (typeof getCards === "function") ? getCards() : [];
   const idx = (typeof flashIndex !== "undefined") ? flashIndex : 0;
   const card = cards[idx];
@@ -3307,7 +3307,7 @@ function markCurrentFlashSeen() {
   renderStudyUpgradePanel();
 }
 function getFlashSeenStats(folderId) {
-  const fid = folderId || ((typeof current !== "undefined") ? current : null);
+  const fid = (folderId === null || folderId === undefined) ? ((typeof current !== "undefined") ? current : null) : folderId;
   const cards = (typeof getCardsByFolderId === "function") ? getCardsByFolderId(fid) : ((typeof getCards === "function") ? getCards() : []);
   const total = cards.length || 0;
   const seen = ensureFlashSeenRecord(fid);
@@ -4702,7 +4702,7 @@ function launchGraduationConfetti() {
 }
 function renderGraduationPanel() {
   const box = document.getElementById("graduationPanel");
-  if(!box || !current || !folders || !folders[current]) return;
+  if(!box || current === null || current === undefined || !folders || !folders[current]) return;
   const stats = getGraduationStats(current);
   const stars = getStarRating(stats.testPercent);
   box.classList.toggle("graduated", stats.graduated);
@@ -4728,7 +4728,7 @@ function updateFolderGraduationBadges() {
   } catch(e) {}
 }
 function markFlashcardViewed(index) {
-  if(!current || !folders || !folders[current]) return;
+  if(current === null || current === undefined || !folders || !folders[current]) return;
   const cards = getCards();
   const card = cards[index];
   if(!card) return;
@@ -4743,7 +4743,7 @@ function markFlashcardViewed(index) {
   updateFolderGraduationBadges();
 }
 function recordTestResult(correctCount, totalCount) {
-  if(!current || !folders || !folders[current] || !totalCount) return;
+  if(current === null || current === undefined || !folders || !folders[current] || !totalCount) return;
   const rec = ensureGraduationRecord(current);
   const percent = Math.round((correctCount / totalCount) * 100);
   if(percent > (rec.bestTestPercent || 0)) {
@@ -4756,7 +4756,7 @@ function recordTestResult(correctCount, totalCount) {
   updateFolderGraduationBadges();
 }
 function recordMatchCompleted() {
-  if(!current || !folders || !folders[current]) return;
+  if(current === null || current === undefined || !folders || !folders[current]) return;
   const rec = ensureGraduationRecord(current);
   rec.matchCompleted = true;
   saveStorage();
@@ -4905,13 +4905,13 @@ function renderFolderStatsPanel() {
 }
 
 function ensureWrongRecord(folderId) {
-  if(!folderId) return {};
+  if(folderId === null || folderId === undefined) return {};
   if(!wrongBookData) wrongBookData = {};
   if(!wrongBookData[folderId]) wrongBookData[folderId] = {};
   return wrongBookData[folderId];
 }
 function ensureMasteryRecord(folderId) {
-  if(!folderId) return {};
+  if(folderId === null || folderId === undefined) return {};
   if(!masteryData) masteryData = {};
   if(!masteryData[folderId]) masteryData[folderId] = {};
   return masteryData[folderId];
@@ -4997,14 +4997,14 @@ function recordAnswerResult(card, index, ok, category) {
   }
 }
 function clearWrongItem(key) {
-  if(!current) return;
+  if(current === null || current === undefined) return;
   const wrongRec = ensureWrongRecord(current);
   delete wrongRec[key];
   saveStorage();
   renderStudyUpgradePanel();
 }
 function makeWrongBookTest() {
-  if(!current || !folders[current]) return;
+  if(current === null || current === undefined || !folders[current]) return;
   const wrongRec = ensureWrongRecord(current);
   const wrongCards = Object.keys(wrongRec).map(k => ({
     id:k,
@@ -5022,7 +5022,7 @@ function makeWrongBookTest() {
 function renderStudyUpgradePanel() {
   const summary = document.getElementById("upgradeSummary");
   const preview = document.getElementById("wrongBookPreview");
-  if(!summary || !preview || !current || !folders || !folders[current]) return;
+  if(!summary || !preview || current === null || current === undefined || !folders || !folders[current]) return;
 
   const cards = getCards();
   const wrongRec = ensureWrongRecord(current);
@@ -5064,7 +5064,7 @@ function renderStudyUpgradePanel() {
 }
 function decorateMasteryBadges() {
   try {
-    if(!current) return;
+    if(current === null || current === undefined) return;
     const masteryRec = ensureMasteryRecord(current);
     document.querySelectorAll(".term-text").forEach((el, idx)=>{
       if(el.dataset.masteryDone) return;
