@@ -7135,11 +7135,98 @@ function renderSentenceEditorWordRows() {
     <div class="sen-word-edit-row">
       <input type="text" placeholder="韓文" value="${escapeAttr(w.kr)}" oninput="sentenceEditorWords[${i}].kr=this.value">
       <input type="text" placeholder="中文" value="${escapeAttr(w.zh||"")}" oninput="sentenceEditorWords[${i}].zh=this.value">
-      <input type="text" placeholder="原形(選填)" value="${escapeAttr(w.root||"")}" oninput="sentenceEditorWords[${i}].root=this.value">
-      <input type="text" placeholder="備註(選填，例如 인간+적+인)" value="${escapeAttr(w.note||"")}" oninput="sentenceEditorWords[${i}].note=this.value">
+      <div style="display:flex;gap:6px;">
+        <input type="text" placeholder="原形(選填)" value="${escapeAttr(w.root||"")}" oninput="sentenceEditorWords[${i}].root=this.value" style="flex:1;min-width:0;">
+        <button type="button" class="ghost" style="white-space:nowrap;font-size:12px;padding:6px 10px;" onclick="guessSentenceWordRoot(${i})">✨ 推測原形</button>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <input type="text" placeholder="備註(選填，例如 인간+적+인)" value="${escapeAttr(w.note||"")}" oninput="sentenceEditorWords[${i}].note=this.value" style="flex:1;min-width:0;">
+        <button type="button" class="ghost" style="white-space:nowrap;font-size:12px;padding:6px 10px;" onclick="aiAssistSentenceWordNote(${i})">✨ AI 補充</button>
+      </div>
       <label class="sen-vocab-check"><input type="checkbox" ${w.addToVocab!==false?"checked":""} onchange="sentenceEditorWords[${i}].addToVocab=this.checked">☑加入單字卡</label>
       <button type="button" class="wc-del" onclick="removeSentenceEditorWordRow(${i})">❌</button>
     </div>`).join("");
+}
+
+/* ===== ✨ 自動推測原形（純規則猜測，非AI，僅供參考） ===== */
+const HANGUL_BASE = 0xAC00;
+const HANGUL_LEAD = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+const HANGUL_VOWEL = ["ㅏ","ㅐ","ㅑ","ㅒ","ㅓ","ㅔ","ㅕ","ㅖ","ㅗ","ㅘ","ㅙ","ㅚ","ㅛ","ㅜ","ㅝ","ㅞ","ㅟ","ㅠ","ㅡ","ㅢ","ㅣ"];
+const HANGUL_TAIL = ["","ㄱ","ㄲ","ㄳ","ㄴ","ㄵ","ㄶ","ㄷ","ㄹ","ㄺ","ㄻ","ㄼ","ㄽ","ㄾ","ㄿ","ㅀ","ㅁ","ㅂ","ㅄ","ㅅ","ㅆ","ㅇ","ㅈ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+function decomposeHangul(ch) {
+  const code = (ch || "").charCodeAt(0) - HANGUL_BASE;
+  if (code < 0 || code > 11171) return null;
+  return { lead: HANGUL_LEAD[Math.floor(code / (21*28))], vowel: HANGUL_VOWEL[Math.floor((code % (21*28)) / 28)], tail: HANGUL_TAIL[code % 28] };
+}
+function composeHangul(lead, vowel, tail) {
+  const li = HANGUL_LEAD.indexOf(lead), vi = HANGUL_VOWEL.indexOf(vowel), ti = HANGUL_TAIL.indexOf(tail || "");
+  if (li < 0 || vi < 0 || ti < 0) return null;
+  return String.fromCharCode(HANGUL_BASE + (li*21+vi)*28 + ti);
+}
+function guessKoreanRootForm(word) {
+  const w = (word || "").trim();
+  if (!w) return "";
+  if (w.endsWith("다")) return w;
+  if (w.endsWith("적인")) return w.slice(0, -1) + "이다";
+  if (w.length > 1 && (w.endsWith("는") || w.endsWith("은"))) return w.slice(0, -1) + "다";
+  const last = w[w.length - 1];
+  const info = decomposeHangul(last);
+  if (info && info.tail === "ㄴ") {
+    const noTail = composeHangul(info.lead, info.vowel, "");
+    if (noTail) return w.slice(0, -1) + noTail + "다";
+  }
+  return w + "다";
+}
+function guessSentenceWordRoot(i) {
+  const w = sentenceEditorWords[i];
+  if (!w || !w.kr.trim()) { alert("請先輸入韓文"); return; }
+  w.root = guessKoreanRootForm(w.kr);
+  renderSentenceEditorWordRows();
+}
+
+/* ===== ✨ AI 補充：產生提示詞讓你貼到 Claude/ChatGPT，再把結果貼回備註 ===== */
+function ensureAiPromptModal() {
+  if (document.getElementById("aiPromptMask")) return;
+  const modal = document.createElement("div");
+  modal.id = "aiPromptMask";
+  modal.className = "hero-modal-mask";
+  modal.innerHTML = `
+    <div class="hero-modal" style="width:min(520px,100%);max-height:80vh;overflow:auto;">
+      <div class="hero-modal-head">
+        <div class="hero-modal-title">✨ AI 補充小提示</div>
+        <button class="hero-modal-close" type="button" onclick="closeAiPromptModal()">關閉</button>
+      </div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">複製下面的提示詞，貼到 Claude / ChatGPT 送出，再把 AI 的說明貼回「備註」欄位。</div>
+      <textarea id="aiPromptText" readonly style="width:100%;box-sizing:border-box;min-height:170px;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:14px;font-family:inherit;"></textarea>
+      <button type="button" class="primary cute-btn" style="width:100%;margin-top:10px;" onclick="copyAiPromptText()">📋 複製提示詞</button>
+    </div>`;
+  document.body.appendChild(modal);
+}
+function openAiPromptModal(text) {
+  ensureAiPromptModal();
+  document.getElementById("aiPromptText").value = text;
+  document.getElementById("aiPromptMask").classList.add("show");
+}
+function closeAiPromptModal() {
+  const m = document.getElementById("aiPromptMask");
+  if (m) m.classList.remove("show");
+}
+function copyAiPromptText() {
+  const ta = document.getElementById("aiPromptText");
+  ta.select();
+  ta.setSelectionRange(0, 999999);
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(ta.value).then(() => { if (typeof showSaveToast === "function") showSaveToast(); }).catch(() => {});
+  } else {
+    try { document.execCommand("copy"); } catch (e) {}
+  }
+}
+function aiAssistSentenceWordNote(i) {
+  const w = sentenceEditorWords[i];
+  if (!w || !w.kr.trim()) { alert("請先輸入韓文"); return; }
+  const sentence = (document.getElementById("senEditKr")?.value || "").trim();
+  const text = `請幫我拆解韓文單字「${w.kr}」的構詞，仿照這個格式：\n\n인간적인\n= 인간 + 적 + 인\n-적 表示「具有……性」\n因此：인간적인 존재 = 人性的存在\n\n請針對「${w.kr}」給我同樣格式的拆解說明${sentence ? `，並套用在句子「${sentence}」裡` : ""}，中文解釋要簡短好懂，適合語言學習筆記使用。`;
+  openAiPromptModal(text);
 }
 function addSentenceEditorWordRow() {
   sentenceEditorWords.push({ id: uid(), kr: "", zh: "", root: "", note: "", addToVocab: true });
