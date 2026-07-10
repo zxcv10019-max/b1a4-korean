@@ -6885,6 +6885,8 @@ function speakKoreanSlow(text) {
 }
 
 /* ---- 列表 ---- */
+let collapsedSentenceTags = JSON.parse(localStorage.getItem("b1a4_collapsed_sen_tags") || "[]");
+
 function renderSentenceList() {
   const wrap = document.getElementById("sentenceListWrap");
   if (!wrap) return;
@@ -6903,7 +6905,60 @@ function renderSentenceList() {
     wrap.innerHTML = `<div class="empty-fox"><span class="ef-icon">🍂</span>找不到符合「${esc(q)}」的短句</div>`;
     return;
   }
-  wrap.innerHTML = filtered.map(makeSentenceCardHtml).join("");
+
+  const allTags = [];
+  filtered.forEach(s => (s.tags || []).forEach(t => { if (!allTags.includes(t)) allTags.push(t); }));
+
+  if (!allTags.length) {
+    wrap.innerHTML = filtered.map(makeSentenceCardHtml).join("");
+    return;
+  }
+
+  let html = "";
+  allTags.forEach(tag => {
+    const items = filtered.filter(s => (s.tags || []).includes(tag));
+    const isCollapsed = collapsedSentenceTags.includes(tag);
+    html += `
+      <div class="group-section">
+        <div class="group-header${isCollapsed ? " collapsed" : ""}" onclick="toggleSentenceTagGroup('${jsAttr(tag)}', this)">
+          <span class="group-toggle">▾</span>
+          <span class="group-name">🏷 ${esc(tag)}</span>
+          <span class="group-count">📝 ${items.length} 句</span>
+        </div>
+        <div class="group-body${isCollapsed ? " collapsed" : ""}" id="sentagbody_${jsAttr(tag).replace(/[^a-zA-Z0-9]/g,"_")}">
+          ${items.map(makeSentenceCardHtml).join("")}
+        </div>
+      </div>`;
+  });
+
+  const untagged = filtered.filter(s => !(s.tags && s.tags.length));
+  if (untagged.length) {
+    const isCollapsed = collapsedSentenceTags.includes("__untagged__");
+    html += `
+      <div class="group-section group-ungrouped">
+        <div class="group-header${isCollapsed ? " collapsed" : ""}" onclick="toggleSentenceTagGroup('__untagged__', this)">
+          <span class="group-toggle">▾</span>
+          <span class="group-name">📂 未標籤</span>
+          <span class="group-count">📝 ${untagged.length} 句</span>
+        </div>
+        <div class="group-body${isCollapsed ? " collapsed" : ""}" id="sentagbody___untagged__">
+          ${untagged.map(makeSentenceCardHtml).join("")}
+        </div>
+      </div>`;
+  }
+
+  wrap.innerHTML = html;
+}
+function toggleSentenceTagGroup(tag, headerEl) {
+  headerEl.classList.toggle("collapsed");
+  const body = document.getElementById("sentagbody_" + (tag === "__untagged__" ? "__untagged__" : tag.replace(/[^a-zA-Z0-9]/g,"_")));
+  if (body) body.classList.toggle("collapsed");
+  if (collapsedSentenceTags.includes(tag)) {
+    collapsedSentenceTags = collapsedSentenceTags.filter(x => x !== tag);
+  } else {
+    collapsedSentenceTags.push(tag);
+  }
+  localStorage.setItem("b1a4_collapsed_sen_tags", JSON.stringify(collapsedSentenceTags));
 }
 
 function makeSentenceCardHtml(s) {
