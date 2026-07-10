@@ -2682,6 +2682,8 @@ textarea {
         <div class="card" style="padding:20px;">
           <label style="font-weight:900;color:#4e8f24;">貼上一句韓文</label>
           <textarea id="sentenceSplitInput" rows="3" placeholder="例如：오늘 날씨가 정말 좋아요" style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;margin-top:8px;"></textarea>
+          <label style="font-weight:900;color:#4e8f24;display:block;margin-top:12px;">整句中文翻譯（選填）</label>
+          <textarea id="sentenceSplitTranslation" rows="2" placeholder="這句話的中文意思是..." style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;margin-top:8px;"></textarea>
           <button type="button" class="primary cute-btn" style="width:100%;margin-top:12px;" onclick="runSentenceSplit()">🔍 自動提取單字</button>
           <div class="hero-help">內建常用字典比對，抓不到翻譯的字會留白，記得手動補上或刪除不需要的項目。</div>
           <div id="sentenceSplitResults" style="margin-top:14px;"></div>
@@ -6705,10 +6707,17 @@ function removeSentenceSplitWord(i) {
 
 function addSentenceWordsToFolder() {
   const valid = sentenceSplitWords.filter(w => w.term.trim());
-  if (!valid.length) { alert("沒有可以加入的單字，請先提取或檢查內容"); return; }
+  const sentenceText = (document.getElementById("sentenceSplitInput")?.value || "").trim();
+  const sentenceTranslation = (document.getElementById("sentenceSplitTranslation")?.value || "").trim();
+  if (!valid.length && !sentenceTranslation) { alert("沒有可以加入的單字，請先提取或檢查內容"); return; }
   const sel = document.getElementById("sentenceSplitFolderSelect");
   const val = sel ? sel.value : "new";
-  const linesToAdd = valid.map(w => `${w.term}\t${w.definition || ""}`).join("\n");
+
+  const lines = valid.map(w => `${w.term}\t${w.definition || ""}`);
+  if (sentenceTranslation && sentenceText) {
+    lines.unshift(`${sentenceText}\t${sentenceTranslation}`);
+  }
+  const linesToAdd = lines.join("\n");
 
   if (val === "new") {
     const name = prompt("新題庫名稱：", "短句單字");
@@ -6727,6 +6736,7 @@ function addSentenceWordsToFolder() {
   renderFolders();
   sentenceSplitWords = [];
   document.getElementById("sentenceSplitInput").value = "";
+  document.getElementById("sentenceSplitTranslation").value = "";
   renderSentenceSplitResults();
   goPage("library");
   loadFolder(current);
