@@ -2787,10 +2787,16 @@ textarea {
             <div style="display:grid;gap:12px;">
               <label style="font-weight:900;color:#4e8f24;">🇰🇷 韓文句子</label>
               <textarea id="senEditKr" rows="2" placeholder="例如：인간, 너무나 인간적인 존재" style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;"></textarea>
-              <label style="font-weight:900;color:#4e8f24;">🇹🇼 整句翻譯</label>
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <label style="font-weight:900;color:#4e8f24;">🇹🇼 整句翻譯</label>
+                <button type="button" class="ghost" style="white-space:nowrap;font-size:12px;padding:6px 10px;" onclick="aiTranslateSentence(this)">✨ AI翻譯</button>
+              </div>
               <textarea id="senEditZh" rows="2" placeholder="這句話的中文意思..." style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;"></textarea>
-              <button type="button" class="ghost" style="width:100%;" onclick="autoExtractSentenceWordsIntoEditor()">🔍 自動拆解（可再手動調整）</button>
-              <div class="hero-help">內建常用字典比對，抓不到翻譯的欄位會留白，記得手動補上。</div>
+              <div class="btns" style="flex-wrap:wrap;">
+                <button type="button" class="ghost" style="flex:1;min-width:140px;" onclick="autoExtractSentenceWordsIntoEditor()">🔍 字典拆解</button>
+                <button type="button" class="ghost" style="flex:1;min-width:140px;" onclick="aiBreakdownSentence(this)">✨ AI拆解</button>
+              </div>
+              <div class="hero-help">字典拆解：內建常用字典比對，速度快但涵蓋範圍有限。AI拆解：呼叫 Gemini 分析，涵蓋範圍更廣，但需要 Gemini 連線成功。兩種都可以拆完後再手動調整。</div>
 
               <div>
                 <label style="font-weight:900;color:#4e8f24;display:block;margin-bottom:8px;">🧩 句子解析</label>
@@ -7368,6 +7374,56 @@ ${sentence}
   runAiAssist(btnEl, text, (val) => {
     const ta = document.getElementById("senEditTeacherNote");
     if (ta) ta.value = val;
+  });
+}
+function aiTranslateSentence(btnEl) {
+  const kr = (document.getElementById("senEditKr")?.value || "").trim();
+  if (!kr) { alert("請先輸入韓文句子"); return; }
+  const text = `請把下面這句韓文翻譯成自然、簡短好懂的中文，適合韓文學習筆記使用。
+
+韓文句子：
+${kr}
+
+規則：
+1. 只回傳翻譯本身，不要加任何說明文字、標題或引號。
+2. 不要使用 Markdown。
+3. 翻譯要通順自然，不要逐字直譯。`;
+  runAiAssist(btnEl, text, (val) => {
+    const ta = document.getElementById("senEditZh");
+    if (ta) ta.value = val.trim();
+  });
+}
+function aiBreakdownSentence(btnEl) {
+  const kr = (document.getElementById("senEditKr")?.value || "").trim();
+  if (!kr) { alert("請先輸入韓文句子"); return; }
+  const text = `請幫我把下面這句韓文拆解成一個一個有意義的單字或詞組，適合韓文學習網站使用。
+
+韓文句子：
+${kr}
+
+請遵守以下規則：
+1. 拆成有意義的單字或詞組，不要拆成單一音節。
+2. 每一行一個單字，格式固定為（用斜線分隔三個欄位）：
+韓文 / 中文意思 / 原形（如果跟韓文一樣或沒有活用變化，這欄留空）
+3. 不要加任何說明文字、標題或 Markdown，只要輸出單字列表。
+4. 不要重複同一個單字。
+
+範例格式（只是格式範例，不是要你分析這句）：
+인간 / 人、人類 / 
+너무나 / 非常、如此 / 
+인간적인 / 人性的 / 인간적이다`;
+  runAiAssist(btnEl, text, (val) => {
+    const lines = val.split("\n").map(l => l.trim()).filter(Boolean);
+    const parsed = lines.map(line => {
+      const parts = line.split("/").map(p => p.trim());
+      return { id: uid(), kr: parts[0] || "", zh: parts[1] || "", root: parts[2] || "", note: "", addToVocab: true };
+    }).filter(w => w.kr);
+    if (parsed.length) {
+      sentenceEditorWords = parsed;
+      renderSentenceEditorWordRows();
+    } else {
+      alert("AI 回覆的格式無法解析，請檢查貼上的內容是否符合「韓文 / 中文 / 原形」的格式。");
+    }
   });
 }
 function addSentenceEditorWordRow() {
