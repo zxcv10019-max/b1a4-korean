@@ -3512,6 +3512,12 @@ let cloudReady = false;
 let cloudUser = null;
 let cloudDocRef = null;
 let cloudSaveTimer = null;
+window.addEventListener("beforeunload", () => {
+  if (cloudSaveTimer) {
+    clearTimeout(cloudSaveTimer);
+    if (typeof uploadCloudNow === "function") uploadCloudNow();
+  }
+});
 let isLoadingCloud = false;
 let firebaseAuth = null;
 let firebaseDb = null;
@@ -3586,6 +3592,16 @@ async function loadCloudData() {
     const hasLocalData = (folders && folders.length) || (groups && groups.length) || ((stats && stats.practice) || 0) > 0;
     if (snap.exists) {
       const data = snap.data() || {};
+
+      // 防止舊的雲端資料蓋掉還沒同步成功的本機新資料：比較時間戳記，本機比較新就改成上傳，而不是下載覆蓋。
+      const cloudUpdatedAt = data.updatedAt ? new Date(data.updatedAt).getTime() : 0;
+      const localChangedAt = Number(new Date(localStorage.getItem("b1a4LastLocalChangeAt") || 0));
+      if (hasLocalData && localChangedAt > cloudUpdatedAt) {
+        await uploadCloudNow();
+        updateSyncUI("已登入：" + (cloudUser.email || cloudUser.displayName || "Google 帳號") + "，本機有較新的資料，已上傳同步。", "已同步", true);
+        return;
+      }
+
       isLoadingCloud = true;
       folders = Array.isArray(data.folders) ? data.folders : [];
       groups = Array.isArray(data.groups) ? data.groups : [];
@@ -3644,6 +3660,7 @@ function writeLocalOnly() {
   localStorage.setItem("b1a4_collapsed_groups", JSON.stringify(collapsedGroups));
 }
 function scheduleCloudSave() {
+  localStorage.setItem("b1a4LastLocalChangeAt", new Date().toISOString());
   if (!cloudDocRef || isLoadingCloud) return;
   clearTimeout(cloudSaveTimer);
   cloudSaveTimer = setTimeout(uploadCloudNow, 650);
@@ -4595,7 +4612,7 @@ function setColor(c) {
   document.querySelectorAll(".color-choice").forEach(el => el.classList.toggle("active", el.dataset.color === c));
 }
 function saveFolder() {
-  if (current === null) newFolder();
+  if (current === null || current === undefined) newFolder();
   serializeEditorCards();
   folders[current].name = document.getElementById("folderName").value || "未命名題庫";
   folders[current].direction = document.getElementById("direction").value;
@@ -4609,7 +4626,7 @@ function saveFolder() {
   showSaveToast();
 }
 function deleteFolder() {
-  if (current === null) return;
+  if (current === null || current === undefined) return;
   if (!confirm("確定要把這個題庫放進回收桶嗎？此動作無法復原。")) return;
   folders.splice(current,1);
   current = folders.length ? 0 : null;
@@ -4625,7 +4642,7 @@ function deleteFolder() {
   }
 }
 function getCards() {
-  return current === null ? [] : parseCards(folders[current].content);
+  return (current === null || current === undefined || !folders[current]) ? [] : parseCards(folders[current].content);
 }
 function addPractice(category) {
   stats.practice = (stats.practice || 0) + 1;
