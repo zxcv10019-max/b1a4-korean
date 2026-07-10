@@ -2671,7 +2671,7 @@ textarea {
               <button class="soft" onclick="newFolder()">＋ 建立題庫</button>
             </div>
           </div>
-          <input id="folderSearchInput" class="folder-search-input" type="text" placeholder="🔍 搜尋題庫..." oninput="filterFolderCards(this.value)">
+          <input id="folderSearchInput" class="folder-search-input" type="text" placeholder="🔍 搜尋單字..." oninput="filterFolderCards(this.value)">
           <div id="folderSearchEmpty" class="empty" style="display:none;">找不到符合的題庫</div>
           <div id="folderGrid" class="folder-grid"></div>
         </div>
@@ -4080,8 +4080,10 @@ function makeForestFolderCard(f, i) {
   const d = document.createElement("div");
   d.className = "forest-folder-card " + (current === i ? "active" : "");
   d.dataset.name = f.name.toLowerCase();
+  const folderCards = parseCards(f.content);
+  d.dataset.words = folderCards.map(c => c.term + " " + c.definition).join(" ").toLowerCase();
   d.style.setProperty("--tab", f.color || "#c6e09c");
-  const cardCount = parseCards(f.content).length;
+  const cardCount = folderCards.length;
   const gStats = getGraduationStats(i);
   const stage = getFolderStage(gStats.flashPercent, gStats.graduated);
   const mascot = FOLDER_MASCOTS[i % FOLDER_MASCOTS.length];
@@ -4112,7 +4114,7 @@ function filterFolderCards(query) {
   const cards = document.querySelectorAll(".forest-folder-card");
   let anyVisible = false;
   cards.forEach(card => {
-    const match = !q || (card.dataset.name || "").includes(q);
+    const match = !q || (card.dataset.name || "").includes(q) || (card.dataset.words || "").includes(q);
     card.style.display = match ? "" : "none";
     if (match) anyVisible = true;
   });
@@ -6981,78 +6983,103 @@ function toggleItemVocab(sentenceId, idx) {
   if (!s || !s.items[idx]) return;
   const it = s.items[idx];
   it.addToVocab = !it.addToVocab;
-  if (it.addToVocab) syncItemToVocabFolder(s, it);
   saveSentenceEntries();
+  if (it.addToVocab) syncItemToVocabFolder(s, it);
   renderSentenceList();
 }
-function syncItemToVocabFolder(s, it) {
-  if (!it.kr || !it.kr.trim()) return;
-  let idx = s.linkedFolderIdx;
-  if (idx === null || idx === undefined || !folders[idx]) {
-    if (!folders.length) {
-      const name = prompt("這句話的單字要存進哪個題庫？輸入新題庫名稱：", "短句單字");
-      if (!name) return;
-      folders.push({ name, direction: "termToDefinition", color: "#c6e09c", content: "", updated: today(), practice: 0 });
-      idx = folders.length - 1;
-    } else {
-      const list = folders.map((f, i) => `${i + 1}. ${f.name}`).join("\n");
-      const pick = prompt(`這句話的單字要存進哪個題庫？輸入編號：\n${list}\n\n（輸入 0 建立新題庫）`, "1");
-      if (pick === null) return;
-      const num = parseInt(pick, 10);
-      if (num === 0 || isNaN(num)) {
-        const name = prompt("新題庫名稱：", "短句單字");
-        if (!name) return;
-        folders.push({ name, direction: "termToDefinition", color: "#c6e09c", content: "", updated: today(), practice: 0 });
-        idx = folders.length - 1;
-      } else {
-        idx = num - 1;
-        if (!folders[idx]) { alert("編號錯誤"); return; }
-      }
-    }
+
+/* ---- 題庫選擇彈窗（取代 window.prompt，手機/PWA環境下 prompt 常常不會顯示，導致加入單字卡看似沒反應） ---- */
+let folderPickerCallback = null;
+function ensureFolderPickerModal() {
+  if (document.getElementById("folderPickerMask")) return;
+  const modal = document.createElement("div");
+  modal.id = "folderPickerMask";
+  modal.className = "hero-modal-mask";
+  modal.innerHTML = `
+    <div class="hero-modal" style="width:min(420px,100%);max-height:80vh;overflow:auto;">
+      <div class="hero-modal-head">
+        <div class="hero-modal-title">📂 加入哪個題庫？</div>
+        <button class="hero-modal-close" type="button" onclick="closeFolderPicker()">關閉</button>
+      </div>
+      <div id="folderPickerList" style="display:flex;flex-direction:column;gap:8px;margin:14px 0;"></div>
+      <div style="display:flex;gap:8px;">
+        <input id="folderPickerNewName" type="text" placeholder="新題庫名稱" class="cute-input" style="flex:1;">
+        <button class="primary" type="button" onclick="folderPickerCreateNew()">＋建立</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+function openFolderPicker(onSelect) {
+  ensureFolderPickerModal();
+  folderPickerCallback = onSelect;
+  const list = document.getElementById("folderPickerList");
+  list.innerHTML = folders.length
+    ? folders.map((f, i) => `<button type="button" class="ghost" style="width:100%;text-align:left;" onclick="folderPickerSelect(${i})">📂 ${esc(f.name)}</button>`).join("")
+    : `<div class="empty" style="padding:8px 0;">目前沒有題庫，請在下方建立一個新的。</div>`;
+  document.getElementById("folderPickerNewName").value = "";
+  document.getElementById("folderPickerMask").classList.add("show");
+}
+function closeFolderPicker() {
+  const mask = document.getElementById("folderPickerMask");
+  if (mask) mask.classList.remove("show");
+  folderPickerCallback = null;
+}
+function folderPickerSelect(idx) {
+  const cb = folderPickerCallback;
+  closeFolderPicker();
+  if (cb) cb(idx);
+}
+function folderPickerCreateNew() {
+  const nameInput = document.getElementById("folderPickerNewName");
+  const name = (nameInput.value || "").trim() || "短句單字";
+  folders.push({ name, direction: "termToDefinition", color: "#c6e09c", content: "", updated: today(), practice: 0 });
+  saveStorage();
+  renderFolders();
+  folderPickerSelect(folders.length - 1);
+}
+function resolveLinkedFolderIdx(s, callback) {
+  if (s.linkedFolderIdx !== null && s.linkedFolderIdx !== undefined && folders[s.linkedFolderIdx]) {
+    callback(s.linkedFolderIdx);
+    return;
+  }
+  openFolderPicker((idx) => {
     s.linkedFolderIdx = idx;
     saveSentenceEntries();
-  }
-  const f = folders[idx];
-  const lines = (f.content || "").split(/\n+/).map(l => l.trim()).filter(Boolean);
-  const exists = lines.some(l => l.split(/\t| - |,/)[0].trim() === it.kr.trim());
-  if (!exists) {
-    f.content = (f.content ? f.content + "\n" : "") + `${it.kr}\t${it.zh || ""}`;
-    f.updated = today();
-    saveStorage();
-    renderFolders();
-  }
+    callback(idx);
+  });
+}
+
+function syncItemToVocabFolder(s, it) {
+  if (!it.kr || !it.kr.trim()) return;
+  resolveLinkedFolderIdx(s, (idx) => {
+    const f = folders[idx];
+    if (!f) return;
+    const lines = (f.content || "").split(/\n+/).map(l => l.trim()).filter(Boolean);
+    const exists = lines.some(l => l.split(/\t| - |,/)[0].trim() === it.kr.trim());
+    if (!exists) {
+      f.content = (f.content ? f.content + "\n" : "") + `${it.kr}\t${it.zh || ""}`;
+      f.updated = today();
+      saveStorage();
+      renderFolders();
+    }
+    if (typeof showSaveToast === "function") showSaveToast();
+  });
 }
 function addWordToFolderQuick(sentenceId, idx) {
   const s = sentenceEntries.find(x => x.id === sentenceId);
   const it = s && s.items[idx];
   if (!it || !it.kr.trim()) return;
-  if (!folders.length) {
-    const name = prompt("目前沒有題庫，輸入新題庫名稱：", "短句單字");
-    if (!name) return;
-    folders.push({ name, direction: "termToDefinition", color: "#c6e09c", content: `${it.kr}\t${it.zh || ""}`, updated: today(), practice: 0 });
-    current = folders.length - 1;
-  } else {
-    const list = folders.map((f, i) => `${i + 1}. ${f.name}`).join("\n");
-    const pick = prompt(`加入哪個題庫？輸入編號：\n${list}\n\n（輸入 0 建立新題庫）`, "1");
-    if (pick === null) return;
-    const num = parseInt(pick, 10);
-    if (num === 0 || isNaN(num)) {
-      const name = prompt("新題庫名稱：", "短句單字");
-      if (!name) return;
-      folders.push({ name, direction: "termToDefinition", color: "#c6e09c", content: `${it.kr}\t${it.zh || ""}`, updated: today(), practice: 0 });
-      current = folders.length - 1;
-    } else {
-      const idx2 = num - 1;
-      const f = folders[idx2];
-      if (!f) { alert("編號錯誤"); return; }
-      f.content = (f.content ? f.content + "\n" : "") + `${it.kr}\t${it.zh || ""}`;
-      f.updated = today();
-      current = idx2;
-    }
-  }
-  saveStorage();
-  renderFolders();
-  alert(`已把「${it.kr}」加入題庫！`);
+  openFolderPicker((fIdx) => {
+    const f = folders[fIdx];
+    if (!f) return;
+    f.content = (f.content ? f.content + "\n" : "") + `${it.kr}\t${it.zh || ""}`;
+    f.updated = today();
+    current = fIdx;
+    saveStorage();
+    renderFolders();
+    if (typeof showSaveToast === "function") showSaveToast();
+    else alert(`已把「${it.kr}」加入題庫！`);
+  });
 }
 function deleteSentenceEntry(id) {
   if (!confirm("確定要刪除這句短句解析嗎？此動作無法復原。")) return;
@@ -7140,10 +7167,17 @@ function saveSentenceEntry() {
     sentenceEntries.push(s);
   }
   saveSentenceEntries();
-  if (s) items.forEach(it => { if (it.addToVocab !== false) syncItemToVocabFolder(s, it); });
   closeSentenceEditor();
   renderSentenceList();
   if (typeof showSaveToast === "function") showSaveToast();
+
+  const toSync = s ? items.filter(it => it.addToVocab !== false && it.kr.trim()) : [];
+  if (toSync.length) {
+    resolveLinkedFolderIdx(s, () => {
+      toSync.forEach(it => syncItemToVocabFolder(s, it));
+      renderSentenceList();
+    });
+  }
 }
 
 function createGrammarFromSentence() {
