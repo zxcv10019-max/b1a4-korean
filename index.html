@@ -2433,7 +2433,18 @@ textarea {
 }
 .sen-word-edit-row input { border:2px solid var(--line); border-radius:10px; padding:8px; font-size:13px; }
 .sen-vocab-check { display:flex; align-items:center; gap:4px; font-size:11px; font-weight:900; color:#4e8f24; white-space:nowrap; }
-.sen-vocab-check-inline { display:flex; align-items:center; gap:6px; font-size:12px; font-weight:800; color:#4e8f24; cursor:pointer; }
+.sen-vocab-check-inline {
+  display:flex;
+  align-items:center;
+  gap:4px;
+  font-size:11px;
+  font-weight:800;
+  color:#4e8f24;
+  cursor:pointer;
+  white-space:nowrap;
+  flex:0 0 auto;
+}
+.sen-vocab-check-inline input { flex:0 0 auto; margin:0; }
 @media (max-width:720px) {
   .sen-word-edit-row { grid-template-columns:1fr 1fr; }
 }
@@ -6754,6 +6765,7 @@ let sentenceEntries = [];
 let sentenceExpanded = {};
 let teacherMode = {};
 let teacherRevealed = {};
+let hiddenItems = {};
 let sentenceEditingId = null;
 let sentenceEditorWords = [];
 let sentenceEditorGrammar = [];
@@ -6898,20 +6910,31 @@ function sentenceItemRowHtml(sentenceId, it, idx, teacherOn) {
       <div class="sen-word-hidden">❓ 點我看答案</div>
     </div>`;
   }
+  if (hiddenItems[key]) {
+    return `<div class="sen-word-card sen-word-hidden-card" onclick="toggleItemHidden('${sentenceId}',${idx})">
+      <div class="sen-word-kr">${esc(it.kr)}</div>
+      <div class="sen-word-hidden">？？？<br>點我顯示答案</div>
+    </div>`;
+  }
   return `<div class="sen-word-card">
       <div class="sen-word-top">
-        <span class="sen-word-kr">${esc(it.kr)}</span>
+        <span class="sen-word-kr" style="cursor:pointer;" onclick="toggleItemHidden('${sentenceId}',${idx})" title="點我收起中文">${esc(it.kr)}</span>
       </div>
       <div class="sen-word-zh">▶ ${esc(it.zh || "（尚未填寫）")}</div>
       ${it.root ? `<div class="sen-word-root">原形：${esc(it.root)}</div>` : ""}
       ${it.note ? `<div class="sen-word-note">💡 ${esc(it.note)}</div>` : ""}
-      <div class="btns" style="justify-content:space-between;margin-top:8px;">
+      <div class="btns" style="justify-content:space-between;margin-top:8px;flex-wrap:nowrap;">
         <button class="speak-btn" onclick="speakKorean('${jsAttr(it.kr)}')">🔊</button>
         <label class="sen-vocab-check-inline">
-          <input type="checkbox" ${it.addToVocab !== false ? "checked" : ""} onchange="toggleItemVocab('${sentenceId}',${idx})"> 加入單字卡
+          <input type="checkbox" ${it.addToVocab !== false ? "checked" : ""} onchange="toggleItemVocab('${sentenceId}',${idx})">加入單字卡
         </label>
       </div>
     </div>`;
+}
+function toggleItemHidden(sentenceId, idx) {
+  const key = sentenceId + "_" + idx;
+  hiddenItems[key] = !hiddenItems[key];
+  renderSentenceList();
 }
 
 function toggleSentenceSection(id, section) {
