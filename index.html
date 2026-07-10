@@ -1578,7 +1578,8 @@ textarea {
 .vocab-subnav {
   display:none;
   gap:8px;
-  overflow-x:auto;
+  flex-wrap:wrap;
+  overflow-x:visible;
   padding:0 0 18px;
   margin-bottom:6px;
 }
@@ -1593,6 +1594,18 @@ textarea {
   border-radius:999px;
   cursor:pointer;
   white-space:nowrap;
+}
+@media (max-width:640px) {
+  .vocab-subnav {
+    flex-wrap:wrap;
+    gap:8px 6px;
+  }
+  .vocab-subnav button {
+    flex:1 1 calc(25% - 6px);
+    padding:9px 4px;
+    font-size:12.5px;
+    text-align:center;
+  }
 }
 .vocab-subnav button.active {
   background:#83b842;
