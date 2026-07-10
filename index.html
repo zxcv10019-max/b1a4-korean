@@ -2432,7 +2432,8 @@ textarea {
   gap:6px; align-items:center; margin-bottom:8px;
 }
 .sen-word-edit-row input { border:2px solid var(--line); border-radius:10px; padding:8px; font-size:13px; }
-.sen-important-check { display:flex; align-items:center; gap:4px; font-size:11px; font-weight:900; color:#6f5310; white-space:nowrap; }
+.sen-vocab-check { display:flex; align-items:center; gap:4px; font-size:11px; font-weight:900; color:#4e8f24; white-space:nowrap; }
+.sen-vocab-check-inline { display:flex; align-items:center; gap:6px; font-size:12px; font-weight:800; color:#4e8f24; cursor:pointer; }
 @media (max-width:720px) {
   .sen-word-edit-row { grid-template-columns:1fr 1fr; }
 }
@@ -2767,8 +2768,8 @@ textarea {
                 <button type="button" class="ghost" style="width:100%;" onclick="addSentenceEditorWordRow()">➕ 新增解析</button>
               </div>
 
-              <label style="font-weight:900;color:#4e8f24;">📝 老師筆記（選填）</label>
-              <textarea id="senEditTeacherNote" rows="3" placeholder="例如：老師說 인간적인 不是「像人」，而是「人性的」；容易跟 인간답다 搞混；這個考過" style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;"></textarea>
+              <label style="font-weight:900;color:#4e8f24;">📝 補充說明（選填）</label>
+              <textarea id="senEditTeacherNote" rows="3" placeholder="例如：인간적인 不是「像人」，而是「人性的」；容易跟 인간답다 搞混；這個考過" style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;"></textarea>
 
               <label style="font-weight:900;color:#4e8f24;">🏷 標籤（選填，用逗號分隔）</label>
               <input id="senEditTags" type="text" placeholder="例如：第1課, 閱讀, 哲學, 世宗, TOPIK" class="cute-input">
@@ -6384,15 +6385,24 @@ function renderFavoritesDetail() {
   if (!wrap) return;
   const songTitle = (songId) => (lyricsSongs.find(s => s.id === songId) || {}).title || "未知歌曲";
 
-  const sentencesHtml = favorites.sentences.length
-    ? favorites.sentences.map((f, i) => `
+  const favSentenceEntries = (typeof sentenceEntries !== "undefined" ? sentenceEntries : []).filter(s => s.favorite);
+  const lyricsSentencesHtml = favorites.sentences.map((f, i) => `
       <div class="lyrics-line-card" style="cursor:default;">
         <div class="btns" style="justify-content:space-between;">
           <div><b>${esc(f.kr)}</b><div style="color:var(--muted);font-size:13px;">${esc(f.zh || "")} · ${esc(songTitle(f.songId))}</div></div>
           <button class="ghost" onclick="removeFavSentence(${i})">移除</button>
         </div>
-      </div>`).join("")
-    : `<div class="empty">還沒有收藏的句子。在歌詞讀本點「❤️ 收藏句子」試試看！</div>`;
+      </div>`).join("");
+  const analysisSentencesHtml = favSentenceEntries.map(s => `
+      <div class="lyrics-line-card" style="cursor:pointer;" onclick="goBottomTab('sentence')">
+        <div class="btns" style="justify-content:space-between;">
+          <div><b>${esc(s.kr)}</b><div style="color:var(--muted);font-size:13px;">${esc(s.zh || "")} · 短句解析</div></div>
+          <button class="ghost" onclick="event.stopPropagation();toggleSentenceFavorite('${s.id}')">移除</button>
+        </div>
+      </div>`).join("");
+  const sentencesHtml = (favorites.sentences.length || favSentenceEntries.length)
+    ? lyricsSentencesHtml + analysisSentencesHtml
+    : `<div class="empty">還沒有收藏的句子。在歌詞讀本點「❤️ 收藏句子」，或在短句解析點 📑 收藏試試看！</div>`;
 
   const wordsHtml = favorites.words.length
     ? `<div style="display:flex;flex-wrap:wrap;gap:8px;">${favorites.words.map((f, i) =>
@@ -6784,20 +6794,23 @@ function loadSentenceEntries() {
     // 舊資料轉換：words/grammar 合併成 items
     if (!Array.isArray(s.items)) {
       const items = [];
-      (s.words || []).forEach(w => items.push({ id: uid(), kr: w.kr, zh: w.zh, root: w.root || "", note: "", rating: w.important ? 5 : 0 }));
-      (s.grammar || []).forEach(g => items.push({ id: uid(), kr: g.formula || "", zh: g.explanation || "", root: "", note: (g.examples || []).map(ex => `${ex.kr} — ${ex.zh}`).join("；"), rating: 0 }));
+      (s.words || []).forEach(w => items.push({ id: uid(), kr: w.kr, zh: w.zh, root: w.root || "", note: "" }));
+      (s.grammar || []).forEach(g => items.push({ id: uid(), kr: g.formula || "", zh: g.explanation || "", root: "", note: (g.examples || []).map(ex => `${ex.kr} — ${ex.zh}`).join("；") }));
       s.items = items;
       delete s.words;
       delete s.grammar;
     }
     s.items.forEach(it => {
-      if (typeof it.rating !== "number") it.rating = 0;
+      delete it.rating;
       if (typeof it.root !== "string") it.root = "";
       if (typeof it.note !== "string") it.note = "";
+      if (typeof it.addToVocab !== "boolean") it.addToVocab = true;
       if (!it.id) it.id = uid();
     });
     if (typeof s.teacherNote !== "string") s.teacherNote = "";
     if (!Array.isArray(s.tags)) s.tags = [];
+    if (typeof s.favorite !== "boolean") s.favorite = false;
+    if (typeof s.linkedFolderIdx !== "number") s.linkedFolderIdx = null;
   });
 }
 function saveSentenceEntries() {
@@ -6815,11 +6828,6 @@ function speakKoreanSlow(text) {
   u.pitch = 1;
   speechSynthesis.cancel();
   speechSynthesis.speak(u);
-}
-
-function starHtml(rating) {
-  const r = Math.max(0, Math.min(5, rating || 0));
-  return "★".repeat(r) + "☆".repeat(5 - r);
 }
 
 /* ---- 列表 ---- */
@@ -6848,10 +6856,6 @@ function makeSentenceCardHtml(s) {
   const ex = sentenceExpanded[s.id] || {};
   const teacherOn = !!teacherMode[s.id];
   const itemsHtml = s.items.length ? s.items.map((it, wi) => sentenceItemRowHtml(s.id, it, wi, teacherOn)).join("") : `<div class="empty" style="padding:8px 0;">尚無句子解析</div>`;
-  const mustLearn = s.items.filter(it => (it.rating || 0) >= 4);
-  const mustLearnHtml = mustLearn.length
-    ? `<div class="sen-important-row">${mustLearn.map(it => `<span class="sen-important-chip">${starHtml(it.rating)} ${esc(it.kr)}${it.zh ? " — " + esc(it.zh) : ""}</span>`).join("")}</div>`
-    : `<div class="empty" style="padding:8px 0;">尚未標記必背單字（在句子解析裡評分 4★ 以上）</div>`;
   const tagsHtml = (s.tags && s.tags.length) ? `<div class="sen-tags-row">${s.tags.map(t => `<span class="sen-tag-chip">🏷 ${esc(t)}</span>`).join("")}</div>` : "";
 
   return `
@@ -6859,6 +6863,7 @@ function makeSentenceCardHtml(s) {
       <div class="sen-head">
         <div class="sen-kr">🇰🇷 ${esc(s.kr)}</div>
         <div class="btns">
+          <button class="gram-icon-btn" onclick="toggleSentenceFavorite('${s.id}')" title="收藏">${s.favorite ? "🔖" : "📑"}</button>
           <button class="gram-icon-btn" onclick="openSentenceEditor('${s.id}')" title="編輯">✏️</button>
           <button class="gram-icon-btn" onclick="deleteSentenceEntry('${s.id}')" title="刪除">🗑</button>
         </div>
@@ -6879,11 +6884,8 @@ function makeSentenceCardHtml(s) {
       </div>
 
       ${s.teacherNote ? `
-      <div class="sen-section-toggle" onclick="toggleSentenceSection('${s.id}','teacherNote')">📝 老師筆記<span>${ex.teacherNote ? "▴" : "▾"}</span></div>
+      <div class="sen-section-toggle" onclick="toggleSentenceSection('${s.id}','teacherNote')">📝 補充說明<span>${ex.teacherNote ? "▴" : "▾"}</span></div>
       <div class="sen-section-body ${ex.teacherNote ? "" : "sen-collapsed"}"><div class="sen-teacher-note">${esc(s.teacherNote).replace(/\n/g,"<br>")}</div></div>` : ""}
-
-      <div class="sen-section-toggle" onclick="toggleSentenceSection('${s.id}','important')">⭐ 必背單字（${mustLearn.length}）<span>${ex.important ? "▴" : "▾"}</span></div>
-      <div class="sen-section-body ${ex.important ? "" : "sen-collapsed"}">${mustLearnHtml}</div>
     </div>`;
 }
 
@@ -6899,14 +6901,15 @@ function sentenceItemRowHtml(sentenceId, it, idx, teacherOn) {
   return `<div class="sen-word-card">
       <div class="sen-word-top">
         <span class="sen-word-kr">${esc(it.kr)}</span>
-        <button class="gram-fav-btn" onclick="event.stopPropagation();cycleItemRating('${sentenceId}',${idx})" title="點擊調整星等">${starHtml(it.rating)}</button>
       </div>
       <div class="sen-word-zh">▶ ${esc(it.zh || "（尚未填寫）")}</div>
       ${it.root ? `<div class="sen-word-root">原形：${esc(it.root)}</div>` : ""}
       ${it.note ? `<div class="sen-word-note">💡 ${esc(it.note)}</div>` : ""}
-      <div class="btns" style="margin-top:8px;">
+      <div class="btns" style="justify-content:space-between;margin-top:8px;">
         <button class="speak-btn" onclick="speakKorean('${jsAttr(it.kr)}')">🔊</button>
-        <button class="ghost" style="font-size:11px;" onclick="addWordToFolderQuick('${sentenceId}',${idx})">☑ 加入單字卡</button>
+        <label class="sen-vocab-check-inline">
+          <input type="checkbox" ${it.addToVocab !== false ? "checked" : ""} onchange="toggleItemVocab('${sentenceId}',${idx})"> 加入單字卡
+        </label>
       </div>
     </div>`;
 }
@@ -6927,12 +6930,60 @@ function revealTeacherWord(id, idx) {
   teacherRevealed[id + "_" + idx] = true;
   renderSentenceList();
 }
-function cycleItemRating(sentenceId, idx) {
+function toggleSentenceFavorite(id) {
+  const s = sentenceEntries.find(x => x.id === id);
+  if (!s) return;
+  s.favorite = !s.favorite;
+  saveSentenceEntries();
+  if (typeof renderFavoritesDetail === "function") renderFavoritesDetail();
+  if (typeof renderFavoritesSummary === "function") renderFavoritesSummary();
+  renderSentenceList();
+}
+function toggleItemVocab(sentenceId, idx) {
   const s = sentenceEntries.find(x => x.id === sentenceId);
   if (!s || !s.items[idx]) return;
-  s.items[idx].rating = ((s.items[idx].rating || 0) + 1) % 6;
+  const it = s.items[idx];
+  it.addToVocab = !it.addToVocab;
+  if (it.addToVocab) syncItemToVocabFolder(s, it);
   saveSentenceEntries();
   renderSentenceList();
+}
+function syncItemToVocabFolder(s, it) {
+  if (!it.kr || !it.kr.trim()) return;
+  let idx = s.linkedFolderIdx;
+  if (idx === null || idx === undefined || !folders[idx]) {
+    if (!folders.length) {
+      const name = prompt("這句話的單字要存進哪個題庫？輸入新題庫名稱：", "短句單字");
+      if (!name) return;
+      folders.push({ name, direction: "termToDefinition", color: "#c6e09c", content: "", updated: today(), practice: 0 });
+      idx = folders.length - 1;
+    } else {
+      const list = folders.map((f, i) => `${i + 1}. ${f.name}`).join("\n");
+      const pick = prompt(`這句話的單字要存進哪個題庫？輸入編號：\n${list}\n\n（輸入 0 建立新題庫）`, "1");
+      if (pick === null) return;
+      const num = parseInt(pick, 10);
+      if (num === 0 || isNaN(num)) {
+        const name = prompt("新題庫名稱：", "短句單字");
+        if (!name) return;
+        folders.push({ name, direction: "termToDefinition", color: "#c6e09c", content: "", updated: today(), practice: 0 });
+        idx = folders.length - 1;
+      } else {
+        idx = num - 1;
+        if (!folders[idx]) { alert("編號錯誤"); return; }
+      }
+    }
+    s.linkedFolderIdx = idx;
+    saveSentenceEntries();
+  }
+  const f = folders[idx];
+  const lines = (f.content || "").split(/\n+/).map(l => l.trim()).filter(Boolean);
+  const exists = lines.some(l => l.split(/\t| - |,/)[0].trim() === it.kr.trim());
+  if (!exists) {
+    f.content = (f.content ? f.content + "\n" : "") + `${it.kr}\t${it.zh || ""}`;
+    f.updated = today();
+    saveStorage();
+    renderFolders();
+  }
 }
 function addWordToFolderQuick(sentenceId, idx) {
   const s = sentenceEntries.find(x => x.id === sentenceId);
@@ -7005,7 +7056,7 @@ function autoExtractSentenceWordsIntoEditor() {
   const raw = document.getElementById("senEditKr").value;
   if (!raw.trim()) { alert("請先輸入韓文句子"); return; }
   const extracted = extractSentenceWords(raw);
-  sentenceEditorWords = extracted.map(w => ({ id: uid(), kr: w.term, zh: w.definition, root: "", note: "", rating: 0 }));
+  sentenceEditorWords = extracted.map(w => ({ id: uid(), kr: w.term, zh: w.definition, root: "", note: "", addToVocab: true }));
   renderSentenceEditorWordRows();
 }
 
@@ -7022,14 +7073,12 @@ function renderSentenceEditorWordRows() {
       <input type="text" placeholder="中文" value="${escapeAttr(w.zh||"")}" oninput="sentenceEditorWords[${i}].zh=this.value">
       <input type="text" placeholder="原形(選填)" value="${escapeAttr(w.root||"")}" oninput="sentenceEditorWords[${i}].root=this.value">
       <input type="text" placeholder="備註(選填，例如 인간+적+인)" value="${escapeAttr(w.note||"")}" oninput="sentenceEditorWords[${i}].note=this.value">
-      <select onchange="sentenceEditorWords[${i}].rating=Number(this.value)" style="border:2px solid var(--line);border-radius:10px;padding:8px;font-size:12px;">
-        ${[0,1,2,3,4,5].map(n => `<option value="${n}" ${w.rating===n?"selected":""}>${n===0?"未評分":"★".repeat(n)}</option>`).join("")}
-      </select>
+      <label class="sen-vocab-check"><input type="checkbox" ${w.addToVocab!==false?"checked":""} onchange="sentenceEditorWords[${i}].addToVocab=this.checked">☑加入單字卡</label>
       <button type="button" class="wc-del" onclick="removeSentenceEditorWordRow(${i})">❌</button>
     </div>`).join("");
 }
 function addSentenceEditorWordRow() {
-  sentenceEditorWords.push({ id: uid(), kr: "", zh: "", root: "", note: "", rating: 0 });
+  sentenceEditorWords.push({ id: uid(), kr: "", zh: "", root: "", note: "", addToVocab: true });
   renderSentenceEditorWordRows();
 }
 function removeSentenceEditorWordRow(i) {
@@ -7045,13 +7094,16 @@ function saveSentenceEntry() {
   const tags = document.getElementById("senEditTags").value.split(",").map(t => t.trim()).filter(Boolean);
   const items = sentenceEditorWords.filter(w => w.kr.trim());
 
+  let s;
   if (sentenceEditingId) {
-    const s = sentenceEntries.find(x => x.id === sentenceEditingId);
+    s = sentenceEntries.find(x => x.id === sentenceEditingId);
     if (s) Object.assign(s, { kr, zh, items, teacherNote, tags });
   } else {
-    sentenceEntries.push({ id: uid(), kr, zh, items, teacherNote, tags });
+    s = { id: uid(), kr, zh, items, teacherNote, tags, favorite: false, linkedFolderIdx: null };
+    sentenceEntries.push(s);
   }
   saveSentenceEntries();
+  if (s) items.forEach(it => { if (it.addToVocab !== false) syncItemToVocabFolder(s, it); });
   closeSentenceEditor();
   renderSentenceList();
   if (typeof showSaveToast === "function") showSaveToast();
