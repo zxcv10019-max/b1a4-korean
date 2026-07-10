@@ -2800,7 +2800,7 @@ textarea {
 
               <div style="display:flex;justify-content:space-between;align-items:center;">
                 <label style="font-weight:900;color:#4e8f24;">📝 補充說明（選填）</label>
-                <button type="button" class="ghost" style="white-space:nowrap;font-size:12px;padding:6px 10px;" onclick="aiAssistSentenceNote()">✨ AI補充</button>
+                <button type="button" class="ghost" style="white-space:nowrap;font-size:12px;padding:6px 10px;" onclick="aiAssistSentenceNote(this)">✨ AI補充</button>
               </div>
               <textarea id="senEditTeacherNote" rows="3" placeholder="例如：인간적인 不是「像人」，而是「人性的」；容易跟 인간답다 搞混；這個考過" style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;"></textarea>
 
@@ -7228,7 +7228,7 @@ function renderSentenceEditorWordRows() {
       <div style="display:flex;flex-direction:column;gap:4px;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <label style="font-size:12px;font-weight:900;color:#9b7a3f;">✨ AI解析（選填）</label>
-          <button type="button" class="ghost" style="white-space:nowrap;font-size:12px;padding:6px 10px;" onclick="aiAssistSentenceWordNote(${i})">✨ AI解析</button>
+          <button type="button" class="ghost" style="white-space:nowrap;font-size:12px;padding:6px 10px;" onclick="aiAssistSentenceWordNote(${i}, this)">✨ AI解析</button>
         </div>
         <textarea placeholder="例如貼上 AI 解析結果…&#10;= 인간 + 적 + 인&#10;-적 表示「具有……性」" rows="3" oninput="sentenceEditorWords[${i}].note=this.value" style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:12px;padding:8px 10px;font-size:13px;font-family:inherit;resize:vertical;">${esc(w.note||"")}</textarea>
       </div>
@@ -7325,7 +7325,26 @@ function copyAiPromptText() {
     try { document.execCommand("copy"); } catch (e) {}
   }
 }
-function aiAssistSentenceWordNote(i) {
+/* ===== 🔮 Gemini 直接串接：由後面新增的 module 腳本覆寫成真正的呼叫方式，這裡是連線失敗時的備援 ===== */
+async function callGeminiAI(prompt) {
+  throw new Error("Gemini 尚未就緒");
+}
+async function runAiAssist(btnEl, prompt, applyFn) {
+  const originalText = btnEl ? btnEl.textContent : "";
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = "⏳ AI分析中..."; }
+  try {
+    const result = await callGeminiAI(prompt);
+    applyFn(result);
+    if (typeof showSaveToast === "function") showSaveToast();
+  } catch (e) {
+    // Gemini 還沒接上或呼叫失敗 → 退回複製貼上模式
+    openAiPromptModal(prompt, applyFn);
+  } finally {
+    if (btnEl) { btnEl.disabled = false; btnEl.textContent = originalText; }
+  }
+}
+
+function aiAssistSentenceWordNote(i, btnEl) {
   const w = sentenceEditorWords[i];
   if (!w || !w.kr.trim()) { alert("請先輸入韓文"); return; }
   const text = `請幫我產生適合韓文學習網站的 AI 解析。
@@ -7353,12 +7372,12 @@ ${w.kr}
 
 因此：
 ...`;
-  openAiPromptModal(text, (val) => {
+  runAiAssist(btnEl, text, (val) => {
     w.note = val;
     renderSentenceEditorWordRows();
   });
 }
-function aiAssistSentenceNote() {
+function aiAssistSentenceNote(btnEl) {
   const sentence = (document.getElementById("senEditKr")?.value || "").trim();
   if (!sentence) { alert("請先輸入韓文句子"); return; }
   const text = `請幫我產生適合韓文學習網站的句子補充說明。
@@ -7380,7 +7399,7 @@ ${sentence}
 • ...
 • ...
 • ...`;
-  openAiPromptModal(text, (val) => {
+  runAiAssist(btnEl, text, (val) => {
     const ta = document.getElementById("senEditTeacherNote");
     if (ta) ta.value = val;
   });
@@ -8073,6 +8092,34 @@ if ("serviceWorker" in navigator) {
     });
   });
 }
+</script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-ai.js";
+
+  try {
+    const firebaseConfig = {
+      apiKey: "AIzaSyCX897x7c1-va19xeQajWr97gK_eY4w_ys",
+      authDomain: "b1a4-cc0af.firebaseapp.com",
+      projectId: "b1a4-cc0af",
+      storageBucket: "b1a4-cc0af.firebasestorage.app",
+      messagingSenderId: "1010872861745",
+      appId: "1:1010872861745:web:9bb41e47d8ef06921d0110",
+      measurementId: "G-01H07Z4RGW"
+    };
+    const aiApp = initializeApp(firebaseConfig, "geminiApp");
+    const ai = getAI(aiApp, { backend: new GoogleAIBackend() });
+    const model = getGenerativeModel(ai, { model: "gemini-3.5-flash" });
+
+    window.callGeminiAI = async function (prompt) {
+      const result = await model.generateContent(prompt);
+      return result.response.text();
+    };
+    console.log("✅ Gemini AI (Firebase AI Logic) 已就緒");
+  } catch (e) {
+    console.warn("Gemini AI 初始化失敗，會自動退回複製貼上模式：", e);
+  }
 </script>
 </body>
 </html>
