@@ -2798,7 +2798,10 @@ textarea {
                 <button type="button" class="ghost" style="width:100%;" onclick="addSentenceEditorWordRow()">➕ 新增解析</button>
               </div>
 
-              <label style="font-weight:900;color:#4e8f24;">📝 補充說明（選填）</label>
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <label style="font-weight:900;color:#4e8f24;">📝 補充說明（選填）</label>
+                <button type="button" class="ghost" style="white-space:nowrap;font-size:12px;padding:6px 10px;" onclick="aiAssistSentenceNote()">✨ AI補充</button>
+              </div>
               <textarea id="senEditTeacherNote" rows="3" placeholder="例如：인간적인 不是「像人」，而是「人性的」；容易跟 인간답다 搞混；這個考過" style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;"></textarea>
 
               <label style="font-weight:900;color:#4e8f24;">🏷 標籤（選填，用逗號分隔）</label>
@@ -6961,7 +6964,7 @@ function sentenceItemRowHtml(sentenceId, it, idx, teacherOn) {
       </div>
       <div class="sen-word-zh">▶ ${esc(it.zh || "（尚未填寫）")}</div>
       ${it.root ? `<div class="sen-word-root">原形：${esc(it.root)}</div>` : ""}
-      ${it.note ? `<div class="sen-word-note-toggle" onclick="event.stopPropagation();toggleNoteExpanded('${sentenceId}',${idx})">📖 AI補充 ${noteExpanded[key] ? "▴" : "▾"}</div>${noteExpanded[key] ? `<div class="sen-word-note">${esc(it.note).replace(/\n/g,"<br>")}</div>` : ""}` : ""}
+      ${it.note ? `<div class="sen-word-note-toggle" onclick="event.stopPropagation();toggleNoteExpanded('${sentenceId}',${idx})">✨ AI解析 ${noteExpanded[key] ? "▴" : "▾"}</div>${noteExpanded[key] ? `<div class="sen-word-note">${esc(it.note).replace(/\n/g,"<br>")}</div>` : ""}` : ""}
       <div class="btns" style="justify-content:flex-start;margin-top:8px;flex-wrap:wrap;">
         <button class="speak-btn" onclick="speakKorean('${jsAttr(it.kr)}')">🔊</button>
         <label class="sen-vocab-check-inline">
@@ -7169,8 +7172,8 @@ function renderSentenceEditorWordRows() {
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <label style="font-size:12px;font-weight:900;color:#9b7a3f;">✨ AI補充（選填）</label>
-          <button type="button" class="ghost" style="white-space:nowrap;font-size:12px;padding:6px 10px;" onclick="aiAssistSentenceWordNote(${i})">✨ AI 補充</button>
+          <label style="font-size:12px;font-weight:900;color:#9b7a3f;">✨ AI解析（選填）</label>
+          <button type="button" class="ghost" style="white-space:nowrap;font-size:12px;padding:6px 10px;" onclick="aiAssistSentenceWordNote(${i})">✨ AI解析</button>
         </div>
         <textarea placeholder="例如貼上 AI 解析結果…&#10;= 인간 + 적 + 인&#10;-적 表示「具有……性」" rows="3" oninput="sentenceEditorWords[${i}].note=this.value" style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:12px;padding:8px 10px;font-size:13px;font-family:inherit;resize:vertical;">${esc(w.note||"")}</textarea>
       </div>
@@ -7224,23 +7227,23 @@ function ensureAiPromptModal() {
   modal.innerHTML = `
     <div class="hero-modal" style="width:min(540px,100%);max-height:88vh;overflow:auto;">
       <div class="hero-modal-head">
-        <div class="hero-modal-title">✨ AI 補充</div>
+        <div class="hero-modal-title">✨ AI 小幫手</div>
         <button class="hero-modal-close" type="button" onclick="closeAiPromptModal()">關閉</button>
       </div>
       <div style="font-size:13px;color:var(--muted);margin-bottom:6px;">① 複製提示詞，貼到 Claude / ChatGPT 送出：</div>
       <textarea id="aiPromptText" readonly style="width:100%;box-sizing:border-box;min-height:110px;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:13px;font-family:inherit;"></textarea>
       <button type="button" class="ghost" style="width:100%;margin-top:8px;" onclick="copyAiPromptText()">📋 複製提示詞</button>
 
-      <div style="font-size:13px;color:var(--muted);margin:16px 0 6px;">② 把 AI 的回覆貼在這裡，按下面按鈕會直接填進這個單字的「AI補充」欄位：</div>
+      <div style="font-size:13px;color:var(--muted);margin:16px 0 6px;">② 把 AI 的回覆貼在這裡，按下面按鈕會直接套用：</div>
       <textarea id="aiPromptResult" placeholder="貼上 AI 的回覆…" style="width:100%;box-sizing:border-box;min-height:150px;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:13px;font-family:inherit;"></textarea>
-      <button type="button" class="primary cute-btn" style="width:100%;margin-top:8px;" onclick="applyAiPromptResult()">✓ 套用到 AI 補充欄位</button>
+      <button type="button" class="primary cute-btn" style="width:100%;margin-top:8px;" onclick="applyAiPromptResult()">✓ 套用</button>
     </div>`;
   document.body.appendChild(modal);
 }
-let aiPromptTargetIndex = null;
-function openAiPromptModal(text, targetIndex) {
+let aiPromptApplyFn = null;
+function openAiPromptModal(text, applyFn) {
   ensureAiPromptModal();
-  aiPromptTargetIndex = targetIndex;
+  aiPromptApplyFn = applyFn;
   document.getElementById("aiPromptText").value = text;
   document.getElementById("aiPromptResult").value = "";
   document.getElementById("aiPromptMask").classList.add("show");
@@ -7248,15 +7251,12 @@ function openAiPromptModal(text, targetIndex) {
 function closeAiPromptModal() {
   const m = document.getElementById("aiPromptMask");
   if (m) m.classList.remove("show");
-  aiPromptTargetIndex = null;
+  aiPromptApplyFn = null;
 }
 function applyAiPromptResult() {
-  const i = aiPromptTargetIndex;
   const val = (document.getElementById("aiPromptResult")?.value || "").trim();
-  if (i === null || i === undefined || !sentenceEditorWords[i]) { closeAiPromptModal(); return; }
   if (!val) { alert("請先把 AI 的回覆貼在上面的欄位裡"); return; }
-  sentenceEditorWords[i].note = val;
-  renderSentenceEditorWordRows();
+  if (typeof aiPromptApplyFn === "function") aiPromptApplyFn(val);
   closeAiPromptModal();
   if (typeof showSaveToast === "function") showSaveToast();
 }
@@ -7273,9 +7273,62 @@ function copyAiPromptText() {
 function aiAssistSentenceWordNote(i) {
   const w = sentenceEditorWords[i];
   if (!w || !w.kr.trim()) { alert("請先輸入韓文"); return; }
+  const text = `請幫我產生適合韓文學習網站的 AI 解析。
+
+韓文單字：
+${w.kr}
+
+請遵守以下規則：
+1. 自動判斷單字類型（構詞、漢字詞、派生詞、活用形或一般單字）。
+2. 如果可以拆解，請拆解並簡單說明。
+3. 如果無法拆解，請簡單說明其來源或用法。
+4. 中文解釋簡短好懂，適合初中級韓文學習者。
+5. 不要舉例句。
+6. 不要使用 Markdown。
+7. 回覆控制在 8 行內。
+8. 最後一定要有「因此：」。
+
+回覆格式：
+
+${w.kr}
+
+= ...
+
+...
+
+因此：
+...`;
+  openAiPromptModal(text, (val) => {
+    w.note = val;
+    renderSentenceEditorWordRows();
+  });
+}
+function aiAssistSentenceNote() {
   const sentence = (document.getElementById("senEditKr")?.value || "").trim();
-  const text = `請幫我拆解韓文單字「${w.kr}」的構詞，仿照這個格式：\n\n인간적인\n= 인간 + 적 + 인\n-적 表示「具有……性」\n因此：인간적인 존재 = 人性的存在\n\n請針對「${w.kr}」給我同樣格式的拆解說明${sentence ? `，並套用在句子「${sentence}」裡` : ""}，中文解釋要簡短好懂，適合語言學習筆記使用。`;
-  openAiPromptModal(text, i);
+  if (!sentence) { alert("請先輸入韓文句子"); return; }
+  const text = `請幫我產生適合韓文學習網站的句子補充說明。
+
+韓文句子：
+${sentence}
+
+請遵守以下規則：
+1. 說明整句重點，不要逐字解析。
+2. 可補充語氣、書面語、文化背景或容易誤解的地方。
+3. 中文簡短好懂，適合初中級韓文學習者。
+4. 不要重複翻譯。
+5. 不要舉例句。
+6. 不要使用 Markdown。
+7. 回覆控制在 3～5 行。
+
+回覆格式：
+
+• ...
+• ...
+• ...`;
+  openAiPromptModal(text, (val) => {
+    const ta = document.getElementById("senEditTeacherNote");
+    if (ta) ta.value = val;
+  });
 }
 function addSentenceEditorWordRow() {
   sentenceEditorWords.push({ id: uid(), kr: "", zh: "", root: "", note: "", addToVocab: true });
