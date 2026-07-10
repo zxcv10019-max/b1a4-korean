@@ -2474,6 +2474,8 @@ textarea {
       <div id="vocabSubnav" class="vocab-subnav">
         <button data-page="library" onclick="goPage('library')">▣ 題庫</button>
         <button data-page="flash" onclick="goPage('flash')">▤ 單字卡</button>
+        <button data-page="grammar" onclick="goPage('grammar')">🌸 文法</button>
+        <button data-page="sentence" onclick="goPage('sentence')">📝 短句</button>
         <button data-page="match" onclick="goPage('match')">⌘ 配對</button>
         <button data-page="listen" onclick="goPage('listen')">🔊 聽力</button>
       </div>
@@ -2575,7 +2577,6 @@ textarea {
           <div class="topbar">
             <h2>我的題庫</h2>
             <div style="display:flex;gap:10px;flex-wrap:wrap">
-              <button class="soft" onclick="openSentenceSplit()">📝 短句拆字</button>
               <button class="soft" onclick="newGroup()">📁 新增分組</button>
               <button class="soft" onclick="newFolder()">＋ 建立題庫</button>
             </div>
@@ -2583,30 +2584,6 @@ textarea {
           <input id="folderSearchInput" class="folder-search-input" type="text" placeholder="🔍 搜尋題庫..." oninput="filterFolderCards(this.value)">
           <div id="folderSearchEmpty" class="empty" style="display:none;">找不到符合的題庫</div>
           <div id="folderGrid" class="folder-grid"></div>
-        </div>
-
-        <div id="sentenceSplitMask" class="hero-modal-mask">
-          <div class="hero-modal" style="width:min(600px,100%);max-height:85vh;overflow:auto;">
-            <div class="hero-modal-head">
-              <div class="hero-modal-title">📝 短句拆字</div>
-              <button class="hero-modal-close" type="button" onclick="closeSentenceSplit()">關閉</button>
-            </div>
-            <div style="display:grid;gap:12px;">
-              <textarea id="sentenceSplitInput" rows="3" placeholder="貼上一句韓文，例如：오늘 날씨가 정말 좋아요" style="border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;"></textarea>
-              <button type="button" class="primary cute-btn" onclick="runSentenceSplit()">🔍 自動提取單字</button>
-              <div class="hero-help">內建常用字典比對，抓不到翻譯的字會留白，記得手動補上或刪除不需要的項目。</div>
-              <div id="sentenceSplitResults"></div>
-              <div class="field-row-2">
-                <div>
-                  <label>加入題庫</label>
-                  <select id="sentenceSplitFolderSelect"></select>
-                </div>
-                <div style="display:flex;align-items:flex-end;">
-                  <button type="button" class="primary cute-btn" style="width:100%;" onclick="addSentenceWordsToFolder()">➕ 加入題庫</button>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         <div id="editorWrap" style="display:none"><div id="editor" class="topbar" style="margin-top:28px">
@@ -2697,6 +2674,28 @@ textarea {
       </section>
 
       <button id="floatingSaveBtn" class="floating-save-btn" onclick="saveFolder()" title="儲存題庫">🌱</button>
+
+      <section id="sentence" class="page">
+        <div class="topbar">
+          <h2>📝 短句拆字</h2>
+        </div>
+        <div class="card" style="padding:20px;">
+          <label style="font-weight:900;color:#4e8f24;">貼上一句韓文</label>
+          <textarea id="sentenceSplitInput" rows="3" placeholder="例如：오늘 날씨가 정말 좋아요" style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;margin-top:8px;"></textarea>
+          <button type="button" class="primary cute-btn" style="width:100%;margin-top:12px;" onclick="runSentenceSplit()">🔍 自動提取單字</button>
+          <div class="hero-help">內建常用字典比對，抓不到翻譯的字會留白，記得手動補上或刪除不需要的項目。</div>
+          <div id="sentenceSplitResults" style="margin-top:14px;"></div>
+          <div class="field-row-2" style="margin-top:14px;">
+            <div>
+              <label>加入題庫</label>
+              <select id="sentenceSplitFolderSelect"></select>
+            </div>
+            <div style="display:flex;align-items:flex-end;">
+              <button type="button" class="primary cute-btn" style="width:100%;" onclick="addSentenceWordsToFolder()">➕ 加入題庫</button>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <section id="flash" class="page">
         <div class="topbar">
@@ -3005,8 +3004,7 @@ textarea {
 
   <nav class="bottom-nav">
     <button data-tab="home" class="active" onclick="goBottomTab('home')"><span class="bn-ico">🏠</span>首頁</button>
-    <button data-tab="vocab" onclick="goBottomTab('vocab')"><span class="bn-ico">📚</span>單字</button>
-    <button data-tab="grammar" onclick="goBottomTab('grammar')"><span class="bn-ico">🌸</span>文法</button>
+    <button data-tab="vocab" onclick="goBottomTab('vocab')"><span class="bn-ico">📖</span>學習</button>
     <button data-tab="lyrics" onclick="goBottomTab('lyrics')"><span class="bn-ico">🎵</span>歌詞</button>
     <button data-tab="test" onclick="goBottomTab('test')"><span class="bn-ico">📝</span>測驗</button>
     <button data-tab="profile" onclick="goBottomTab('profile')"><span class="bn-ico">👤</span>我的</button>
@@ -3859,8 +3857,8 @@ function esc(s) { return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;
 function norm(v) { return String(v||"").trim().toLowerCase().replace(/[，。！？、,.!?]/g,"").replace(/\s+/g," "); }
 function today() { return new Date().toISOString().slice(0,10).replaceAll("-","/"); }
 
-const BOTTOM_TAB_MAP = { home:"home", library:"vocab", flash:"vocab", match:"vocab", listen:"vocab", grammar:"grammar", test:"test", lyrics:"lyrics", profile:"profile" };
-const VOCAB_PAGES = ["library","flash","match","listen"];
+const BOTTOM_TAB_MAP = { home:"home", library:"vocab", flash:"vocab", match:"vocab", listen:"vocab", grammar:"vocab", sentence:"vocab", test:"test", lyrics:"lyrics", profile:"profile" };
+const VOCAB_PAGES = ["library","flash","grammar","sentence","match","listen"];
 
 function updateBottomNav(id) {
   document.querySelectorAll(".bottom-nav button").forEach(b => b.classList.remove("active"));
@@ -3879,6 +3877,7 @@ function goBottomTab(tab) {
   if (tab === "home") return goPage("home");
   if (tab === "vocab") return goPage(VOCAB_PAGES.includes(current_vocab_page) ? current_vocab_page : "flash");
   if (tab === "grammar") return goPage("grammar");
+  if (tab === "sentence") return goPage("sentence");
   if (tab === "lyrics") return goPage("lyrics");
   if (tab === "test") return goPage("test");
   if (tab === "profile") return goPage("profile");
@@ -3895,6 +3894,7 @@ function goPage(id) {
   if (id === "match" && !document.getElementById("matchBoard").innerHTML) startMatch();
   if (id === "profile") { renderLearningCalendar(); renderDetailedStats(); }
   if (id === "grammar" && typeof renderGrammarList === "function") renderGrammarList();
+  if (id === "sentence" && typeof syncSentenceSplitFolderSelect === "function") syncSentenceSplitFolderSelect();
   const floatBtn = document.getElementById("floatingSaveBtn");
   if (floatBtn) {
     const editorOpen = id === "library" && document.getElementById("editorWrap").style.display !== "none";
@@ -6670,17 +6670,6 @@ function extractSentenceWords(text) {
   return results;
 }
 
-function openSentenceSplit() {
-  document.getElementById("sentenceSplitInput").value = "";
-  sentenceSplitWords = [];
-  renderSentenceSplitResults();
-  syncSentenceSplitFolderSelect();
-  document.getElementById("sentenceSplitMask").classList.add("show");
-}
-function closeSentenceSplit() {
-  document.getElementById("sentenceSplitMask").classList.remove("show");
-}
-
 function syncSentenceSplitFolderSelect() {
   const sel = document.getElementById("sentenceSplitFolderSelect");
   if (!sel) return;
@@ -6736,7 +6725,10 @@ function addSentenceWordsToFolder() {
   }
   saveStorage();
   renderFolders();
-  closeSentenceSplit();
+  sentenceSplitWords = [];
+  document.getElementById("sentenceSplitInput").value = "";
+  renderSentenceSplitResults();
+  goPage("library");
   loadFolder(current);
   document.getElementById("editor")?.scrollIntoView({ behavior: "smooth" });
   if (typeof showSaveToast === "function") showSaveToast();
