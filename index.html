@@ -2477,6 +2477,11 @@ textarea {
   padding:12px 14px; font-size:13px; color:#6f5310; font-weight:700; line-height:1.6;
 }
 .sen-word-note { font-size:11px; color:#9b7a3f; background:#fdf6e3; border-radius:8px; padding:6px 8px; margin-top:6px; line-height:1.6; }
+.sen-word-note-toggle {
+  font-size:11px; font-weight:900; color:#9b7a3f;
+  cursor:pointer; margin-top:6px; display:flex; justify-content:space-between; align-items:center;
+  background:#fdf6e3; border-radius:8px; padding:5px 8px;
+}
 .sen-word-top .gram-fav-btn { font-size:12px; white-space:nowrap; }
 
 
@@ -6799,6 +6804,7 @@ let sentenceExpanded = {};
 let teacherMode = {};
 let teacherRevealed = {};
 let hiddenItems = {};
+let noteExpanded = {};
 let sentenceEditingId = null;
 let sentenceEditorWords = [];
 let sentenceEditorGrammar = [];
@@ -6955,7 +6961,7 @@ function sentenceItemRowHtml(sentenceId, it, idx, teacherOn) {
       </div>
       <div class="sen-word-zh">▶ ${esc(it.zh || "（尚未填寫）")}</div>
       ${it.root ? `<div class="sen-word-root">原形：${esc(it.root)}</div>` : ""}
-      ${it.note ? `<div class="sen-word-note">📖 AI補充<br>${esc(it.note).replace(/\n/g,"<br>")}</div>` : ""}
+      ${it.note ? `<div class="sen-word-note-toggle" onclick="event.stopPropagation();toggleNoteExpanded('${sentenceId}',${idx})">📖 AI補充 ${noteExpanded[key] ? "▴" : "▾"}</div>${noteExpanded[key] ? `<div class="sen-word-note">${esc(it.note).replace(/\n/g,"<br>")}</div>` : ""}` : ""}
       <div class="btns" style="justify-content:flex-start;margin-top:8px;flex-wrap:wrap;">
         <button class="speak-btn" onclick="speakKorean('${jsAttr(it.kr)}')">🔊</button>
         <label class="sen-vocab-check-inline">
@@ -6967,6 +6973,11 @@ function sentenceItemRowHtml(sentenceId, it, idx, teacherOn) {
 function toggleItemHidden(sentenceId, idx) {
   const key = sentenceId + "_" + idx;
   hiddenItems[key] = !hiddenItems[key];
+  renderSentenceList();
+}
+function toggleNoteExpanded(sentenceId, idx) {
+  const key = sentenceId + "_" + idx;
+  noteExpanded[key] = !noteExpanded[key];
   renderSentenceList();
 }
 
