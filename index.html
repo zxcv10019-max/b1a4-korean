@@ -2799,7 +2799,10 @@ textarea {
               <div class="hero-help">字典拆解：內建常用字典比對，速度快但涵蓋範圍有限。AI拆解：呼叫 Gemini 分析，涵蓋範圍更廣，但需要 Gemini 連線成功。兩種都可以拆完後再手動調整。</div>
 
               <div>
-                <label style="font-weight:900;color:#4e8f24;display:block;margin-bottom:8px;">🧩 句子解析</label>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                  <label style="font-weight:900;color:#4e8f24;">🧩 句子解析</label>
+                  <button type="button" class="ghost" style="white-space:nowrap;font-size:12px;padding:6px 10px;" onclick="aiAssistAllSentenceWords(this)">✨ 一次解析全部單字</button>
+                </div>
                 <div id="senEditWordsWrap"></div>
                 <button type="button" class="ghost" style="width:100%;" onclick="addSentenceEditorWordRow()">➕ 新增解析</button>
               </div>
@@ -7316,6 +7319,46 @@ async function runAiAssist(btnEl, prompt, applyFn) {
   }
 }
 
+function aiAssistAllSentenceWords(btnEl) {
+  const words = sentenceEditorWords.filter(w => w.kr.trim());
+  if (!words.length) { alert("請先新增至少一個單字（可以先按「🔍字典拆解」或「✨AI拆解」）"); return; }
+  const list = words.map((w, i) => `${i + 1}. ${w.kr}`).join("\n");
+  const text = `請幫我產生適合韓文學習網站的 AI 解析，請針對下面每一個單字分別分析。
+
+單字清單：
+${list}
+
+請對每一個單字都遵守以下規則：
+1. 自動判斷單字類型（構詞、漢字詞、派生詞、活用形或一般單字）。
+2. 如果可以拆解，請拆解並簡單說明。
+3. 如果無法拆解，請簡單說明其來源或用法。
+4. 中文解釋簡短好懂，適合初中級韓文學習者。
+5. 不要舉例句。
+6. 不要使用 Markdown。
+7. 每個單字的說明控制在 8 行內。
+8. 每個單字最後一定要有「因此：」。
+
+請按照單字清單的順序回覆，每個單字的解析之間用單獨一行「###」分隔，不要加其他標題或說明文字。範例格式（只是格式範例）：
+
+인간
+= ...
+因此：
+...
+###
+너무나
+= ...
+因此：
+...`;
+  runAiAssist(btnEl, text, (val) => {
+    const chunks = val.split(/\n?###\n?/).map(c => c.trim()).filter(Boolean);
+    if (chunks.length !== words.length) {
+      alert(`AI 回覆的段落數（${chunks.length}）跟單字數量（${words.length}）對不上，請檢查貼上的內容，或改成一個一個單字用「✨AI解析」分開處理。`);
+      return;
+    }
+    words.forEach((w, i) => { w.note = chunks[i]; });
+    renderSentenceEditorWordRows();
+  });
+}
 function aiAssistSentenceWordNote(i, btnEl) {
   const w = sentenceEditorWords[i];
   if (!w || !w.kr.trim()) { alert("請先輸入韓文"); return; }
@@ -8132,7 +8175,7 @@ if ("serviceWorker" in navigator) {
     };
     const aiApp = initializeApp(firebaseConfig, "geminiApp");
     const ai = getAI(aiApp, { backend: new GoogleAIBackend() });
-    const model = getGenerativeModel(ai, { model: "gemini-3.5-flash" });
+    const model = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
 
     window.callGeminiAI = async function (prompt) {
       const result = await model.generateContent(prompt);
