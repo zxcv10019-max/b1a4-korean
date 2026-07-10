@@ -2444,6 +2444,15 @@ textarea {
 }
 .sen-grammar-edit-examples { margin-top:4px; }
 
+.sen-tags-row { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.sen-tag-chip { background:#e8f2ff; color:#3a6ea5; font-weight:900; font-size:11px; padding:4px 10px; border-radius:999px; }
+.sen-teacher-note {
+  background:#fff8e0; border:1px solid #f0dfa0; border-radius:14px;
+  padding:12px 14px; font-size:13px; color:#6f5310; font-weight:700; line-height:1.6;
+}
+.sen-word-note { font-size:11px; color:#9b7a3f; background:#fdf6e3; border-radius:8px; padding:4px 8px; margin-top:6px; }
+.sen-word-top .gram-fav-btn { font-size:12px; white-space:nowrap; }
+
 
 /* ===== 首頁：今日目標（狐狸陪伴） ===== */
 .fox-goal-line {
@@ -2749,23 +2758,22 @@ textarea {
               <textarea id="senEditKr" rows="2" placeholder="例如：인간, 너무나 인간적인 존재" style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;"></textarea>
               <label style="font-weight:900;color:#4e8f24;">🇹🇼 整句翻譯</label>
               <textarea id="senEditZh" rows="2" placeholder="這句話的中文意思..." style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;"></textarea>
-              <button type="button" class="ghost" style="width:100%;" onclick="autoExtractSentenceWordsIntoEditor()">🔍 自動拆解單字（可再手動調整）</button>
-              <button type="button" class="ghost" style="width:100%;" onclick="createGrammarFromSentence()">🌸 這句話有特殊文法？另外建立文法卡</button>
-              <div class="hero-help">內建常用字典比對，抓不到翻譯或詞性的欄位會留白，記得手動補上。</div>
+              <button type="button" class="ghost" style="width:100%;" onclick="autoExtractSentenceWordsIntoEditor()">🔍 自動拆解（可再手動調整）</button>
+              <div class="hero-help">內建常用字典比對，抓不到翻譯的欄位會留白，記得手動補上。</div>
 
               <div>
-                <label style="font-weight:900;color:#4e8f24;display:block;margin-bottom:8px;">🧩 單字解析</label>
+                <label style="font-weight:900;color:#4e8f24;display:block;margin-bottom:8px;">🧩 句子解析</label>
                 <div id="senEditWordsWrap"></div>
-                <button type="button" class="ghost" style="width:100%;" onclick="addSentenceEditorWordRow()">➕ 新增單字</button>
+                <button type="button" class="ghost" style="width:100%;" onclick="addSentenceEditorWordRow()">➕ 新增解析</button>
               </div>
 
-              <div>
-                <label style="font-weight:900;color:#4e8f24;display:block;margin-bottom:8px;">📚 文法解析</label>
-                <div id="senEditGrammarWrap"></div>
-                <button type="button" class="ghost" style="width:100%;" onclick="addSentenceEditorGrammarRow()">➕ 新增文法解析</button>
-              </div>
+              <label style="font-weight:900;color:#4e8f24;">📝 老師筆記（選填）</label>
+              <textarea id="senEditTeacherNote" rows="3" placeholder="例如：老師說 인간적인 不是「像人」，而是「人性的」；容易跟 인간답다 搞混；這個考過" style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;"></textarea>
 
-              <button class="primary cute-btn" type="button" onclick="saveSentenceEntry()">📝 儲存短句</button>
+              <label style="font-weight:900;color:#4e8f24;">🏷 標籤（選填，用逗號分隔）</label>
+              <input id="senEditTags" type="text" placeholder="例如：第1課, 閱讀, 哲學, 世宗, TOPIK" class="cute-input">
+
+              <button class="primary cute-btn" type="button" onclick="saveSentenceEntry()">💾 儲存短句</button>
             </div>
           </div>
         </div>
@@ -6773,9 +6781,23 @@ function loadSentenceEntries() {
   catch (e) { sentenceEntries = []; }
   if (!Array.isArray(sentenceEntries)) sentenceEntries = [];
   sentenceEntries.forEach(s => {
-    if (!Array.isArray(s.words)) s.words = [];
-    if (!Array.isArray(s.grammar)) s.grammar = [];
-    s.words.forEach(w => { if (typeof w.important !== "boolean") w.important = false; });
+    // 舊資料轉換：words/grammar 合併成 items
+    if (!Array.isArray(s.items)) {
+      const items = [];
+      (s.words || []).forEach(w => items.push({ id: uid(), kr: w.kr, zh: w.zh, root: w.root || "", note: "", rating: w.important ? 5 : 0 }));
+      (s.grammar || []).forEach(g => items.push({ id: uid(), kr: g.formula || "", zh: g.explanation || "", root: "", note: (g.examples || []).map(ex => `${ex.kr} — ${ex.zh}`).join("；"), rating: 0 }));
+      s.items = items;
+      delete s.words;
+      delete s.grammar;
+    }
+    s.items.forEach(it => {
+      if (typeof it.rating !== "number") it.rating = 0;
+      if (typeof it.root !== "string") it.root = "";
+      if (typeof it.note !== "string") it.note = "";
+      if (!it.id) it.id = uid();
+    });
+    if (typeof s.teacherNote !== "string") s.teacherNote = "";
+    if (!Array.isArray(s.tags)) s.tags = [];
   });
 }
 function saveSentenceEntries() {
@@ -6795,6 +6817,11 @@ function speakKoreanSlow(text) {
   speechSynthesis.speak(u);
 }
 
+function starHtml(rating) {
+  const r = Math.max(0, Math.min(5, rating || 0));
+  return "★".repeat(r) + "☆".repeat(5 - r);
+}
+
 /* ---- 列表 ---- */
 function renderSentenceList() {
   const wrap = document.getElementById("sentenceListWrap");
@@ -6805,7 +6832,10 @@ function renderSentenceList() {
   }
   const q = (document.getElementById("sentenceSearchInput")?.value || "").trim().toLowerCase();
   const filtered = q
-    ? sentenceEntries.filter(s => (s.kr||"").toLowerCase().includes(q) || (s.zh||"").toLowerCase().includes(q))
+    ? sentenceEntries.filter(s =>
+        (s.kr||"").toLowerCase().includes(q) ||
+        (s.zh||"").toLowerCase().includes(q) ||
+        (s.tags||[]).some(t => t.toLowerCase().includes(q)))
     : sentenceEntries;
   if (q && !filtered.length) {
     wrap.innerHTML = `<div class="empty-fox"><span class="ef-icon">🍂</span>找不到符合「${esc(q)}」的短句</div>`;
@@ -6817,12 +6847,12 @@ function renderSentenceList() {
 function makeSentenceCardHtml(s) {
   const ex = sentenceExpanded[s.id] || {};
   const teacherOn = !!teacherMode[s.id];
-  const wordsHtml = s.words.length ? s.words.map((w, wi) => sentenceWordRowHtml(s.id, w, wi, teacherOn)).join("") : `<div class="empty" style="padding:8px 0;">尚無單字解析</div>`;
-  const grammarHtml = s.grammar.length ? s.grammar.map((g, gi) => sentenceGrammarRowHtml(g)).join("") : `<div class="empty" style="padding:8px 0;">尚無文法解析</div>`;
-  const importantWords = s.words.filter(w => w.important);
-  const importantHtml = importantWords.length
-    ? `<div class="sen-important-row">${importantWords.map(w => `<span class="sen-important-chip">⭐ ${esc(w.kr)}${w.zh ? " — " + esc(w.zh) : ""}</span>`).join("")}</div>`
-    : `<div class="empty" style="padding:8px 0;">尚未標記必背單字（在單字解析裡點☆）</div>`;
+  const itemsHtml = s.items.length ? s.items.map((it, wi) => sentenceItemRowHtml(s.id, it, wi, teacherOn)).join("") : `<div class="empty" style="padding:8px 0;">尚無句子解析</div>`;
+  const mustLearn = s.items.filter(it => (it.rating || 0) >= 4);
+  const mustLearnHtml = mustLearn.length
+    ? `<div class="sen-important-row">${mustLearn.map(it => `<span class="sen-important-chip">${starHtml(it.rating)} ${esc(it.kr)}${it.zh ? " — " + esc(it.zh) : ""}</span>`).join("")}</div>`
+    : `<div class="empty" style="padding:8px 0;">尚未標記必背單字（在句子解析裡評分 4★ 以上）</div>`;
+  const tagsHtml = (s.tags && s.tags.length) ? `<div class="sen-tags-row">${s.tags.map(t => `<span class="sen-tag-chip">🏷 ${esc(t)}</span>`).join("")}</div>` : "";
 
   return `
     <div class="card sentence-card">
@@ -6834,62 +6864,50 @@ function makeSentenceCardHtml(s) {
         </div>
       </div>
       <div class="sen-zh">🇹🇼 ${esc(s.zh || "（尚未填寫翻譯）")}</div>
+      ${tagsHtml}
       <div class="btns" style="margin-top:10px;">
         <button class="ghost" onclick="speakKorean('${jsAttr(s.kr)}')">🔊 播放整句</button>
         <button class="ghost" onclick="speakKoreanSlow('${jsAttr(s.kr)}')">🐢 慢速播放</button>
       </div>
 
-      <div class="sen-section-toggle" onclick="toggleSentenceSection('${s.id}','words')">🧩 單字解析（${s.words.length}）<span>${ex.words ? "▴" : "▾"}</span></div>
+      <div class="sen-section-toggle" onclick="toggleSentenceSection('${s.id}','words')">🧩 句子解析（${s.items.length}）<span>${ex.words ? "▴" : "▾"}</span></div>
       <div class="sen-section-body ${ex.words ? "" : "sen-collapsed"}">
         <div class="btns" style="justify-content:flex-end;margin-bottom:8px;">
           <button class="ghost" style="font-size:11px;" onclick="toggleTeacherMode('${s.id}')">${teacherOn ? "👀 顯示所有答案" : "🎓 老師模式"}</button>
         </div>
-        <div class="sen-word-grid">${wordsHtml}</div>
+        <div class="sen-word-grid">${itemsHtml}</div>
       </div>
 
-      <div class="sen-section-toggle" onclick="toggleSentenceSection('${s.id}','grammar')">📚 文法解析（${s.grammar.length}）<span>${ex.grammar ? "▴" : "▾"}</span></div>
-      <div class="sen-section-body ${ex.grammar ? "" : "sen-collapsed"}">${grammarHtml}</div>
+      ${s.teacherNote ? `
+      <div class="sen-section-toggle" onclick="toggleSentenceSection('${s.id}','teacherNote')">📝 老師筆記<span>${ex.teacherNote ? "▴" : "▾"}</span></div>
+      <div class="sen-section-body ${ex.teacherNote ? "" : "sen-collapsed"}"><div class="sen-teacher-note">${esc(s.teacherNote).replace(/\n/g,"<br>")}</div></div>` : ""}
 
-      <div class="sen-section-toggle" onclick="toggleSentenceSection('${s.id}','important')">⭐ 必背單字（${importantWords.length}）<span>${ex.important ? "▴" : "▾"}</span></div>
-      <div class="sen-section-body ${ex.important ? "" : "sen-collapsed"}">${importantHtml}</div>
+      <div class="sen-section-toggle" onclick="toggleSentenceSection('${s.id}','important')">⭐ 必背單字（${mustLearn.length}）<span>${ex.important ? "▴" : "▾"}</span></div>
+      <div class="sen-section-body ${ex.important ? "" : "sen-collapsed"}">${mustLearnHtml}</div>
     </div>`;
 }
 
-function sentenceWordRowHtml(sentenceId, w, idx, teacherOn) {
+function sentenceItemRowHtml(sentenceId, it, idx, teacherOn) {
   const key = sentenceId + "_" + idx;
   const revealed = teacherRevealed[key];
   if (teacherOn && !revealed) {
     return `<div class="sen-word-card sen-word-hidden-card" onclick="revealTeacherWord('${sentenceId}',${idx})">
-      <div class="sen-word-kr">${esc(w.kr)}</div>
+      <div class="sen-word-kr">${esc(it.kr)}</div>
       <div class="sen-word-hidden">❓ 點我看答案</div>
     </div>`;
   }
   return `<div class="sen-word-card">
       <div class="sen-word-top">
-        <span class="sen-word-kr">${esc(w.kr)}</span>
-        <button class="gram-fav-btn" onclick="event.stopPropagation();toggleWordImportant('${sentenceId}',${idx})">${w.important ? "⭐" : "☆"}</button>
+        <span class="sen-word-kr">${esc(it.kr)}</span>
+        <button class="gram-fav-btn" onclick="event.stopPropagation();cycleItemRating('${sentenceId}',${idx})" title="點擊調整星等">${starHtml(it.rating)}</button>
       </div>
-      ${w.pos ? `<div class="sen-word-pos">${esc(w.pos)}</div>` : ""}
-      <div class="sen-word-zh">▶ ${esc(w.zh || "（尚未填寫）")}</div>
-      ${w.root && w.root !== w.kr ? `<div class="sen-word-root">原形：${esc(w.root)}</div>` : ""}
+      <div class="sen-word-zh">▶ ${esc(it.zh || "（尚未填寫）")}</div>
+      ${it.root ? `<div class="sen-word-root">原形：${esc(it.root)}</div>` : ""}
+      ${it.note ? `<div class="sen-word-note">💡 ${esc(it.note)}</div>` : ""}
       <div class="btns" style="margin-top:8px;">
-        <button class="speak-btn" onclick="speakKorean('${jsAttr(w.kr)}')">🔊</button>
-        <button class="ghost" style="font-size:11px;" onclick="addWordToFolderQuick('${sentenceId}',${idx})">➕ 加入單字卡</button>
+        <button class="speak-btn" onclick="speakKorean('${jsAttr(it.kr)}')">🔊</button>
+        <button class="ghost" style="font-size:11px;" onclick="addWordToFolderQuick('${sentenceId}',${idx})">☑ 加入單字卡</button>
       </div>
-    </div>`;
-}
-
-function sentenceGrammarRowHtml(g) {
-  const formulaHtml = (g.formula || "").split("+").map(p => `<span class="sen-formula-part">${esc(p.trim())}</span>`).join(`<span class="sen-formula-plus">+</span>`);
-  const examplesHtml = (g.examples || []).map(ex => `
-    <div class="gram-example">
-      <div class="gram-example-kr">${esc(ex.kr)} <button type="button" class="speak-btn" onclick="speakKorean('${jsAttr(ex.kr)}')">🔊</button></div>
-      <div class="gram-example-zh">${esc(ex.zh)}</div>
-    </div>`).join("");
-  return `<div class="sen-grammar-card">
-      ${g.formula ? `<div class="sen-grammar-formula">${formulaHtml}</div>` : ""}
-      ${g.explanation ? `<div class="sen-grammar-explain">${esc(g.explanation)}</div>` : ""}
-      ${examplesHtml}
     </div>`;
 }
 
@@ -6909,21 +6927,21 @@ function revealTeacherWord(id, idx) {
   teacherRevealed[id + "_" + idx] = true;
   renderSentenceList();
 }
-function toggleWordImportant(sentenceId, idx) {
+function cycleItemRating(sentenceId, idx) {
   const s = sentenceEntries.find(x => x.id === sentenceId);
-  if (!s || !s.words[idx]) return;
-  s.words[idx].important = !s.words[idx].important;
+  if (!s || !s.items[idx]) return;
+  s.items[idx].rating = ((s.items[idx].rating || 0) + 1) % 6;
   saveSentenceEntries();
   renderSentenceList();
 }
 function addWordToFolderQuick(sentenceId, idx) {
   const s = sentenceEntries.find(x => x.id === sentenceId);
-  const w = s && s.words[idx];
-  if (!w || !w.kr.trim()) return;
+  const it = s && s.items[idx];
+  if (!it || !it.kr.trim()) return;
   if (!folders.length) {
     const name = prompt("目前沒有題庫，輸入新題庫名稱：", "短句單字");
     if (!name) return;
-    folders.push({ name, direction: "termToDefinition", color: "#c6e09c", content: `${w.kr}\t${w.zh || ""}`, updated: today(), practice: 0 });
+    folders.push({ name, direction: "termToDefinition", color: "#c6e09c", content: `${it.kr}\t${it.zh || ""}`, updated: today(), practice: 0 });
     current = folders.length - 1;
   } else {
     const list = folders.map((f, i) => `${i + 1}. ${f.name}`).join("\n");
@@ -6933,20 +6951,20 @@ function addWordToFolderQuick(sentenceId, idx) {
     if (num === 0 || isNaN(num)) {
       const name = prompt("新題庫名稱：", "短句單字");
       if (!name) return;
-      folders.push({ name, direction: "termToDefinition", color: "#c6e09c", content: `${w.kr}\t${w.zh || ""}`, updated: today(), practice: 0 });
+      folders.push({ name, direction: "termToDefinition", color: "#c6e09c", content: `${it.kr}\t${it.zh || ""}`, updated: today(), practice: 0 });
       current = folders.length - 1;
     } else {
       const idx2 = num - 1;
       const f = folders[idx2];
       if (!f) { alert("編號錯誤"); return; }
-      f.content = (f.content ? f.content + "\n" : "") + `${w.kr}\t${w.zh || ""}`;
+      f.content = (f.content ? f.content + "\n" : "") + `${it.kr}\t${it.zh || ""}`;
       f.updated = today();
       current = idx2;
     }
   }
   saveStorage();
   renderFolders();
-  alert(`已把「${w.kr}」加入題庫！`);
+  alert(`已把「${it.kr}」加入題庫！`);
 }
 function deleteSentenceEntry(id) {
   if (!confirm("確定要刪除這句短句解析嗎？此動作無法復原。")) return;
@@ -6965,17 +6983,18 @@ function openSentenceEditor(id) {
     title.textContent = "✏️ 編輯短句";
     document.getElementById("senEditKr").value = s.kr || "";
     document.getElementById("senEditZh").value = s.zh || "";
-    sentenceEditorWords = (s.words || []).map(w => ({ ...w }));
-    sentenceEditorGrammar = (s.grammar || []).map(g => ({ ...g, examples: (g.examples || []).map(ex => ({ ...ex })) }));
+    document.getElementById("senEditTeacherNote").value = s.teacherNote || "";
+    document.getElementById("senEditTags").value = (s.tags || []).join(", ");
+    sentenceEditorWords = (s.items || []).map(it => ({ ...it }));
   } else {
     title.textContent = "📝 新增短句";
     document.getElementById("senEditKr").value = "";
     document.getElementById("senEditZh").value = "";
+    document.getElementById("senEditTeacherNote").value = "";
+    document.getElementById("senEditTags").value = "";
     sentenceEditorWords = [];
-    sentenceEditorGrammar = [];
   }
   renderSentenceEditorWordRows();
-  renderSentenceEditorGrammarRows();
   document.getElementById("sentenceEditorMask").classList.add("show");
 }
 function closeSentenceEditor() {
@@ -6986,7 +7005,7 @@ function autoExtractSentenceWordsIntoEditor() {
   const raw = document.getElementById("senEditKr").value;
   if (!raw.trim()) { alert("請先輸入韓文句子"); return; }
   const extracted = extractSentenceWords(raw);
-  sentenceEditorWords = extracted.map(w => ({ kr: w.term, pos: "", zh: w.definition, root: "", important: false }));
+  sentenceEditorWords = extracted.map(w => ({ id: uid(), kr: w.term, zh: w.definition, root: "", note: "", rating: 0 }));
   renderSentenceEditorWordRows();
 }
 
@@ -6994,21 +7013,23 @@ function renderSentenceEditorWordRows() {
   const wrap = document.getElementById("senEditWordsWrap");
   if (!wrap) return;
   if (!sentenceEditorWords.length) {
-    wrap.innerHTML = `<div class="empty" style="padding:8px 0;">尚無單字，按下面「➕ 新增單字」或先自動拆解</div>`;
+    wrap.innerHTML = `<div class="empty" style="padding:8px 0;">尚無解析，按下面「➕ 新增解析」或先自動拆解</div>`;
     return;
   }
   wrap.innerHTML = sentenceEditorWords.map((w, i) => `
     <div class="sen-word-edit-row">
       <input type="text" placeholder="韓文" value="${escapeAttr(w.kr)}" oninput="sentenceEditorWords[${i}].kr=this.value">
-      <input type="text" placeholder="詞性(選填)" value="${escapeAttr(w.pos||"")}" oninput="sentenceEditorWords[${i}].pos=this.value">
-      <input type="text" placeholder="中文意思" value="${escapeAttr(w.zh||"")}" oninput="sentenceEditorWords[${i}].zh=this.value">
+      <input type="text" placeholder="中文" value="${escapeAttr(w.zh||"")}" oninput="sentenceEditorWords[${i}].zh=this.value">
       <input type="text" placeholder="原形(選填)" value="${escapeAttr(w.root||"")}" oninput="sentenceEditorWords[${i}].root=this.value">
-      <label class="sen-important-check"><input type="checkbox" ${w.important?"checked":""} onchange="sentenceEditorWords[${i}].important=this.checked">⭐必背</label>
+      <input type="text" placeholder="備註(選填，例如 인간+적+인)" value="${escapeAttr(w.note||"")}" oninput="sentenceEditorWords[${i}].note=this.value">
+      <select onchange="sentenceEditorWords[${i}].rating=Number(this.value)" style="border:2px solid var(--line);border-radius:10px;padding:8px;font-size:12px;">
+        ${[0,1,2,3,4,5].map(n => `<option value="${n}" ${w.rating===n?"selected":""}>${n===0?"未評分":"★".repeat(n)}</option>`).join("")}
+      </select>
       <button type="button" class="wc-del" onclick="removeSentenceEditorWordRow(${i})">❌</button>
     </div>`).join("");
 }
 function addSentenceEditorWordRow() {
-  sentenceEditorWords.push({ kr: "", pos: "", zh: "", root: "", important: false });
+  sentenceEditorWords.push({ id: uid(), kr: "", zh: "", root: "", note: "", rating: 0 });
   renderSentenceEditorWordRows();
 }
 function removeSentenceEditorWordRow(i) {
@@ -7016,60 +7037,19 @@ function removeSentenceEditorWordRow(i) {
   renderSentenceEditorWordRows();
 }
 
-function renderSentenceEditorGrammarRows() {
-  const wrap = document.getElementById("senEditGrammarWrap");
-  if (!wrap) return;
-  if (!sentenceEditorGrammar.length) {
-    wrap.innerHTML = `<div class="empty" style="padding:8px 0;">尚無文法解析，按下面「➕ 新增文法解析」</div>`;
-    return;
-  }
-  wrap.innerHTML = sentenceEditorGrammar.map((g, gi) => `
-    <div class="sen-grammar-edit-row">
-      <input type="text" placeholder="拆解公式，例如：인간 + 적 + 인" value="${escapeAttr(g.formula||"")}" oninput="sentenceEditorGrammar[${gi}].formula=this.value">
-      <textarea rows="2" placeholder="說明，例如：적＝性的、인＝修飾名詞" oninput="sentenceEditorGrammar[${gi}].explanation=this.value">${esc(g.explanation||"")}</textarea>
-      <div class="sen-grammar-edit-examples">
-        ${(g.examples||[]).map((ex,ei) => `
-          <div class="gram-example-row">
-            <input type="text" placeholder="例句韓文" value="${escapeAttr(ex.kr||"")}" oninput="sentenceEditorGrammar[${gi}].examples[${ei}].kr=this.value">
-            <input type="text" placeholder="例句翻譯" value="${escapeAttr(ex.zh||"")}" oninput="sentenceEditorGrammar[${gi}].examples[${ei}].zh=this.value">
-            <button type="button" class="wc-del" onclick="removeGrammarRowExample(${gi},${ei})">❌</button>
-          </div>`).join("")}
-        <button type="button" class="ghost" style="width:100%;" onclick="addGrammarRowExample(${gi})">➕ 新增例句</button>
-      </div>
-      <button type="button" class="ghost" style="width:100%;margin-top:6px;" onclick="removeSentenceEditorGrammarRow(${gi})">🗑 刪除這條文法解析</button>
-    </div>`).join("");
-}
-function addSentenceEditorGrammarRow() {
-  sentenceEditorGrammar.push({ formula: "", explanation: "", examples: [] });
-  renderSentenceEditorGrammarRows();
-}
-function removeSentenceEditorGrammarRow(gi) {
-  sentenceEditorGrammar.splice(gi, 1);
-  renderSentenceEditorGrammarRows();
-}
-function addGrammarRowExample(gi) {
-  sentenceEditorGrammar[gi].examples.push({ kr: "", zh: "" });
-  renderSentenceEditorGrammarRows();
-}
-function removeGrammarRowExample(gi, ei) {
-  sentenceEditorGrammar[gi].examples.splice(ei, 1);
-  renderSentenceEditorGrammarRows();
-}
-
 function saveSentenceEntry() {
   const kr = document.getElementById("senEditKr").value.trim();
   if (!kr) { alert("請先輸入韓文句子"); return; }
   const zh = document.getElementById("senEditZh").value.trim();
-  const words = sentenceEditorWords.filter(w => w.kr.trim());
-  const grammar = sentenceEditorGrammar
-    .filter(g => g.formula.trim() || g.explanation.trim())
-    .map(g => ({ ...g, examples: (g.examples || []).filter(ex => ex.kr.trim() || ex.zh.trim()) }));
+  const teacherNote = document.getElementById("senEditTeacherNote").value.trim();
+  const tags = document.getElementById("senEditTags").value.split(",").map(t => t.trim()).filter(Boolean);
+  const items = sentenceEditorWords.filter(w => w.kr.trim());
 
   if (sentenceEditingId) {
     const s = sentenceEntries.find(x => x.id === sentenceEditingId);
-    if (s) Object.assign(s, { kr, zh, words, grammar });
+    if (s) Object.assign(s, { kr, zh, items, teacherNote, tags });
   } else {
-    sentenceEntries.push({ id: uid(), kr, zh, words, grammar });
+    sentenceEntries.push({ id: uid(), kr, zh, items, teacherNote, tags });
   }
   saveSentenceEntries();
   closeSentenceEditor();
