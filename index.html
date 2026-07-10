@@ -2404,10 +2404,11 @@ textarea {
 .sen-section-body { margin-top:10px; }
 .sen-section-body.sen-collapsed { display:none; }
 
-.sen-word-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(160px,1fr)); gap:10px; }
+.sen-word-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(190px,1fr)); gap:10px; }
 .sen-word-card {
   background:#fff; border:2px solid #ffd7e8; border-radius:16px;
   padding:12px; box-shadow:0 6px 14px rgba(72,108,39,.06);
+  min-width:0; max-width:100%; overflow:hidden; box-sizing:border-box;
 }
 .sen-word-hidden-card { cursor:pointer; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:80px; }
 .sen-word-hidden { color:var(--muted); font-weight:800; font-size:12px; margin-top:6px; }
@@ -6923,7 +6924,7 @@ function sentenceItemRowHtml(sentenceId, it, idx, teacherOn) {
       <div class="sen-word-zh">▶ ${esc(it.zh || "（尚未填寫）")}</div>
       ${it.root ? `<div class="sen-word-root">原形：${esc(it.root)}</div>` : ""}
       ${it.note ? `<div class="sen-word-note">💡 ${esc(it.note)}</div>` : ""}
-      <div class="btns" style="justify-content:space-between;margin-top:8px;flex-wrap:nowrap;">
+      <div class="btns" style="justify-content:flex-start;margin-top:8px;flex-wrap:wrap;">
         <button class="speak-btn" onclick="speakKorean('${jsAttr(it.kr)}')">🔊</button>
         <label class="sen-vocab-check-inline">
           <input type="checkbox" ${it.addToVocab !== false ? "checked" : ""} onchange="toggleItemVocab('${sentenceId}',${idx})">加入單字卡
