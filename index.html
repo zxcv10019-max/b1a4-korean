@@ -1625,6 +1625,13 @@ textarea {
 .lyrics-line-kr { font-size:19px; font-weight:900; margin-bottom:4px; }
 .lyrics-line-zh { color:var(--muted); font-size:15px; }
 .lyrics-line-card.active { border-color:#83b842; background:#f4faed; }
+
+.lyrics-line-locked { opacity:.5; text-align:center; cursor:default; }
+.lyrics-study-card { cursor:default; }
+.lyrics-study-card.understood { border-color:#9bc95d; background:#f7fdf1; }
+.lyrics-study-chip-wrap { display:flex; flex-direction:column; }
+.sen-section-label { font-size:12px; font-weight:1000; color:#4e8f24; margin-bottom:6px; }
+
 .lyrics-detail {
   margin-top:10px;
   padding-top:10px;
@@ -3085,6 +3092,7 @@ textarea {
             <button class="ghost" onclick="closeLyricsReader()">‹ 返回歌單</button>
             <div class="btns">
               <button class="ghost" id="songFavBtn" onclick="toggleSongFav(currentSongId)">🤍 收藏歌曲</button>
+              <button class="primary cute-btn" id="lyricsModeBtn" onclick="toggleLyricsMode()">📖 學習模式</button>
               <button class="ghost" onclick="autoDetectSong()">🪄 自動偵測全部單字文法</button>
               <button class="ghost" onclick="aiAnalyzeAllLyrics(this)">✨ AI解析全部句子</button>
               <button class="ghost" onclick="addLyricsLine()">＋ 新增一句</button>
@@ -3093,7 +3101,8 @@ textarea {
           </div>
           <div class="lyrics-mock card" style="padding:24px;">
             <div id="lyricsReaderTitle" style="text-align:center;font-weight:1000;font-size:20px;margin-bottom:4px;"></div>
-            <div id="lyricsReaderArtist" style="text-align:center;color:var(--muted);font-weight:800;margin-bottom:20px;"></div>
+            <div id="lyricsReaderArtist" style="text-align:center;color:var(--muted);font-weight:800;margin-bottom:8px;"></div>
+            <div id="lyricsStudyProgress" style="display:none;text-align:center;margin-bottom:16px;"></div>
             <div id="lyricsLinesWrap"></div>
           </div>
         </div>
@@ -6604,6 +6613,7 @@ function removeFavSong(i) { favorites.songs.splice(i, 1); saveFavorites(); rende
 function computeSongStats(song) {
   const totalLines = song.lines.length;
   const filledLines = song.lines.filter(l => l.zh && l.zh.trim()).length;
+  const understoodLines = song.lines.filter(l => l.understood).length;
   const wordSet = new Set();
   const grammarSet = new Set();
   song.lines.forEach(l => {
@@ -6611,7 +6621,8 @@ function computeSongStats(song) {
     (l.grammar || []).forEach(g => g.p && grammarSet.add(g.p));
   });
   const completion = totalLines ? Math.round((filledLines / totalLines) * 100) : 0;
-  return { totalLines, filledLines, totalWords: wordSet.size, totalGrammar: grammarSet.size, completion };
+  const understoodPercent = totalLines ? Math.round((understoodLines / totalLines) * 100) : 0;
+  return { totalLines, filledLines, totalWords: wordSet.size, totalGrammar: grammarSet.size, completion, understoodLines, understoodPercent };
 }
 
 function renderFavoritesSummary() {
@@ -6694,6 +6705,13 @@ function loadLyricsSongs() {
     lyricsSongs = defaultLyricsSongs();
   }
   if (!Array.isArray(lyricsSongs)) lyricsSongs = defaultLyricsSongs();
+  lyricsSongs.forEach(s => {
+    (s.lines || []).forEach(l => {
+      if (typeof l.understood !== "boolean") l.understood = false;
+      if (typeof l.sentenceAnalysis !== "string") l.sentenceAnalysis = "";
+      if (typeof l.wordNotes !== "object" || !l.wordNotes) l.wordNotes = {};
+    });
+  });
 }
 
 function saveLyricsSongs() {
@@ -6717,7 +6735,8 @@ function renderLyricsSongGrid() {
         <div class="folder-meta">
           ${esc(s.artist || "未命名歌手")}<br>
           已學會 ${stats.totalWords} 個單字・${stats.totalGrammar} 個文法<br>
-          完成度 ${stats.completion}%
+          📖 學習進度 ${stats.understoodPercent}%（${stats.understoodLines}/${stats.totalLines} 句）
+          ${stats.understoodPercent >= 100 ? `<br><span style="color:#e0a500;">★★★★★ 已學完</span>` : ""}
         </div>
       </div>
     </div>`;
@@ -6811,6 +6830,17 @@ function textToPairs(str, keyA, keyB) {
   }).filter(o => o[keyA]);
 }
 
+let lyricsViewMode = "edit";
+let lyricsRevealState = {};
+let lyricsWordChipExpand = {};
+
+function toggleLyricsMode() {
+  lyricsViewMode = lyricsViewMode === "edit" ? "study" : "edit";
+  const btn = document.getElementById("lyricsModeBtn");
+  if (btn) btn.textContent = lyricsViewMode === "edit" ? "📖 學習模式" : "✏️ 編輯模式";
+  renderLyricsReader();
+}
+
 function renderLyricsReader() {
   const song = getCurrentSong();
   if (!song) { closeLyricsReader(); return; }
@@ -6818,6 +6848,24 @@ function renderLyricsReader() {
   document.getElementById("lyricsReaderArtist").textContent = song.artist || "";
   const favBtn = document.getElementById("songFavBtn");
   if (favBtn) favBtn.textContent = isSongFav(song.id) ? "❤️ 已收藏" : "🤍 收藏歌曲";
+
+  const progressWrap = document.getElementById("lyricsStudyProgress");
+  if (progressWrap) {
+    if (lyricsViewMode === "study") {
+      const stats = computeSongStats(song);
+      progressWrap.style.display = "block";
+      progressWrap.innerHTML = `<div class="quest-meter" style="max-width:320px;margin:0 auto;"><span style="width:${stats.understoodPercent}%;"></span></div>
+        <div style="font-weight:900;color:#4e8f24;margin-top:6px;">📖 已理解 ${stats.understoodLines} / ${stats.totalLines} 句（${stats.understoodPercent}%）${stats.understoodPercent >= 100 ? " ★★★★★" : ""}</div>`;
+    } else {
+      progressWrap.style.display = "none";
+    }
+  }
+
+  if (lyricsViewMode === "study") renderLyricsStudyView(song);
+  else renderLyricsEditView(song);
+}
+
+function renderLyricsEditView(song) {
   const wrap = document.getElementById("lyricsLinesWrap");
   wrap.innerHTML = song.lines.map((ln, i) => {
     const wordTags = (ln.words || []).map(w => `<span class="lyrics-detail-tag-static">${esc(w.k)}（${esc(w.z || "")}）</span>`).join(" ");
@@ -6854,6 +6902,147 @@ function renderLyricsReader() {
       </div>
     </div>`;
   }).join("");
+}
+
+function renderLyricsStudyView(song) {
+  const wrap = document.getElementById("lyricsLinesWrap");
+  // 找到第一句還沒理解的位置，之後的句子鎖住（闖關模式）
+  let firstUnlockedPos = song.lines.findIndex(l => !l.understood);
+  if (firstUnlockedPos === -1) firstUnlockedPos = song.lines.length; // 全部完成
+
+  wrap.innerHTML = song.lines.map((ln, i) => {
+    const locked = i > firstUnlockedPos;
+    if (locked) {
+      return `<div class="lyrics-line-card lyrics-line-locked">
+        <div style="font-weight:900;color:var(--muted);">第 ${i + 1} 句　🔒</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:4px;">完成上一句才能解鎖</div>
+      </div>`;
+    }
+    const revealed = !!lyricsRevealState[ln.id];
+    const sentFav = isSentenceFav(song.id, ln.id);
+    const wordChips = (ln.words || []).map(w => {
+      const chipKey = ln.id + "_" + w.k;
+      const chipExpanded = !!lyricsWordChipExpand[chipKey];
+      const note = ln.wordNotes && ln.wordNotes[w.k];
+      return `<div class="lyrics-study-chip-wrap">
+        <span class="lyrics-detail-tag-static" style="cursor:pointer;" onclick="toggleWordChipExpand('${ln.id}','${jsAttr(w.k)}')">${esc(w.k)}（${esc(w.z || "")}）</span>
+        ${chipExpanded ? `<div class="sen-word-note" style="margin-top:6px;">${note ? esc(note).replace(/\n/g,"<br>") : `<button type="button" class="ghost" style="font-size:11px;" onclick="aiAnalyzeLyricsWordChip('${ln.id}','${jsAttr(w.k)}', this)">✨ AI解析這個字</button>`}</div>` : ""}
+      </div>`;
+    }).join("");
+
+    return `
+    <div class="lyrics-line-card lyrics-study-card ${ln.understood ? "understood" : ""}">
+      <div class="btns" style="justify-content:space-between;margin-bottom:10px;">
+        <span style="font-weight:900;color:var(--muted);">第 ${i + 1} 句</span>
+        <button class="ghost" type="button" onclick="toggleLineUnderstood('${ln.id}')">${ln.understood ? "✅ 已理解" : "☐ 已理解"}</button>
+      </div>
+      <div style="font-weight:1000;font-size:19px;color:#20351f;line-height:1.6;">${esc(ln.kr)}</div>
+      <div class="btns" style="margin-top:10px;">
+        <button class="ghost" type="button" onclick="speakLyricsLine('${ln.id}')">🔊 播放</button>
+        ${!revealed ? `<button class="primary cute-btn" type="button" onclick="toggleLineReveal('${ln.id}')">👁 查看翻譯</button>` : ""}
+      </div>
+
+      ${revealed ? `
+      <div style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);">
+        <div style="color:var(--muted);font-weight:700;">🇹🇼 ${esc(ln.zh || "（尚未填寫翻譯）")}</div>
+
+        ${wordChips ? `<div class="sen-section-label" style="margin-top:12px;">🧩 單字（點字看解析）</div><div style="display:flex;flex-wrap:wrap;gap:8px;">${wordChips}</div>` : ""}
+
+        <div class="sen-section-label" style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;">
+          <span>📚 AI解析（句子文法／語氣）</span>
+          <button type="button" class="ghost" style="font-size:11px;" onclick="aiAnalyzeLyricsSentenceNuance('${ln.id}', this)">✨ AI解析句子</button>
+        </div>
+        ${ln.sentenceAnalysis ? `<div class="sen-teacher-note">${esc(ln.sentenceAnalysis).replace(/\n/g,"<br>")}</div>` : `<div class="empty" style="padding:8px 0;">還沒有句子解析，按上面按鈕產生</div>`}
+
+        <div class="btns" style="margin-top:12px;">
+          <button class="ghost" type="button" onclick="addWordsFav('${song.id}','${ln.id}', ${JSON.stringify(ln.words || []).replace(/"/g, "&quot;")})">⭐ 加入單字</button>
+          <button class="ghost" type="button" onclick="toggleSentenceFav('${song.id}','${ln.id}', ${JSON.stringify(ln.kr).replace(/"/g, "&quot;")}, ${JSON.stringify(ln.zh || "").replace(/"/g, "&quot;")})">${sentFav ? "❤️ 已收藏句子" : "🤍 收藏句子"}</button>
+        </div>
+      </div>` : ""}
+    </div>`;
+  }).join("");
+}
+
+function toggleLineReveal(lineId) {
+  lyricsRevealState[lineId] = !lyricsRevealState[lineId];
+  renderLyricsReader();
+}
+function toggleWordChipExpand(lineId, word) {
+  const key = lineId + "_" + word;
+  lyricsWordChipExpand[key] = !lyricsWordChipExpand[key];
+  renderLyricsReader();
+}
+function toggleLineUnderstood(lineId) {
+  const song = getCurrentSong();
+  if (!song) return;
+  const line = song.lines.find(l => l.id === lineId);
+  if (!line) return;
+  line.understood = !line.understood;
+  saveLyricsSongs();
+  if (line.understood && typeof logActivity === "function") logActivity("lyrics", 2);
+  renderLyricsReader();
+  renderLyricsSongGrid();
+}
+function aiAnalyzeLyricsSentenceNuance(lineId, btnEl) {
+  const song = getCurrentSong();
+  if (!song) return;
+  const line = song.lines.find(l => l.id === lineId);
+  if (!line || !line.kr.trim()) return;
+  const text = `請分析以下這句韓文歌詞的「句子層面」重點，不要逐字解單字，並只輸出有效 JSON，不要輸出 Markdown、程式碼框、標題或其他文字。
+
+韓文歌詞：
+${line.kr}
+${line.zh ? `已有中文翻譯：${line.zh}` : ""}
+
+請輸出以下格式：
+{
+  "analysis": ""
+}
+
+analysis 請說明：
+1. 這句用的語氣/句型有什麼特殊之處（例如是邀請、疑問、口語省略、書面語等）。
+2. 如果有關鍵文法/句尾（例如 -ㄹ래?、-아/어 보다），說明意思跟語感，並跟容易搞混的類似文法比較。
+3. 簡短、口語化說明，適合初中級學習者，3～6行。
+4. 不要使用 Markdown。`;
+  runAiAssist(btnEl, text, (val) => {
+    try {
+      const data = parseAiJson(val);
+      line.sentenceAnalysis = String(data.analysis || "").trim();
+      saveLyricsSongs();
+      renderLyricsReader();
+    } catch (error) {
+      console.error("AI 句子語氣解析 JSON 錯誤：", error, val);
+      alert("AI 回覆格式無法解析，請再按一次「AI解析句子」。");
+    }
+  });
+}
+function aiAnalyzeLyricsWordChip(lineId, word, btnEl) {
+  const song = getCurrentSong();
+  if (!song) return;
+  const line = song.lines.find(l => l.id === lineId);
+  if (!line) return;
+  const text = `請分析以下韓文單字，並只輸出有效 JSON，不要輸出 Markdown、程式碼框、標題或其他文字。
+
+韓文：${word}
+
+請輸出以下格式：
+{
+  "analysis": ""
+}
+
+analysis 請包含：翻譯、原形（如果有）、簡短構成說明（如果能拆解），最後一行用「因此：」整理記憶方式。整體控制在5～8行，不要使用Markdown，不要舉例句。`;
+  runAiAssist(btnEl, text, (val) => {
+    try {
+      const data = parseAiJson(val);
+      if (!line.wordNotes) line.wordNotes = {};
+      line.wordNotes[word] = String(data.analysis || "").trim();
+      saveLyricsSongs();
+      renderLyricsReader();
+    } catch (error) {
+      console.error("AI 單字解析 JSON 錯誤：", error, val);
+      alert("AI 回覆格式無法解析，請再按一次。");
+    }
+  });
 }
 
 function updateLyricsLine(lineId, field, value) {
