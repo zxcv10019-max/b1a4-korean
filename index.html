@@ -3606,8 +3606,6 @@ setTimeout(()=>{try{renderFlashSeenBox();renderFolderStatsPanel();renderStudyUpg
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-functions-compat.js"></script>
-<script src="js/ai.js"></script>
 <script>
 let flashSeenData = JSON.parse(localStorage.getItem("b1a4FlashSeenData") || "{}");
 // ===== Firebase 雲端同步設定 =====
@@ -7770,12 +7768,9 @@ function copyAiPromptText() {
     try { document.execCommand("copy"); } catch (e) {}
   }
 }
-/* ===== OpenAI 安全串接：實際連線程式放在 js/ai.js ===== */
+/* ===== 🔮 Gemini 直接串接：由後面新增的 module 腳本覆寫成真正的呼叫方式，這裡是連線失敗時的備援 ===== */
 async function callGeminiAI(prompt) {
-  if (!window.BanaAI || typeof window.BanaAI.ask !== "function") {
-    throw new Error("BANA Forest AI 尚未就緒");
-  }
-  return window.BanaAI.ask(prompt);
+  throw new Error("Gemini 尚未就緒");
 }
 async function runAiAssist(btnEl, prompt, applyFn) {
   const originalText = btnEl ? btnEl.textContent : "";
@@ -7785,7 +7780,7 @@ async function runAiAssist(btnEl, prompt, applyFn) {
     applyFn(result);
     if (typeof showSaveToast === "function") showSaveToast();
   } catch (e) {
-    // OpenAI 尚未接上或呼叫失敗 → 退回複製貼上模式
+    // Gemini 還沒接上或呼叫失敗 → 退回複製貼上模式
     openAiPromptModal(prompt, applyFn);
   } finally {
     if (btnEl) { btnEl.disabled = false; btnEl.textContent = originalText; }
@@ -7894,78 +7889,139 @@ JSON格式：
 }
 
 function aiAssistAllSentenceWords(btnEl) {
-  const words = sentenceEditorWords.filter(w => w.kr.trim());
-  if (!words.length) { alert("請先新增至少一個單字（可以先按「🔍字典拆解」或「✨AI拆解」）"); return; }
-  const list = words.map((w, i) => `${i + 1}. ${w.kr}`).join("\n");
-  const text = `請幫我產生適合韓文學習網站的 AI 解析，請針對下面每一個單字分別分析。
+  const indexedWords = sentenceEditorWords
+    .map((w, originalIndex) => ({ w, originalIndex }))
+    .filter(item => item.w.kr.trim());
 
-單字清單：
-${list}
+  if (!indexedWords.length) {
+    alert("請先新增至少一個單字");
+    return;
+  }
 
-請對每一個單字都遵守以下規則：
-1. 自動判斷單字類型（構詞、漢字詞、派生詞、活用形或一般單字）。
-2. 如果可以拆解，請拆解並簡單說明。
-3. 如果無法拆解，請簡單說明其來源或用法。
-4. 中文解釋簡短好懂，適合初中級韓文學習者。
-5. 不要舉例句。
-6. 不要使用 Markdown。
-7. 每個單字的說明控制在 8 行內。
-8. 每個單字最後一定要有「因此：」。
+  const list = indexedWords.map((item, i) => ({
+    index: i + 1,
+    word: item.w.kr.trim(),
+    translation: String(item.w.zh || "").trim()
+  }));
 
-請按照單字清單的順序回覆，每個單字的解析之間用單獨一行「###」分隔，不要加其他標題或說明文字。範例格式（只是格式範例）：
+  const text = `請分析以下韓文單字，並只輸出有效 JSON 陣列。
+不要輸出 Markdown、程式碼框、標題或其他文字。
 
-인간
-= ...
-因此：
-...
-###
-너무나
-= ...
-因此：
-...`;
+單字資料：
+${JSON.stringify(list, null, 2)}
+
+請嚴格按照以下格式輸出：
+[
+  {
+    "index": 1,
+    "root": "",
+    "analysis": ""
+  }
+]
+
+規則：
+1. 必須依照原本 index 順序輸出，每個單字一筆。
+2. root 只填真正不同的原形。
+3. 名詞、字典形，或原形和單字相同時，root 必須是空字串。
+4. analysis 不要重複已提供的中文翻譯。
+5. analysis 不要再寫「原形」。
+6. 有學習價值才拆解漢字詞、詞根、接辭或語尾，不要硬拆。
+7. 簡短說明詞性、構成、語感或用法。
+8. 不要舉例句。
+9. 每個 analysis 最後一定要有「因此：」。
+10. 每個 analysis 控制在 5～8 行內。
+11. 如果無法可靠判斷原形，不要猜，root 留空。`;
+
   runAiAssist(btnEl, text, (val) => {
-    const chunks = val.split(/\n?###\n?/).map(c => c.trim()).filter(Boolean);
-    if (chunks.length !== words.length) {
-      alert(`AI 回覆的段落數（${chunks.length}）跟單字數量（${words.length}）對不上，請檢查貼上的內容，或改成一個一個單字用「✨AI解析」分開處理。`);
-      return;
+    try {
+      const clean = String(val)
+        .replace(/^```json\s*/i, "")
+        .replace(/^```\s*/i, "")
+        .replace(/```$/i, "")
+        .trim();
+
+      const result = JSON.parse(clean);
+      if (!Array.isArray(result)) throw new Error("回覆不是陣列");
+
+      result.forEach((item, resultIndex) => {
+        const targetPosition = Number(item.index || resultIndex + 1) - 1;
+        const target = indexedWords[targetPosition];
+        if (!target) return;
+
+        const w = sentenceEditorWords[target.originalIndex];
+        const root = String(item.root || "").trim();
+        const analysis = String(item.analysis || "").trim();
+
+        w.root = root && root !== w.kr.trim() ? root : "";
+        w.note = analysis;
+      });
+
+      renderSentenceEditorWordRows();
+    } catch (error) {
+      console.error("AI 全部解析 JSON 錯誤：", error, val);
+      alert("AI 回覆格式無法解析，請再按一次『一次解析全部單字』。");
     }
-    words.forEach((w, i) => { w.note = chunks[i]; });
-    renderSentenceEditorWordRows();
   });
 }
+
 function aiAssistSentenceWordNote(i, btnEl) {
   const w = sentenceEditorWords[i];
-  if (!w || !w.kr.trim()) { alert("請先輸入韓文"); return; }
-  const text = `請幫我產生適合韓文學習網站的 AI 解析。
 
-韓文單字：
-${w.kr}
+  if (!w || !w.kr.trim()) {
+    alert("請先輸入韓文");
+    return;
+  }
 
-請遵守以下規則：
-1. 自動判斷單字類型（構詞、漢字詞、派生詞、活用形或一般單字）。
-2. 如果可以拆解，請拆解並簡單說明。
-3. 如果無法拆解，請簡單說明其來源或用法。
-4. 中文解釋簡短好懂，適合初中級韓文學習者。
-5. 不要舉例句。
-6. 不要使用 Markdown。
-7. 回覆控制在 8 行內。
-8. 最後一定要有「因此：」。
+  const text = `請分析以下韓文單字，並只輸出有效 JSON。
+不要輸出 Markdown、程式碼框、標題或其他文字。
 
-回覆格式：
+韓文：${w.kr}
+網站已有中文翻譯：${w.zh || "未填寫"}
 
-${w.kr}
+請輸出以下格式：
+{
+  "root": "",
+  "analysis": ""
+}
 
-= ...
+規則：
+1. root 只填真正不同的原形。
+2. 如果是名詞、字典形，或原形和韓文相同，root 必須是空字串。
+3. analysis 不要重複中文翻譯。
+4. analysis 不要再寫「原形」。
+5. 有學習價值才拆解漢字詞、詞根、接辭或語尾，不要硬拆。
+6. 簡短說明詞性、構成、語感或用法。
+7. 不要舉例句。
+8. analysis 最後一定要有「因此：」。
+9. analysis 控制在 5～8 行內。
+10. 如果無法可靠判斷原形，不要猜，root 留空。
 
-...
+例如 인간 的 root 必須是空字串；
+例如 먹었어요 的 root 可以是 먹다。`;
 
-因此：
-...`;
   runAiAssist(btnEl, text, (val) => {
-    w.note = val;
-    renderSentenceEditorWordRows();
+    try {
+      const clean = String(val)
+        .replace(/^```json\s*/i, "")
+        .replace(/^```\s*/i, "")
+        .replace(/```$/i, "")
+        .trim();
+
+      const data = JSON.parse(clean);
+      const root = String(data.root || "").trim();
+      const analysis = String(data.analysis || "").trim();
+
+      w.root = root && root !== w.kr.trim() ? root : "";
+      w.note = analysis;
+
+      renderSentenceEditorWordRows();
+    } catch (error) {
+      console.error("AI 單字解析 JSON 錯誤：", error, val);
+      alert("AI 回覆格式無法解析，請再按一次 AI解析。");
+    }
   });
 }
+
 function aiAssistSentenceNote(btnEl) {
   const sentence = (document.getElementById("senEditKr")?.value || "").trim();
   if (!sentence) { alert("請先輸入韓文句子"); return; }
@@ -8745,5 +8801,32 @@ if ("serviceWorker" in navigator) {
 }
 </script>
 
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+  import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-ai.js";
+
+  try {
+    const firebaseConfig = {
+      apiKey: "AIzaSyCX897x7c1-va19xeQajWr97gK_eY4w_ys",
+      authDomain: "b1a4-cc0af.firebaseapp.com",
+      projectId: "b1a4-cc0af",
+      storageBucket: "b1a4-cc0af.firebasestorage.app",
+      messagingSenderId: "1010872861745",
+      appId: "1:1010872861745:web:9bb41e47d8ef06921d0110",
+      measurementId: "G-01H07Z4RGW"
+    };
+    const aiApp = initializeApp(firebaseConfig, "geminiApp");
+    const ai = getAI(aiApp, { backend: new GoogleAIBackend() });
+    const model = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
+
+    window.callGeminiAI = async function (prompt) {
+      const result = await model.generateContent(prompt);
+      return result.response.text();
+    };
+    console.log("✅ Gemini AI (Firebase AI Logic) 已就緒");
+  } catch (e) {
+    console.warn("Gemini AI 初始化失敗，會自動退回複製貼上模式：", e);
+  }
+</script>
 </body>
 </html>
