@@ -2903,19 +2903,6 @@ textarea {
         </div>
       </section>
 
-      <section id="aiHub" class="page">
-        <div class="topbar">
-          <button class="ghost" onclick="goPage('profile')">‹ 返回我的</button>
-          <h2>🤖 AI 助手</h2>
-        </div>
-        <div class="card" style="padding:20px;">
-          <label style="font-weight:900;color:#4e8f24;">💬 問 AI 任何韓文問題</label>
-          <textarea id="aiHubQuestion" rows="3" placeholder="例如：왜 인간적인 不能直接翻成「像人」？" style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;margin-top:8px;"></textarea>
-          <button type="button" class="primary cute-btn" style="width:100%;margin-top:10px;" onclick="askAiHub(this)">✨ 詢問 AI</button>
-          <div id="aiHubAnswerWrap" style="margin-top:14px;"></div>
-        </div>
-      </section>
-
       <section id="flash" class="page">
         <div class="topbar">
           <button class="ghost" onclick="goPage('practiceHub')">‹ 返回練習</button>
@@ -3135,14 +3122,6 @@ textarea {
       <section id="profile" class="page profile-page">
         <div class="topbar">
           <h2>👤 我的</h2>
-        </div>
-
-        <div class="card" style="padding:18px 22px;margin-bottom:18px;cursor:pointer;" onclick="goPage('aiHub')">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div style="font-weight:1000;font-size:16px;color:#20351f;">🤖 AI 助手</div>
-            <span style="color:#83b842;font-weight:900;">進入 ›</span>
-          </div>
-          <div style="font-size:13px;color:var(--muted);font-weight:700;margin-top:4px;">解析單字／句子／小說／歌詞、文法解釋、自由問答</div>
         </div>
 
         <div class="card" style="padding:22px;margin-bottom:18px;">
@@ -4195,7 +4174,7 @@ const BOTTOM_TAB_MAP = {
   readingHub:"readingHub", reading:"readingHub", lyrics:"readingHub", sentence:"readingHub",
   practiceHub:"practiceHub", flash:"practiceHub", test:"practiceHub", match:"practiceHub", listen:"practiceHub",
   libraryHub:"libraryHub", library:"libraryHub", grammar:"libraryHub",
-  aiHub:"profile",
+  aiHub:"profile", // 保留給任何遺留連結，實際頁面已移除
   profile:"profile"
 };
 const VOCAB_PAGES = ["library","flash","grammar","sentence","reading","match","listen"];
@@ -7894,24 +7873,6 @@ async function runAiAssist(btnEl, prompt, applyFn) {
   } finally {
     if (btnEl) btnEl.disabled = false;
   }
-}
-
-function askAiHub(btnEl) {
-  const q = (document.getElementById("aiHubQuestion")?.value || "").trim();
-  if (!q) { alert("請先輸入你想問的問題"); return; }
-  const prompt = `你是一個親切的韓文老師，請用簡短好懂的中文回答學生的問題，適合初中級韓文學習者。
-
-學生的問題：
-${q}
-
-規則：
-1. 中文回答，簡短清楚，不要長篇大論。
-2. 不要使用 Markdown。
-3. 可以適度舉一兩個簡單例子，但不用太多。`;
-  runAiAssist(btnEl, prompt, (val) => {
-    const wrap = document.getElementById("aiHubAnswerWrap");
-    if (wrap) wrap.innerHTML = `<div class="sen-teacher-note">${esc(val).replace(/\n/g,"<br>")}</div>`;
-  });
 }
 
 function aiAssistSentenceAnalysis(btnEl) {
