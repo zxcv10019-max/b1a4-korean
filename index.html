@@ -4471,11 +4471,11 @@ function renderHomeQuestDesign(){
     const todayReading = (t.lyrics || 0) + (t.sentence || 0) + (t.reading || 0) + (t.grammar || 0);
 
     const tasks = [
-      { key:"reading", label:"📖 閱讀", done: todayReading > 0 },
-      { key:"flash", label:"🎴 單字卡", done: todayFlash > 0 },
-      { key:"test", label:"📝 測驗", done: todayTest > 0 },
-      { key:"match", label:"🎮 配對", done: todayMatch > 0 },
-      { key:"listen", label:"🎧 聽力", done: todayListen > 0 }
+      { key:"reading", label:"📖 閱讀", done: todayReading > 0, go:"goToLastRead()" },
+      { key:"flash", label:"🎴 單字卡", done: todayFlash > 0, go:"goPage('flash')" },
+      { key:"test", label:"📝 測驗", done: todayTest > 0, go:"goPage('test')" },
+      { key:"match", label:"🎮 配對", done: todayMatch > 0, go:"goPage('match')" },
+      { key:"listen", label:"🎧 聽力", done: todayListen > 0, go:"goPage('listen')" }
     ];
     const doneCount = tasks.filter(x => x.done).length;
     const percent = Math.round((doneCount / tasks.length) * 100);
@@ -4483,9 +4483,10 @@ function renderHomeQuestDesign(){
     const checklist = document.getElementById("todayTaskChecklist");
     if (checklist) {
       checklist.innerHTML = tasks.map(x => `
-        <div class="today-task-item ${x.done ? "done" : ""}">
+        <div class="today-task-item ${x.done ? "done" : ""}" style="cursor:pointer;" onclick="${x.go}">
           <span class="today-task-check">${x.done ? "☑" : "☐"}</span>
           <span>${x.label}</span>
+          <span style="margin-left:auto;color:#83b842;font-weight:900;">開始 ›</span>
         </div>`).join("");
     }
 
