@@ -2441,11 +2441,52 @@ textarea {
 .sen-grammar-explain { font-size:13px; color:#3f5634; font-weight:700; margin-top:8px; }
 .sen-grammar-card .gram-example { margin-top:8px; }
 
-.sen-word-edit-row {
-  display:grid; grid-template-columns:1fr 1fr 1fr 1fr auto auto;
-  gap:6px; align-items:center; margin-bottom:8px;
+.sen-word-edit-card {
+  background:#fff;
+  border:2px solid var(--line);
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:12px;
 }
-.sen-word-edit-row input { border:2px solid var(--line); border-radius:10px; padding:8px; font-size:13px; }
+.sen-word-edit-toprow {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-bottom:10px;
+}
+.sen-word-edit-label {
+  display:block;
+  font-size:11px;
+  font-weight:900;
+  color:#9b7a3f;
+  margin-bottom:4px;
+}
+.sen-word-edit-label-row {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin:10px 0 4px;
+}
+.sen-word-edit-inline-btn { display:flex; gap:6px; margin-bottom:10px; }
+.sen-word-edit-inline-btn input { flex:1; min-width:0; }
+.sen-word-edit-card input, .sen-word-edit-card textarea {
+  width:100%;
+  box-sizing:border-box;
+  border:2px solid var(--line);
+  border-radius:10px;
+  padding:9px 10px;
+  font-size:13px;
+  font-family:inherit;
+}
+.sen-word-edit-card textarea { resize:vertical; }
+.sen-word-edit-bottomrow {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-top:10px;
+  padding-top:10px;
+  border-top:1px dashed var(--line);
+}
 .sen-vocab-check { display:flex; align-items:center; gap:4px; font-size:11px; font-weight:900; color:#4e8f24; white-space:nowrap; }
 .sen-vocab-check-inline {
   display:flex;
@@ -2459,8 +2500,8 @@ textarea {
   flex:0 0 auto;
 }
 .sen-vocab-check-inline input { flex:0 0 auto; margin:0; }
-@media (max-width:720px) {
-  .sen-word-edit-row { grid-template-columns:1fr 1fr; }
+@media (max-width:480px) {
+  .sen-word-edit-toprow { grid-template-columns:1fr; }
 }
 
 .sen-grammar-edit-row { background:#f6fff0; border:1px solid #d7edb8; border-radius:14px; padding:12px; margin-bottom:10px; }
@@ -2867,14 +2908,7 @@ textarea {
           <button class="ghost" onclick="goPage('profile')">‹ 返回我的</button>
           <h2>🤖 AI 助手</h2>
         </div>
-        <div class="quick-icons-row" style="grid-template-columns:repeat(2,1fr);">
-          <div class="quick-icon-tile" onclick="goPage('flash')"><span class="qi-ico">🎴</span>解析單字<br><small style="font-weight:700;">（單字卡）</small></div>
-          <div class="quick-icon-tile" onclick="goPage('sentence')"><span class="qi-ico">📝</span>解析句子</div>
-          <div class="quick-icon-tile" onclick="goPage('reading')"><span class="qi-ico">📚</span>解析小說</div>
-          <div class="quick-icon-tile" onclick="goPage('lyrics')"><span class="qi-ico">🎵</span>解析歌詞</div>
-          <div class="quick-icon-tile" onclick="goPage('grammar')"><span class="qi-ico">🌸</span>文法解釋</div>
-        </div>
-        <div class="card" style="padding:20px;margin-top:16px;">
+        <div class="card" style="padding:20px;">
           <label style="font-weight:900;color:#4e8f24;">💬 問 AI 任何韓文問題</label>
           <textarea id="aiHubQuestion" rows="3" placeholder="例如：왜 인간적인 不能直接翻成「像人」？" style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;margin-top:8px;"></textarea>
           <button type="button" class="primary cute-btn" style="width:100%;margin-top:10px;" onclick="askAiHub(this)">✨ 詢問 AI</button>
@@ -3065,6 +3099,7 @@ textarea {
             <div class="btns">
               <button class="ghost" id="songFavBtn" onclick="toggleSongFav(currentSongId)">🤍 收藏歌曲</button>
               <button class="ghost" onclick="autoDetectSong()">🪄 自動偵測全部單字文法</button>
+              <button class="ghost" onclick="aiAnalyzeAllLyrics(this)">✨ AI解析全部句子</button>
               <button class="ghost" onclick="addLyricsLine()">＋ 新增一句</button>
               <button class="ghost" onclick="deleteCurrentSong()">🗑 刪除這首歌</button>
             </div>
@@ -6815,6 +6850,7 @@ function renderLyricsReader() {
         <span style="font-weight:900;color:var(--muted);">第 ${i + 1} 句</span>
         <div class="btns">
           <button class="ghost" type="button" onclick="autoDetectLine('${ln.id}')">🪄 自動偵測</button>
+          <button class="ghost" type="button" onclick="aiAnalyzeLyricsLine('${ln.id}', this)">✨ AI解析</button>
           <button class="ghost" type="button" onclick="speakLyricsLine('${ln.id}')">🔊 AI 發音</button>
           <button class="ghost" type="button" onclick="deleteLyricsLine('${ln.id}')">🗑 刪除</button>
         </div>
@@ -7648,22 +7684,34 @@ function renderSentenceEditorWordRows() {
     return;
   }
   wrap.innerHTML = sentenceEditorWords.map((w, i) => `
-    <div class="sen-word-edit-row">
-      <input type="text" placeholder="韓文" value="${escapeAttr(w.kr)}" oninput="sentenceEditorWords[${i}].kr=this.value">
-      <input type="text" placeholder="中文" value="${escapeAttr(w.zh||"")}" oninput="sentenceEditorWords[${i}].zh=this.value">
-      <div style="display:flex;gap:6px;">
-        <input type="text" placeholder="原形(選填)" value="${escapeAttr(w.root||"")}" oninput="sentenceEditorWords[${i}].root=this.value" style="flex:1;min-width:0;">
-        <button type="button" class="ghost" style="white-space:nowrap;font-size:12px;padding:6px 10px;" onclick="guessSentenceWordRoot(${i})">✨ 推測原形</button>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:4px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <label style="font-size:12px;font-weight:900;color:#9b7a3f;">✨ AI解析（選填）</label>
-          <button type="button" class="ghost" style="white-space:nowrap;font-size:12px;padding:6px 10px;" onclick="aiAssistSentenceWordNote(${i}, this)">✨ AI解析</button>
+    <div class="sen-word-edit-card">
+      <div class="sen-word-edit-toprow">
+        <div>
+          <label class="sen-word-edit-label">韓文</label>
+          <input type="text" placeholder="韓文" value="${escapeAttr(w.kr)}" oninput="sentenceEditorWords[${i}].kr=this.value">
         </div>
-        <textarea placeholder="例如貼上 AI 解析結果…&#10;= 인간 + 적 + 인&#10;-적 表示「具有……性」" rows="3" oninput="sentenceEditorWords[${i}].note=this.value" style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:12px;padding:8px 10px;font-size:13px;font-family:inherit;resize:vertical;">${esc(w.note||"")}</textarea>
+        <div>
+          <label class="sen-word-edit-label">中文</label>
+          <input type="text" placeholder="中文" value="${escapeAttr(w.zh||"")}" oninput="sentenceEditorWords[${i}].zh=this.value">
+        </div>
       </div>
-      <label class="sen-vocab-check"><input type="checkbox" ${w.addToVocab!==false?"checked":""} onchange="sentenceEditorWords[${i}].addToVocab=this.checked">☑加入單字卡</label>
-      <button type="button" class="wc-del" onclick="removeSentenceEditorWordRow(${i})">❌</button>
+
+      <label class="sen-word-edit-label">原形（選填）</label>
+      <div class="sen-word-edit-inline-btn">
+        <input type="text" placeholder="原形" value="${escapeAttr(w.root||"")}" oninput="sentenceEditorWords[${i}].root=this.value">
+        <button type="button" class="ghost" onclick="guessSentenceWordRoot(${i})">✨ 推測原形</button>
+      </div>
+
+      <div class="sen-word-edit-label-row">
+        <label class="sen-word-edit-label" style="margin:0;">✨ AI解析（選填）</label>
+        <button type="button" class="ghost" onclick="aiAssistSentenceWordNote(${i}, this)">✨ AI解析</button>
+      </div>
+      <textarea placeholder="例如貼上 AI 解析結果…&#10;= 인간 + 적 + 인&#10;-적 表示「具有……性」" rows="3" oninput="sentenceEditorWords[${i}].note=this.value">${esc(w.note||"")}</textarea>
+
+      <div class="sen-word-edit-bottomrow">
+        <label class="sen-vocab-check"><input type="checkbox" ${w.addToVocab!==false?"checked":""} onchange="sentenceEditorWords[${i}].addToVocab=this.checked">☑加入單字卡</label>
+        <button type="button" class="wc-del" onclick="removeSentenceEditorWordRow(${i})">❌ 刪除</button>
+      </div>
     </div>`).join("");
 }
 
@@ -7724,7 +7772,12 @@ function guessKoreanRootForm(word) {
 function guessSentenceWordRoot(i) {
   const w = sentenceEditorWords[i];
   if (!w || !w.kr.trim()) { alert("請先輸入韓文"); return; }
-  w.root = guessKoreanRootForm(w.kr);
+  const guessed = guessKoreanRootForm(w.kr);
+  if (!guessed || guessed === w.kr) {
+    alert(`「${w.kr}」本身就是字典形，不需要另外填原形。`);
+    return;
+  }
+  w.root = guessed;
   renderSentenceEditorWordRows();
 }
 
@@ -8271,6 +8324,92 @@ function mergeDetectedIntoLine(line, detected) {
   });
   detected.grammar.forEach(g => {
     if (!line.grammar.some(x => x.p === g.p)) line.grammar.push(g);
+  });
+}
+
+function aiAnalyzeLyricsLine(lineId, btnEl) {
+  const song = getCurrentSong();
+  if (!song) return;
+  const line = song.lines.find(l => l.id === lineId);
+  if (!line || !line.kr.trim()) { alert("請先輸入這句歌詞的韓文"); return; }
+  const text = `請分析以下韓文歌詞，並只輸出有效 JSON，不要輸出 Markdown、程式碼框、標題或其他文字。
+
+韓文歌詞：
+${line.kr}
+${line.zh ? `已有中文翻譯：${line.zh}` : ""}
+
+請輸出以下格式：
+{
+  "words": [ { "k": "", "z": "" } ],
+  "grammar": [ { "p": "", "n": "" } ]
+}
+
+規則：
+1. words：挑出這句裡值得學習的單字，k=韓文，z=簡短中文意思。
+2. grammar：挑出這句用到的文法點，p=文法點，n=簡短說明。
+3. 不要每個字都列，只挑對學習者有價值的。
+4. 沒有值得列的就給空陣列，不要硬湊。`;
+  runAiAssist(btnEl, text, (val) => {
+    try {
+      const data = parseAiJson(val);
+      const words = Array.isArray(data.words) ? data.words.map(w => ({ k: String(w.k||"").trim(), z: String(w.z||"").trim() })).filter(w=>w.k) : [];
+      const grammar = Array.isArray(data.grammar) ? data.grammar.map(g => ({ p: String(g.p||"").trim(), n: String(g.n||"").trim() })).filter(g=>g.p) : [];
+      mergeDetectedIntoLine(line, { words, grammar });
+      saveLyricsSongs();
+      renderLyricsReader();
+    } catch (error) {
+      console.error("AI 歌詞解析 JSON 錯誤：", error, val);
+      alert("AI 回覆格式無法解析，請再按一次「AI解析」。");
+    }
+  });
+}
+
+function aiAnalyzeAllLyrics(btnEl) {
+  const song = getCurrentSong();
+  if (!song) return;
+  const lines = song.lines.filter(l => l.kr.trim());
+  if (!lines.length) { alert("這首歌還沒有任何歌詞內容"); return; }
+  const list = lines.map((l, i) => ({ index: i + 1, kr: l.kr, zh: l.zh || "" }));
+  const text = `請分析以下每一句韓文歌詞，並只輸出有效 JSON 陣列，不要輸出 Markdown、程式碼框、標題或其他文字。
+
+歌詞資料：
+${JSON.stringify(list, null, 2)}
+
+請嚴格按照以下格式輸出：
+[
+  {
+    "index": 1,
+    "words": [ { "k": "", "z": "" } ],
+    "grammar": [ { "p": "", "n": "" } ]
+  }
+]
+
+規則：
+1. 必須依照原本 index 順序輸出，每句一筆，就算是空陣列也要輸出該筆。
+2. words：挑出這句裡值得學習的單字，k=韓文，z=簡短中文意思，不用每個字都列。
+3. grammar：挑出這句用到的文法點，p=文法點，n=簡短說明。
+4. 沒有值得列的就給空陣列，不要硬湊。`;
+  runAiAssist(btnEl, text, (val) => {
+    try {
+      const result = parseAiJson(val);
+      if (!Array.isArray(result)) throw new Error("回覆不是陣列");
+      let count = 0;
+      result.forEach((item, resultIndex) => {
+        const pos = Number(item.index || resultIndex + 1) - 1;
+        const line = lines[pos];
+        if (!line) return;
+        const words = Array.isArray(item.words) ? item.words.map(w => ({ k: String(w.k||"").trim(), z: String(w.z||"").trim() })).filter(w=>w.k) : [];
+        const grammar = Array.isArray(item.grammar) ? item.grammar.map(g => ({ p: String(g.p||"").trim(), n: String(g.n||"").trim() })).filter(g=>g.p) : [];
+        if (words.length || grammar.length) count++;
+        mergeDetectedIntoLine(line, { words, grammar });
+      });
+      saveLyricsSongs();
+      renderLyricsReader();
+      alert(`AI 解析完成，${count} / ${lines.length} 句補上了單字或文法建議，記得檢查一下是否正確喔！`);
+    } catch (error) {
+      console.error("AI 全歌詞解析 JSON 錯誤：", error, val);
+      alert("AI 回覆格式無法解析，請再按一次「AI解析全部句子」。");
+    }
   });
 }
 
