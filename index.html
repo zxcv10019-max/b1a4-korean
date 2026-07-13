@@ -4017,6 +4017,15 @@ function runSiteSearch(query) {
     (g.title || "").toLowerCase().includes(q) || (g.meaning || "").toLowerCase().includes(q)
   );
 
+  const allSentences = (typeof sentenceEntries !== "undefined" ? sentenceEntries : []);
+  const novelResults = allSentences.filter(s => s.chapterId && (
+    (s.kr || "").toLowerCase().includes(q) || (s.zh || "").toLowerCase().includes(q)
+  ));
+  const shortSentenceResults = allSentences.filter(s => !s.chapterId && (
+    (s.kr || "").toLowerCase().includes(q) || (s.zh || "").toLowerCase().includes(q) ||
+    (s.tags || []).some(t => t.toLowerCase().includes(q))
+  ));
+
   let html = "";
   if (wordResults.length) {
     html += `<div style="font-weight:1000;margin:6px 0 8px;">📚 單字（${wordResults.length}）</div>`;
@@ -4048,7 +4057,25 @@ function runSiteSearch(query) {
         <div style="font-size:11px;color:var(--muted);font-weight:700;">出自《${esc(r.song.title)}》</div>
       </div>`).join("");
   }
-  if (!wordResults.length && !grammarResults.length && !songResults.length && !lineResults.length) {
+  if (novelResults.length) {
+    html += `<div style="font-weight:1000;margin:14px 0 8px;">📚 小說（${novelResults.length}）</div>`;
+    html += novelResults.slice(0, 20).map(s => {
+      const ch = novelChapters.find(c => c.id === s.chapterId);
+      const nv = ch ? novels.find(n => n.id === ch.novelId) : null;
+      return `<div class="search-result-item" onclick="closeSiteSearch();goPage('reading');${nv ? `currentNovelId='${nv.id}';` : ""}${ch ? `openChapter('${ch.id}')` : "renderReadingHome()"}">
+        ${esc(s.kr)} <span style="color:var(--muted);">— ${esc(s.zh || "")}</span>
+        <div style="font-size:11px;color:var(--muted);font-weight:700;">出自《${esc(nv ? nv.title : "")}》${ch ? " · " + esc(ch.title) : ""}</div>
+      </div>`;
+    }).join("");
+  }
+  if (shortSentenceResults.length) {
+    html += `<div style="font-weight:1000;margin:14px 0 8px;">📝 短句（${shortSentenceResults.length}）</div>`;
+    html += shortSentenceResults.slice(0, 20).map(s => `
+      <div class="search-result-item" onclick="closeSiteSearch();goPage('sentence');">
+        ${esc(s.kr)} <span style="color:var(--muted);">— ${esc(s.zh || "")}</span>
+      </div>`).join("");
+  }
+  if (!wordResults.length && !grammarResults.length && !songResults.length && !lineResults.length && !novelResults.length && !shortSentenceResults.length) {
     html = `<div class="empty" style="padding:16px 0;">找不到符合「${esc(query)}」的結果</div>`;
   }
   resultsEl.innerHTML = html;
