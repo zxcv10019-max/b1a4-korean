@@ -3110,6 +3110,18 @@ textarea {
           <div style="font-size:13px;color:var(--muted);font-weight:700;margin-top:4px;">解析單字／句子／小說／歌詞、文法解釋、自由問答</div>
         </div>
 
+        <div class="card" style="padding:22px;margin-bottom:18px;">
+          <div class="account-title">🔑 OpenAI API 金鑰</div>
+          <div style="font-size:13px;color:#a94442;font-weight:800;background:#fff3f3;border:1px solid #f0c9c9;border-radius:12px;padding:10px 14px;margin:10px 0;">
+            ⚠️ 安全提醒：這個金鑰只會存在「這台裝置的瀏覽器」裡（localStorage），不會被存進網站的原始碼或雲端同步。但因為這個網站是公開放在 GitHub Pages 上的，任何懂技術的人理論上都可能想辦法從瀏覽器端截取到你正在使用中的金鑰。強烈建議：<br>
+            1. 只在 OpenAI 後台設定「用量上限」（例如每月 $5 美元），避免被盜用後產生大筆費用<br>
+            2. 不要把這個金鑰用在其他重要帳號共用<br>
+            3. 如果覺得不放心，也可以定期到 OpenAI 後台重新產生新金鑰
+          </div>
+          <input id="openAiKeyInput" type="password" placeholder="貼上你的 OpenAI API 金鑰 (sk-...)" class="cute-input" style="margin-bottom:10px;">
+          <button type="button" class="primary cute-btn" style="width:100%;" onclick="saveOpenAiKeyFromInput()">💾 儲存金鑰</button>
+        </div>
+
 
         <div class="card" style="padding:22px;margin-bottom:18px;">
           <div class="account-title">帳號同步</div>
@@ -7768,22 +7780,66 @@ function copyAiPromptText() {
     try { document.execCommand("copy"); } catch (e) {}
   }
 }
-/* ===== 🔮 Gemini 直接串接：由後面新增的 module 腳本覆寫成真正的呼叫方式，這裡是連線失敗時的備援 ===== */
-async function callGeminiAI(prompt) {
-  throw new Error("Gemini 尚未就緒");
+/* ===== 🤖 OpenAI 直接串接 ===== */
+const OPENAI_KEY_STORAGE = "b1a4OpenAiKey";
+function getOpenAiKey() { return localStorage.getItem(OPENAI_KEY_STORAGE) || ""; }
+function saveOpenAiKeyFromInput() {
+  const el = document.getElementById("openAiKeyInput");
+  if (!el) return;
+  localStorage.setItem(OPENAI_KEY_STORAGE, el.value.trim());
+  el.value = getOpenAiKey() ? "••••••••••••••••" : "";
+  el.type = "password";
+  alert(getOpenAiKey() ? "已儲存 API 金鑰（只存在這台裝置上）" : "已清除 API 金鑰");
+}
+async function callAI(prompt) {
+  const key = getOpenAiKey();
+  if (!key) throw new Error("尚未設定 OpenAI API 金鑰，請到「我的」頁面設定");
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.3
+    })
+  });
+  if (!res.ok) {
+    let msg = res.status;
+    try { const j = await res.json(); msg = (j.error && j.error.message) || res.status; } catch (e) {}
+    throw new Error("OpenAI 錯誤：" + msg);
+  }
+  const data = await res.json();
+  return (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "";
+}
+function parseAiJson(text) {
+  let cleaned = String(text || "").trim();
+  cleaned = cleaned.replace(/^```json\s*/i, "").replace(/^```\s*/, "").replace(/```\s*$/, "").trim();
+  const start = cleaned.indexOf("{");
+  const startArr = cleaned.indexOf("[");
+  let s = start, e = "}";
+  if (startArr !== -1 && (start === -1 || startArr < start)) { s = startArr; e = "]"; }
+  const end = cleaned.lastIndexOf(e);
+  if (s !== -1 && end !== -1) cleaned = cleaned.slice(s, end + 1);
+  return JSON.parse(cleaned);
 }
 async function runAiAssist(btnEl, prompt, applyFn) {
   const originalText = btnEl ? btnEl.textContent : "";
-  if (btnEl) { btnEl.disabled = true; btnEl.textContent = "⏳ AI分析中..."; }
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = "⏳ AI 分析中..."; }
   try {
-    const result = await callGeminiAI(prompt);
+    const result = await callAI(prompt);
     applyFn(result);
+    if (btnEl) { btnEl.textContent = "✅ 已完成解析"; setTimeout(() => { if (btnEl) btnEl.textContent = originalText; }, 1500); }
     if (typeof showSaveToast === "function") showSaveToast();
   } catch (e) {
-    // Gemini 還沒接上或呼叫失敗 → 退回複製貼上模式
-    openAiPromptModal(prompt, applyFn);
+    console.warn("AI 呼叫失敗：", e);
+    if (btnEl) { btnEl.textContent = "❌ 解析失敗，請再試一次"; setTimeout(() => { if (btnEl) btnEl.textContent = originalText; }, 2000); }
+    if (!getOpenAiKey()) {
+      openAiPromptModal(prompt, applyFn);
+    } else {
+      alert("AI 呼叫失敗：" + (e.message || e));
+    }
   } finally {
-    if (btnEl) { btnEl.disabled = false; btnEl.textContent = originalText; }
+    if (btnEl) btnEl.disabled = false;
   }
 }
 
@@ -8789,6 +8845,8 @@ function initFavoritesAndLyrics() {
   renderFavoritesDetail();
   renderGrammarList();
   renderSentenceList();
+  const keyInput = document.getElementById("openAiKeyInput");
+  if (keyInput && getOpenAiKey()) keyInput.placeholder = "已設定金鑰（●●●●●●●●）";
 }
 initFavoritesAndLyrics();
 
@@ -8806,34 +8864,6 @@ if ("serviceWorker" in navigator) {
     });
   });
 }
-</script>
-
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-  import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-ai.js";
-
-  try {
-    const firebaseConfig = {
-      apiKey: "AIzaSyCX897x7c1-va19xeQajWr97gK_eY4w_ys",
-      authDomain: "b1a4-cc0af.firebaseapp.com",
-      projectId: "b1a4-cc0af",
-      storageBucket: "b1a4-cc0af.firebasestorage.app",
-      messagingSenderId: "1010872861745",
-      appId: "1:1010872861745:web:9bb41e47d8ef06921d0110",
-      measurementId: "G-01H07Z4RGW"
-    };
-    const aiApp = initializeApp(firebaseConfig, "geminiApp");
-    const ai = getAI(aiApp, { backend: new GoogleAIBackend() });
-    const model = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
-
-    window.callGeminiAI = async function (prompt) {
-      const result = await model.generateContent(prompt);
-      return result.response.text();
-    };
-    console.log("✅ Gemini AI (Firebase AI Logic) 已就緒");
-  } catch (e) {
-    console.warn("Gemini AI 初始化失敗，會自動退回複製貼上模式：", e);
-  }
 </script>
 </body>
 </html>
