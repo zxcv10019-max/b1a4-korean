@@ -2560,6 +2560,13 @@ textarea {
 }
 </style>
 
+
+<style>
+.sen-grammar-card{border-color:#cfe0ff;background:linear-gradient(145deg,#fff,#f5f9ff)}
+.sen-grammar-card .sen-word-kr{color:#4974a5}
+.sen-grammar-edit-row{border-color:#cfe0ff!important;background:#f8fbff!important}
+.sentence-card .sen-section-toggle{margin-top:12px}
+</style>
 </head>
 <body>
 <div class="app">
@@ -3202,19 +3209,37 @@ textarea {
           <button type="button" class="ghost" style="white-space:nowrap;font-size:12px;padding:6px 10px;" onclick="aiTranslateSentence(this)">✨ AI翻譯</button>
         </div>
         <textarea id="senEditZh" rows="2" placeholder="這句話的中文意思..." style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;"></textarea>
+
+        <button type="button" class="primary cute-btn" style="width:100%;" onclick="aiBuildSentenceStudy(this)">✨ AI 一次完成翻譯＋解析＋單字＋文法</button>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <label style="font-weight:900;color:#4e8f24;">💡 整句解析</label>
+          <button type="button" class="ghost" style="white-space:nowrap;font-size:12px;padding:6px 10px;" onclick="aiAssistSentenceAnalysis(this)">✨ AI解析</button>
+        </div>
+        <textarea id="senEditAnalysis" rows="4" placeholder="說明整句重點、語氣、比喻或容易誤解的地方，不逐字解析。" style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;"></textarea>
+
         <div class="btns" style="flex-wrap:wrap;">
           <button type="button" class="ghost" style="flex:1;min-width:140px;" onclick="autoExtractSentenceWordsIntoEditor()">🔍 字典拆解</button>
-          <button type="button" class="ghost" style="flex:1;min-width:140px;" onclick="aiBreakdownSentence(this)">✨ AI拆解</button>
+          <button type="button" class="ghost" style="flex:1;min-width:140px;" onclick="aiBreakdownSentence(this)">✨ AI單字拆解</button>
         </div>
-        <div class="hero-help">字典拆解：內建常用字典比對，速度快但涵蓋範圍有限。AI拆解：呼叫 Gemini 分析，涵蓋範圍更廣，但需要 Gemini 連線成功。兩種都可以拆完後再手動調整。</div>
+        <div class="hero-help">單字解析與文法解析分開儲存。AI會依真正的學習單位整理，不再只按照空格硬拆。</div>
 
         <div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-            <label style="font-weight:900;color:#4e8f24;">🧩 句子解析</label>
+            <label style="font-weight:900;color:#4e8f24;">📖 單字解析</label>
             <button type="button" class="ghost" style="white-space:nowrap;font-size:12px;padding:6px 10px;" onclick="aiAssistAllSentenceWords(this)">✨ 一次解析全部單字</button>
           </div>
           <div id="senEditWordsWrap"></div>
-          <button type="button" class="ghost" style="width:100%;" onclick="addSentenceEditorWordRow()">➕ 新增解析</button>
+          <button type="button" class="ghost" style="width:100%;" onclick="addSentenceEditorWordRow()">➕ 新增單字</button>
+        </div>
+
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <label style="font-weight:900;color:#4e8f24;">📘 文法解析</label>
+            <button type="button" class="ghost" style="white-space:nowrap;font-size:12px;padding:6px 10px;" onclick="aiAssistSentenceGrammar(this)">✨ AI找文法</button>
+          </div>
+          <div id="senEditGrammarWrap"></div>
+          <button type="button" class="ghost" style="width:100%;" onclick="addSentenceEditorGrammarRow()">➕ 新增文法</button>
         </div>
 
         <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -7001,6 +7026,15 @@ function loadSentenceEntries() {
       if (typeof it.addToVocab !== "boolean") it.addToVocab = true;
       if (!it.id) it.id = uid();
     });
+    if (typeof s.analysis !== "string") s.analysis = "";
+    if (!Array.isArray(s.grammar)) s.grammar = [];
+    s.grammar.forEach(g => {
+      if (!g.id) g.id = uid();
+      if (typeof g.pattern !== "string") g.pattern = "";
+      if (typeof g.meaning !== "string") g.meaning = "";
+      if (typeof g.phrase !== "string") g.phrase = "";
+      if (typeof g.note !== "string") g.note = "";
+    });
     if (typeof s.teacherNote !== "string") s.teacherNote = "";
     if (!Array.isArray(s.tags)) s.tags = [];
     if (typeof s.favorite !== "boolean") s.favorite = false;
@@ -7326,7 +7360,8 @@ function toggleSentenceTagGroup(tag, headerEl) {
 function makeSentenceCardHtml(s) {
   const ex = sentenceExpanded[s.id] || {};
   const teacherOn = !!teacherMode[s.id];
-  const itemsHtml = s.items.length ? s.items.map((it, wi) => sentenceItemRowHtml(s.id, it, wi, teacherOn)).join("") : `<div class="empty" style="padding:8px 0;">尚無句子解析</div>`;
+  const itemsHtml = s.items.length ? s.items.map((it, wi) => sentenceItemRowHtml(s.id, it, wi, teacherOn)).join("") : `<div class="empty" style="padding:8px 0;">尚無單字解析</div>`;
+  const grammarHtml = (s.grammar || []).length ? (s.grammar || []).map(g => sentenceGrammarCardHtml(g)).join("") : `<div class="empty" style="padding:8px 0;">尚無文法解析</div>`;
   const tagsHtml = (s.tags && s.tags.length) ? `<div class="sen-tags-row">${s.tags.map(t => `<span class="sen-tag-chip">🏷 ${esc(t)}</span>`).join("")}</div>` : "";
 
   return `
@@ -7346,13 +7381,18 @@ function makeSentenceCardHtml(s) {
         <button class="ghost" onclick="speakKoreanSlow('${jsAttr(s.kr)}')">🐢 慢速播放</button>
       </div>
 
-      <div class="sen-section-toggle" onclick="toggleSentenceSection('${s.id}','words')">🧩 句子解析（${s.items.length}）<span>${ex.words ? "▴" : "▾"}</span></div>
+      ${s.analysis ? `<div class="sen-section-toggle" onclick="toggleSentenceSection('${s.id}','analysis')">💡 整句解析<span>${ex.analysis ? "▴" : "▾"}</span></div><div class="sen-section-body ${ex.analysis ? "" : "sen-collapsed"}"><div class="sen-teacher-note">${esc(s.analysis).replace(/\n/g,"<br>")}</div></div>` : ""}
+
+      <div class="sen-section-toggle" onclick="toggleSentenceSection('${s.id}','words')">📖 單字解析（${s.items.length}）<span>${ex.words ? "▴" : "▾"}</span></div>
       <div class="sen-section-body ${ex.words ? "" : "sen-collapsed"}">
         <div class="btns" style="justify-content:flex-end;margin-bottom:8px;">
           <button class="ghost" style="font-size:11px;" onclick="toggleTeacherMode('${s.id}')">${teacherOn ? "👀 顯示所有答案" : "🎓 老師模式"}</button>
         </div>
         <div class="sen-word-grid">${itemsHtml}</div>
       </div>
+
+      <div class="sen-section-toggle" onclick="toggleSentenceSection('${s.id}','grammar')">📘 文法解析（${(s.grammar || []).length}）<span>${ex.grammar ? "▴" : "▾"}</span></div>
+      <div class="sen-section-body ${ex.grammar ? "" : "sen-collapsed"}"><div class="sen-word-grid">${grammarHtml}</div></div>
 
       ${s.teacherNote ? `
       <div class="sen-section-toggle" onclick="toggleSentenceSection('${s.id}','teacherNote')">📝 補充說明<span>${ex.teacherNote ? "▴" : "▾"}</span></div>
@@ -7390,6 +7430,15 @@ function sentenceItemRowHtml(sentenceId, it, idx, teacherOn) {
       </div>
     </div>`;
 }
+function sentenceGrammarCardHtml(g) {
+  return `<div class="sen-word-card sen-grammar-card">
+    <div class="sen-word-kr">${esc(g.pattern || "（未填文法）")}</div>
+    <div class="sen-word-zh">▶ ${esc(g.meaning || "（尚未填寫）")}</div>
+    ${g.phrase ? `<div class="sen-word-root">本句：${esc(g.phrase)}</div>` : ""}
+    ${g.note ? `<div class="sen-word-note" style="margin-top:8px;">${esc(g.note).replace(/\n/g,"<br>")}</div>` : ""}
+  </div>`;
+}
+
 function toggleItemHidden(sentenceId, idx) {
   const key = sentenceId + "_" + idx;
   hiddenItems[key] = !hiddenItems[key];
@@ -7547,19 +7596,24 @@ function openSentenceEditor(id, context) {
     title.textContent = "✏️ 編輯短句";
     document.getElementById("senEditKr").value = s.kr || "";
     document.getElementById("senEditZh").value = s.zh || "";
+    document.getElementById("senEditAnalysis").value = s.analysis || "";
     document.getElementById("senEditTeacherNote").value = s.teacherNote || "";
     document.getElementById("senEditTags").value = (s.tags || []).join(", ");
     sentenceEditorWords = (s.items || []).map(it => ({ ...it }));
+    sentenceEditorGrammar = (s.grammar || []).map(g => ({ ...g }));
     if (s.chapterId) sentenceEditorContext = { novelId: s.novelId, chapterId: s.chapterId };
   } else {
     title.textContent = "📝 新增短句";
     document.getElementById("senEditKr").value = "";
     document.getElementById("senEditZh").value = "";
+    document.getElementById("senEditAnalysis").value = "";
     document.getElementById("senEditTeacherNote").value = "";
     document.getElementById("senEditTags").value = "";
     sentenceEditorWords = [];
+    sentenceEditorGrammar = [];
   }
   renderSentenceEditorWordRows();
+  renderSentenceEditorGrammarRows();
   document.getElementById("sentenceEditorMask").classList.add("show");
 }
 function closeSentenceEditor() {
@@ -7599,6 +7653,31 @@ function renderSentenceEditorWordRows() {
       <label class="sen-vocab-check"><input type="checkbox" ${w.addToVocab!==false?"checked":""} onchange="sentenceEditorWords[${i}].addToVocab=this.checked">☑加入單字卡</label>
       <button type="button" class="wc-del" onclick="removeSentenceEditorWordRow(${i})">❌</button>
     </div>`).join("");
+}
+
+function renderSentenceEditorGrammarRows() {
+  const wrap = document.getElementById("senEditGrammarWrap");
+  if (!wrap) return;
+  if (!sentenceEditorGrammar.length) {
+    wrap.innerHTML = `<div class="empty" style="padding:8px 0;">尚無文法，按「✨ AI找文法」或手動新增</div>`;
+    return;
+  }
+  wrap.innerHTML = sentenceEditorGrammar.map((g, i) => `
+    <div class="sen-word-edit-row sen-grammar-edit-row">
+      <input type="text" placeholder="文法，例如：-ㄹ/을 수 있다" value="${escapeAttr(g.pattern||"")}" oninput="sentenceEditorGrammar[${i}].pattern=this.value">
+      <input type="text" placeholder="中文意思，例如：可以……" value="${escapeAttr(g.meaning||"")}" oninput="sentenceEditorGrammar[${i}].meaning=this.value">
+      <input type="text" placeholder="本句語塊，例如：거절할 수 있다" value="${escapeAttr(g.phrase||"")}" oninput="sentenceEditorGrammar[${i}].phrase=this.value">
+      <textarea rows="3" placeholder="文法重點與用法" oninput="sentenceEditorGrammar[${i}].note=this.value" style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:12px;padding:8px 10px;font-size:13px;font-family:inherit;resize:vertical;">${esc(g.note||"")}</textarea>
+      <button type="button" class="wc-del" onclick="removeSentenceEditorGrammarRow(${i})">❌</button>
+    </div>`).join("");
+}
+function addSentenceEditorGrammarRow() {
+  sentenceEditorGrammar.push({ id: uid(), pattern:"", meaning:"", phrase:"", note:"" });
+  renderSentenceEditorGrammarRows();
+}
+function removeSentenceEditorGrammarRow(i) {
+  sentenceEditorGrammar.splice(i,1);
+  renderSentenceEditorGrammarRows();
 }
 
 /* ===== ✨ 自動推測原形（純規則猜測，非AI，僅供參考） ===== */
@@ -7723,6 +7802,89 @@ ${q}
   runAiAssist(btnEl, prompt, (val) => {
     const wrap = document.getElementById("aiHubAnswerWrap");
     if (wrap) wrap.innerHTML = `<div class="sen-teacher-note">${esc(val).replace(/\n/g,"<br>")}</div>`;
+  });
+}
+
+function aiAssistSentenceAnalysis(btnEl) {
+  const sentence = (document.getElementById("senEditKr")?.value || "").trim();
+  const translation = (document.getElementById("senEditZh")?.value || "").trim();
+  if (!sentence) { alert("請先輸入韓文句子"); return; }
+  const prompt = `請為韓文學習網站產生「整句解析」。
+
+韓文：${sentence}
+中文翻譯：${translation}
+
+規則：
+1. 說明整句核心意思，不逐字解析。
+2. 可補充語氣、比喻、書面語或容易誤解處。
+3. 不重複翻譯，不舉例句。
+4. 使用繁體中文，控制在3～5行。
+5. 每行以「• 」開頭，不使用其他Markdown。`;
+  runAiAssist(btnEl, prompt, val => {
+    const ta=document.getElementById("senEditAnalysis"); if(ta) ta.value=val.trim();
+  });
+}
+
+function aiAssistSentenceGrammar(btnEl) {
+  const sentence = (document.getElementById("senEditKr")?.value || "").trim();
+  if (!sentence) { alert("請先輸入韓文句子"); return; }
+  const prompt = `請找出下列韓文句子中真正值得學習的文法或固定語塊。
+
+韓文句子：
+${sentence}
+
+請只輸出JSON陣列，不要加說明或Markdown。格式：
+[{"pattern":"-ㄹ/을 수 있다","meaning":"可以……、能夠……","phrase":"句中實際語塊","note":"簡短說明用法"}]
+
+規則：
+1. 不要把普通單字當文法。
+2. 完整文法要合併，例如「외면해서는 안 된다」辨識為「-아/어서는 안 되다」。
+3. 中文使用繁體，適合初中級學習者。
+4. 若沒有明顯文法，回傳空陣列[]。`;
+  runAiAssist(btnEl, prompt, val => {
+    try {
+      const json=val.replace(/^```json\s*/i,"").replace(/```$/i,"").trim();
+      const arr=JSON.parse(json);
+      sentenceEditorGrammar=(Array.isArray(arr)?arr:[]).map(g=>({id:uid(),pattern:g.pattern||"",meaning:g.meaning||"",phrase:g.phrase||"",note:g.note||""}));
+      renderSentenceEditorGrammarRows();
+    } catch(e) { alert("AI文法格式無法解析，請確認回覆為JSON陣列。"); }
+  });
+}
+
+function aiBuildSentenceStudy(btnEl) {
+  const sentence = (document.getElementById("senEditKr")?.value || "").trim();
+  if (!sentence) { alert("請先輸入韓文句子"); return; }
+  const prompt = `你是BANA Forest韓文學習網站AI助手。請分析下列短句，並只輸出有效JSON，不要Markdown或額外文字。
+
+韓文句子：
+${sentence}
+
+JSON格式：
+{
+  "translation":"自然的繁體中文翻譯",
+  "analysis":"3～5行整句解析，每行以•開頭，不逐字解析",
+  "words":[{"kr":"句中形式或有意義語塊","zh":"中文翻譯","root":"原形，沒有則空白","note":"完整單字解析，最後一定有因此："}],
+  "grammar":[{"pattern":"完整文法形式","meaning":"中文意思","phrase":"句中實際語塊","note":"簡短用法解析"}]
+}
+
+規則：
+1. 單字與文法分開。
+2. 不依空格硬拆；助詞可與名詞一起，完整文法語塊不要拆散。
+3. words只放有學習價值的單字或詞組。
+4. 單字note先說詞類/構詞，有原形則說明；漢字詞或派生詞有價值才拆；最後固定以「因此：」結尾。
+5. grammar辨識如-ㄹ 수 있다、-아/어도、-아/어서는 안 되다等完整文法。
+6. 全部使用繁體中文，適合初中級學習者。`;
+  runAiAssist(btnEl, prompt, val => {
+    try {
+      const json=val.replace(/^```json\s*/i,"").replace(/```$/i,"").trim();
+      const data=JSON.parse(json);
+      document.getElementById("senEditZh").value=data.translation||"";
+      document.getElementById("senEditAnalysis").value=data.analysis||"";
+      sentenceEditorWords=(data.words||[]).map(w=>({id:uid(),kr:w.kr||"",zh:w.zh||"",root:w.root||"",note:w.note||"",addToVocab:true}));
+      sentenceEditorGrammar=(data.grammar||[]).map(g=>({id:uid(),pattern:g.pattern||"",meaning:g.meaning||"",phrase:g.phrase||"",note:g.note||""}));
+      renderSentenceEditorWordRows();
+      renderSentenceEditorGrammarRows();
+    } catch(e) { alert("AI回覆格式無法解析，請確認為完整JSON。"); }
   });
 }
 
@@ -7889,17 +8051,19 @@ function saveSentenceEntry() {
   const kr = document.getElementById("senEditKr").value.trim();
   if (!kr) { alert("請先輸入韓文句子"); return; }
   const zh = document.getElementById("senEditZh").value.trim();
+  const analysis = document.getElementById("senEditAnalysis").value.trim();
   const teacherNote = document.getElementById("senEditTeacherNote").value.trim();
   const tags = document.getElementById("senEditTags").value.split(",").map(t => t.trim()).filter(Boolean);
   const items = sentenceEditorWords.filter(w => w.kr.trim());
+  const grammar = sentenceEditorGrammar.filter(g => (g.pattern || g.phrase || g.meaning).trim());
 
   let s;
   if (sentenceEditingId) {
     s = sentenceEntries.find(x => x.id === sentenceEditingId);
-    if (s) Object.assign(s, { kr, zh, items, teacherNote, tags });
+    if (s) Object.assign(s, { kr, zh, analysis, items, grammar, teacherNote, tags });
   } else {
     s = {
-      id: uid(), kr, zh, items, teacherNote, tags, favorite: false, linkedFolderIdx: null,
+      id: uid(), kr, zh, analysis, items, grammar, teacherNote, tags, favorite: false, linkedFolderIdx: null,
       novelId: (sentenceEditorContext && sentenceEditorContext.novelId) || "",
       chapterId: (sentenceEditorContext && sentenceEditorContext.chapterId) || ""
     };
