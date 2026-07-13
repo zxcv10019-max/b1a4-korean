@@ -2512,6 +2512,15 @@ textarea {
 
 
 /* ===== 首頁：今日目標（狐狸陪伴） ===== */
+.today-task-list { display:flex; flex-direction:column; gap:8px; margin-top:8px; }
+.today-task-item {
+  display:flex; align-items:center; gap:10px;
+  background:#fff; border:1px solid var(--line); border-radius:12px;
+  padding:10px 14px; font-weight:800; color:#5c6e52; font-size:14px;
+}
+.today-task-item.done { color:#3f7a1f; background:#f4faed; border-color:#d7edb8; }
+.today-task-check { font-size:18px; }
+
 .fox-goal-line {
   display:flex; align-items:center; gap:8px;
   font-weight:1000; color:#3f5634; font-size:16px;
@@ -2603,58 +2612,34 @@ textarea {
       </div>
       <section id="home" class="page active">
 
-        <div class="quick-icons-row">
-          <div class="quick-icon-tile" onclick="goPage('flash')"><span class="qi-ico">📖</span>單字卡</div>
-          <div class="quick-icon-tile" onclick="goPage('grammar')"><span class="qi-ico">🌸</span>文法</div>
-          <div class="quick-icon-tile" onclick="goPage('sentence')"><span class="qi-ico">📝</span>短句</div>
-          <div class="quick-icon-tile" onclick="goBottomTab('lyrics')"><span class="qi-ico">🎵</span>歌詞</div>
-          <div class="quick-icon-tile" onclick="goPage('listen')"><span class="qi-ico">🎧</span>聽力</div>
-          <div class="quick-icon-tile" onclick="goPage('test')"><span class="qi-ico">📝</span>測驗</div>
-        </div>
+        <div class="today-quest-card">
+          <div class="quest-eyebrow">TODAY STUDY</div>
+          <div class="quest-title">영이 안녕！今天也一起加油 🌱</div>
+          <div id="todayReadingStatus" class="fox-goal-line" style="cursor:pointer;" onclick="goToLastRead()"><span>📖</span> 還沒開始閱讀</div>
+          <button type="button" class="primary cute-btn" style="width:100%;margin-top:8px;" onclick="goToLastRead()">▶ 開始閱讀</button>
 
-        <div class="home-quest-wrap">
-          <div class="today-quest-card">
-            <div class="quest-eyebrow">TODAY STUDY</div>
-            <div class="quest-title">영이 안녕！今天也一起加油 🌱</div>
-            <div class="fox-goal-line"><span>🦊</span> 今天完成目標了嗎？</div>
-            <div class="quest-meter"><span id="todayQuestBar"></span></div>
-            <div class="quest-goal-percent" id="todayQuestPercent">0%</div>
-            <div class="quest-row">
-              <div class="quest-mini">📖 今日學習<b id="questFlashToday">0</b><small>個</small></div>
-              <div class="quest-mini">📝 今日測驗<b id="questTestToday">0</b><small>題</small></div>
-              <div class="quest-mini">🎧 今日聽力<b id="questListenToday">0</b><small>次</small></div>
-              <div class="quest-mini">🔥 今日 XP<b id="questXpToday">+0</b></div>
-            </div>
-            <div class="btns" style="justify-content:space-between;align-items:center;margin-top:12px;">
-              <div class="home-note-pill" style="margin-top:0;">🔥 連續 <span id="questStreakDays">0</span> 天</div>
-              <button class="ghost" style="font-size:12px;padding:8px 14px;" onclick="clearAllPracticeData()">🗑 清除練習紀錄</button>
-            </div>
-          </div>
+          <div style="font-weight:1000;color:#4e8f24;margin-top:18px;">✅ 今日任務</div>
+          <div id="todayTaskChecklist" class="today-task-list"></div>
+          <div class="quest-meter" style="margin-top:10px;"><span id="todayQuestBar"></span></div>
+          <div class="quest-goal-percent" id="todayQuestPercent">0%</div>
 
-          <div class="forest-card">
-            <div class="forest-level"><span>🌳 我的學習森林</span><span id="forestLevel">Lv.0</span></div>
-            <div class="forest-stage mascot-forest" id="forestStage">🌱<br>🦊 🐻 🐥 🦖</div>
-            <div class="quest-sub" id="forestHint" style="margin:12px 0 0">完成學習任務後森林會開始長大。</div>
+          <div class="btns" style="justify-content:space-between;align-items:center;margin-top:12px;">
+            <div class="home-note-pill" style="margin-top:0;">🔥 連續 <span id="questStreakDays">0</span> 天</div>
+            <button class="ghost" style="font-size:12px;padding:8px 14px;" onclick="clearAllPracticeData()">🗑 清除練習紀錄</button>
           </div>
         </div>
 
-        <div class="home-design-grid" style="grid-template-columns:1fr;">
-          <div class="shortcut-card">
-            <div class="design-title">⚡ 快捷開始</div>
-            <div class="shortcut-grid">
-              <div class="shortcut-tile" onclick="goPage('flash')">▤ 單字卡</div>
-              <div class="shortcut-tile" onclick="goPage('test')">✎ 筆試</div>
-              <div class="shortcut-tile" onclick="goPage('match')">⌘ 配對</div>
-              <div class="shortcut-tile" onclick="goPage('listen')">🔊 聽力</div>
-            </div>
-          </div>
+        <div class="forest-card">
+          <div class="forest-level"><span>🌳 我的學習森林</span><span id="forestLevel">Lv.0</span></div>
+          <div class="forest-stage mascot-forest" id="forestStage">🌱<br>🦊 🐻 🐥 🦖</div>
+          <div class="quest-sub" id="forestHint" style="margin:12px 0 0">完成學習任務後森林會開始長大。</div>
         </div>
 
         <div class="home-design-grid" style="grid-template-columns:1fr;">
           <div class="daily-card" id="recentSongCard">
-            <div class="design-title">🎵 最近學習的歌曲</div>
+            <div class="design-title">⭐ 最近閱讀</div>
             <div id="recentSongBody" style="text-align:left;">
-              <div class="empty" style="padding:20px 0;">去「歌詞讀本」建立第一首歌吧！</div>
+              <div class="empty" style="padding:20px 0;">去「📖閱讀」建立第一本小說或一首歌吧！</div>
             </div>
           </div>
         </div>
@@ -2843,9 +2828,56 @@ textarea {
         </div>
       </section>
 
+      <section id="readingHub" class="page">
+        <div class="topbar"><h2>📖 閱讀</h2></div>
+        <div class="quick-icons-row" style="grid-template-columns:repeat(3,1fr);">
+          <div class="quick-icon-tile" onclick="goPage('reading')"><span class="qi-ico">📚</span>小說</div>
+          <div class="quick-icon-tile" onclick="goPage('lyrics')"><span class="qi-ico">🎵</span>歌詞</div>
+          <div class="quick-icon-tile" onclick="goPage('sentence')"><span class="qi-ico">📝</span>短句</div>
+        </div>
+      </section>
+
+      <section id="practiceHub" class="page">
+        <div class="topbar"><h2>🎴 練習</h2></div>
+        <div class="quick-icons-row" style="grid-template-columns:repeat(2,1fr);">
+          <div class="quick-icon-tile" onclick="goPage('flash')"><span class="qi-ico">🎴</span>單字卡</div>
+          <div class="quick-icon-tile" onclick="goPage('test')"><span class="qi-ico">📝</span>測驗</div>
+          <div class="quick-icon-tile" onclick="goPage('match')"><span class="qi-ico">🎮</span>配對</div>
+          <div class="quick-icon-tile" onclick="goPage('listen')"><span class="qi-ico">🎧</span>聽力</div>
+        </div>
+      </section>
+
+      <section id="libraryHub" class="page">
+        <div class="topbar"><h2>📚 題庫</h2></div>
+        <div class="quick-icons-row" style="grid-template-columns:repeat(2,1fr);">
+          <div class="quick-icon-tile" onclick="goPage('library')"><span class="qi-ico">📁</span>我的題庫</div>
+          <div class="quick-icon-tile" onclick="goPage('grammar')"><span class="qi-ico">🌸</span>文法</div>
+        </div>
+      </section>
+
+      <section id="aiHub" class="page">
+        <div class="topbar">
+          <button class="ghost" onclick="goPage('profile')">‹ 返回我的</button>
+          <h2>🤖 AI 助手</h2>
+        </div>
+        <div class="quick-icons-row" style="grid-template-columns:repeat(2,1fr);">
+          <div class="quick-icon-tile" onclick="goPage('flash')"><span class="qi-ico">🎴</span>解析單字<br><small style="font-weight:700;">（單字卡）</small></div>
+          <div class="quick-icon-tile" onclick="goPage('sentence')"><span class="qi-ico">📝</span>解析句子</div>
+          <div class="quick-icon-tile" onclick="goPage('reading')"><span class="qi-ico">📚</span>解析小說</div>
+          <div class="quick-icon-tile" onclick="goPage('lyrics')"><span class="qi-ico">🎵</span>解析歌詞</div>
+          <div class="quick-icon-tile" onclick="goPage('grammar')"><span class="qi-ico">🌸</span>文法解釋</div>
+        </div>
+        <div class="card" style="padding:20px;margin-top:16px;">
+          <label style="font-weight:900;color:#4e8f24;">💬 問 AI 任何韓文問題</label>
+          <textarea id="aiHubQuestion" rows="3" placeholder="例如：왜 인간적인 不能直接翻成「像人」？" style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;margin-top:8px;"></textarea>
+          <button type="button" class="primary cute-btn" style="width:100%;margin-top:10px;" onclick="askAiHub(this)">✨ 詢問 AI</button>
+          <div id="aiHubAnswerWrap" style="margin-top:14px;"></div>
+        </div>
+      </section>
+
       <section id="flash" class="page">
         <div class="topbar">
-          <button class="ghost" onclick="goPage('library')">‹ 返回題庫</button>
+          <button class="ghost" onclick="goPage('practiceHub')">‹ 返回練習</button>
           <select id="flashSelect" onchange="selectFromDropdown(this.value)"></select>
           <div id="flashSeenBox" class="flash-seen-box"></div>
 <span id="flashInfo" class="soft" style="padding:8px 14px;border-radius:999px;font-weight:900;">0 / 0</span>
@@ -2878,7 +2910,7 @@ textarea {
 
       <section id="test" class="page">
         <div class="topbar">
-          <button class="ghost" onclick="goPage('library')">‹ 返回題庫</button>
+          <button class="ghost" onclick="goPage('practiceHub')">‹ 返回練習</button>
           <select id="testSelect" onchange="selectFromDropdown(this.value)"></select>
           <span id="score" class="score"></span>
         </div>
@@ -2914,7 +2946,7 @@ textarea {
 
       <section id="listen" class="page">
         <div class="topbar">
-          <button class="ghost" onclick="goPage('library')">‹ 返回題庫</button>
+          <button class="ghost" onclick="goPage('practiceHub')">‹ 返回練習</button>
           <select id="listenSelect" onchange="selectFromDropdown(this.value)"></select>
           <span id="listenScore" class="score"></span>
         </div>
@@ -2995,7 +3027,7 @@ textarea {
 
       <section id="match" class="page">
         <div class="topbar">
-          <button class="ghost" onclick="goPage('library')">‹ 返回題庫</button>
+          <button class="ghost" onclick="goPage('practiceHub')">‹ 返回練習</button>
           <select id="matchSelect" onchange="selectFromDropdown(this.value)"></select>
           <span id="matchScore" class="score"></span>
         </div>
@@ -3061,6 +3093,14 @@ textarea {
       <section id="profile" class="page profile-page">
         <div class="topbar">
           <h2>👤 我的</h2>
+        </div>
+
+        <div class="card" style="padding:18px 22px;margin-bottom:18px;cursor:pointer;" onclick="goPage('aiHub')">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-weight:1000;font-size:16px;color:#20351f;">🤖 AI 助手</div>
+            <span style="color:#83b842;font-weight:900;">進入 ›</span>
+          </div>
+          <div style="font-size:13px;color:var(--muted);font-weight:700;margin-top:4px;">解析單字／句子／小說／歌詞、文法解釋、自由問答</div>
         </div>
 
 
@@ -3205,9 +3245,9 @@ textarea {
 
   <nav class="bottom-nav">
     <button data-tab="home" class="active" onclick="goBottomTab('home')"><span class="bn-ico">🏠</span>首頁</button>
-    <button data-tab="vocab" onclick="goBottomTab('vocab')"><span class="bn-ico">📖</span>學習</button>
-    <button data-tab="lyrics" onclick="goBottomTab('lyrics')"><span class="bn-ico">🎵</span>歌詞</button>
-    <button data-tab="test" onclick="goBottomTab('test')"><span class="bn-ico">📝</span>測驗</button>
+    <button data-tab="readingHub" onclick="goBottomTab('readingHub')"><span class="bn-ico">📖</span>閱讀</button>
+    <button data-tab="practiceHub" onclick="goBottomTab('practiceHub')"><span class="bn-ico">🎴</span>練習</button>
+    <button data-tab="libraryHub" onclick="goBottomTab('libraryHub')"><span class="bn-ico">📚</span>題庫</button>
     <button data-tab="profile" onclick="goBottomTab('profile')"><span class="bn-ico">👤</span>我的</button>
   </nav>
 </div>
@@ -4051,7 +4091,14 @@ function esc(s) { return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;
 function norm(v) { return String(v||"").trim().toLowerCase().replace(/[，。！？、,.!?]/g,"").replace(/\s+/g," "); }
 function today() { return new Date().toISOString().slice(0,10).replaceAll("-","/"); }
 
-const BOTTOM_TAB_MAP = { home:"home", library:"vocab", flash:"vocab", match:"vocab", listen:"vocab", grammar:"vocab", sentence:"vocab", reading:"vocab", test:"test", lyrics:"lyrics", profile:"profile" };
+const BOTTOM_TAB_MAP = {
+  home:"home",
+  readingHub:"readingHub", reading:"readingHub", lyrics:"readingHub", sentence:"readingHub",
+  practiceHub:"practiceHub", flash:"practiceHub", test:"practiceHub", match:"practiceHub", listen:"practiceHub",
+  libraryHub:"libraryHub", library:"libraryHub", grammar:"libraryHub",
+  aiHub:"profile",
+  profile:"profile"
+};
 const VOCAB_PAGES = ["library","flash","grammar","sentence","reading","match","listen"];
 
 function updateBottomNav(id) {
@@ -4061,19 +4108,15 @@ function updateBottomNav(id) {
   if (activeBtn) activeBtn.classList.add("active");
 
   const subnav = document.getElementById("vocabSubnav");
-  if (subnav) {
-    subnav.style.display = VOCAB_PAGES.includes(id) ? "flex" : "none";
-    subnav.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.page === id));
-  }
+  if (subnav) subnav.style.display = "none";
 }
 
 function goBottomTab(tab) {
   if (tab === "home") return goPage("home");
-  if (tab === "vocab") return goPage(VOCAB_PAGES.includes(current_vocab_page) ? current_vocab_page : "flash");
-  if (tab === "grammar") return goPage("grammar");
-  if (tab === "sentence") return goPage("sentence");
-  if (tab === "lyrics") return goPage("lyrics");
-  if (tab === "test") return goPage("test");
+  if (tab === "readingHub") return goPage("readingHub");
+  if (tab === "practiceHub") return goPage("practiceHub");
+  if (tab === "libraryHub") return goPage("libraryHub");
+  if (tab === "aiHub") return goPage("aiHub");
   if (tab === "profile") return goPage("profile");
 }
 let current_vocab_page = "flash";
@@ -4337,20 +4380,44 @@ function renderHomeQuestDesign(){
     const todayFlash = t.flash || 0;
     const todayTest = t.test || 0;
     const todayListen = t.listen || 0;
-    const todayLyrics = t.lyrics || 0;
     const todayMatch = t.match || 0;
-    const todayTotal = dayTotal(t);
-    const todayXp = todayTotal * 5;
-    const percent = Math.min(100, Math.round((todayTotal / DAILY_GOAL_UNITS) * 100));
+    const todayReading = (t.lyrics || 0) + (t.sentence || 0) + (t.reading || 0) + (t.grammar || 0);
+
+    const tasks = [
+      { key:"reading", label:"📖 閱讀", done: todayReading > 0 },
+      { key:"flash", label:"🎴 單字卡", done: todayFlash > 0 },
+      { key:"test", label:"📝 測驗", done: todayTest > 0 },
+      { key:"match", label:"🎮 配對", done: todayMatch > 0 },
+      { key:"listen", label:"🎧 聽力", done: todayListen > 0 }
+    ];
+    const doneCount = tasks.filter(x => x.done).length;
+    const percent = Math.round((doneCount / tasks.length) * 100);
+
+    const checklist = document.getElementById("todayTaskChecklist");
+    if (checklist) {
+      checklist.innerHTML = tasks.map(x => `
+        <div class="today-task-item ${x.done ? "done" : ""}">
+          <span class="today-task-check">${x.done ? "☑" : "☐"}</span>
+          <span>${x.label}</span>
+        </div>`).join("");
+    }
 
     const bar = document.getElementById('todayQuestBar');
     if(bar) bar.style.width = percent + '%';
-    setText('todayQuestPercent', percent + '%');
-    setText('questFlashToday', todayFlash);
-    setText('questTestToday', todayTest);
-    setText('questListenToday', todayListen);
-    setText('questXpToday', '+' + todayXp);
+    setText('todayQuestPercent', `今日完成度 ${percent}%（${doneCount}/${tasks.length}）`);
     setText('questStreakDays', computeCurrentStreak());
+
+    // 今天閱讀狀態
+    const readingStatusEl = document.getElementById("todayReadingStatus");
+    if (readingStatusEl) {
+      const lastNovel = (typeof novels !== "undefined" ? novels : []).find(n => n.lastReadChapterId);
+      if (lastNovel) {
+        const ch = novelChapters.find(c => c.id === lastNovel.lastReadChapterId);
+        readingStatusEl.innerHTML = `<span>📖</span> 上次閱讀：${esc(lastNovel.title)}${ch ? " · " + esc(ch.title) : ""}`;
+      } else {
+        readingStatusEl.innerHTML = `<span>📖</span> 還沒開始閱讀，點下面開始第一本小說吧！`;
+      }
+    }
 
     let level = Math.max(1, Math.floor(totalCards / 50) + 1);
     if(totalPractice >= 30) level += 1;
@@ -4380,7 +4447,7 @@ function renderHomeQuestDesign(){
 
     const heat = document.getElementById('studyHeatmap');
     if(heat){
-      const filled = Math.min(14, Math.ceil((percent/100)*14) || (todayTotal ? Math.min(14,todayTotal) : 0));
+      const filled = Math.min(14, Math.ceil((percent/100)*14));
       heat.innerHTML = Array.from({length:14},(_,i)=>`<div class="heat-cell ${i<filled?'on':''}"></div>`).join('');
     }
 
@@ -5625,7 +5692,7 @@ function finishSingleTest() {
       <div style="font-size:15px;color:var(--muted);font-weight:800;margin-bottom:14px;">正確 ${correctCount} ／ ${total} 題</div>
       <div class="btns" style="justify-content:center;">
         <button type="button" class="primary" onclick="makeTest()">🔁 重新測驗</button>
-        <button type="button" class="ghost" onclick="goPage('library')">‹ 返回題庫</button>
+        <button type="button" class="ghost" onclick="goPage('practiceHub')">‹ 返回練習</button>
       </div>
     </div>
     ${wrongItems.length ? `<div class="questions-grid" id="questionsGrid" style="margin-top:18px;"></div>` : ""}
@@ -7066,6 +7133,17 @@ function openChapter(chapterId) {
   document.getElementById("chapterReadingView").style.display = "block";
   document.getElementById("chapterReadingTitle").textContent = "📃 " + c.title;
   renderChapterReading();
+  if (typeof logActivity === "function") logActivity("reading", 3);
+}
+function goToLastRead() {
+  const lastNovel = novels.find(n => n.lastReadChapterId);
+  if (lastNovel) {
+    currentNovelId = lastNovel.id;
+    goPage("reading");
+    openChapter(lastNovel.lastReadChapterId);
+  } else {
+    goPage("readingHub");
+  }
 }
 function closeChapterView() {
   currentChapterId = null;
@@ -7603,6 +7681,24 @@ async function runAiAssist(btnEl, prompt, applyFn) {
   }
 }
 
+function askAiHub(btnEl) {
+  const q = (document.getElementById("aiHubQuestion")?.value || "").trim();
+  if (!q) { alert("請先輸入你想問的問題"); return; }
+  const prompt = `你是一個親切的韓文老師，請用簡短好懂的中文回答學生的問題，適合初中級韓文學習者。
+
+學生的問題：
+${q}
+
+規則：
+1. 中文回答，簡短清楚，不要長篇大論。
+2. 不要使用 Markdown。
+3. 可以適度舉一兩個簡單例子，但不用太多。`;
+  runAiAssist(btnEl, prompt, (val) => {
+    const wrap = document.getElementById("aiHubAnswerWrap");
+    if (wrap) wrap.innerHTML = `<div class="sen-teacher-note">${esc(val).replace(/\n/g,"<br>")}</div>`;
+  });
+}
+
 function aiAssistAllSentenceWords(btnEl) {
   const words = sentenceEditorWords.filter(w => w.kr.trim());
   if (!words.length) { alert("請先新增至少一個單字（可以先按「🔍字典拆解」或「✨AI拆解」）"); return; }
@@ -7783,6 +7879,7 @@ function saveSentenceEntry() {
     sentenceEntries.push(s);
   }
   saveSentenceEntries();
+  if (typeof logActivity === "function") logActivity(sentenceEditorContext && sentenceEditorContext.chapterId ? "reading" : "sentence", 2);
   closeSentenceEditor();
   if (sentenceEditorContext && sentenceEditorContext.chapterId) {
     if (typeof renderChapterReading === "function") renderChapterReading();
