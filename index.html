@@ -3606,6 +3606,8 @@ setTimeout(()=>{try{renderFlashSeenBox();renderFolderStatsPanel();renderStudyUpg
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-functions-compat.js"></script>
+<script src="js/ai.js"></script>
 <script>
 let flashSeenData = JSON.parse(localStorage.getItem("b1a4FlashSeenData") || "{}");
 // ===== Firebase 雲端同步設定 =====
@@ -7768,9 +7770,12 @@ function copyAiPromptText() {
     try { document.execCommand("copy"); } catch (e) {}
   }
 }
-/* ===== 🔮 Gemini 直接串接：由後面新增的 module 腳本覆寫成真正的呼叫方式，這裡是連線失敗時的備援 ===== */
+/* ===== OpenAI 安全串接：實際連線程式放在 js/ai.js ===== */
 async function callGeminiAI(prompt) {
-  throw new Error("Gemini 尚未就緒");
+  if (!window.BanaAI || typeof window.BanaAI.ask !== "function") {
+    throw new Error("BANA Forest AI 尚未就緒");
+  }
+  return window.BanaAI.ask(prompt);
 }
 async function runAiAssist(btnEl, prompt, applyFn) {
   const originalText = btnEl ? btnEl.textContent : "";
@@ -7780,7 +7785,7 @@ async function runAiAssist(btnEl, prompt, applyFn) {
     applyFn(result);
     if (typeof showSaveToast === "function") showSaveToast();
   } catch (e) {
-    // Gemini 還沒接上或呼叫失敗 → 退回複製貼上模式
+    // OpenAI 尚未接上或呼叫失敗 → 退回複製貼上模式
     openAiPromptModal(prompt, applyFn);
   } finally {
     if (btnEl) { btnEl.disabled = false; btnEl.textContent = originalText; }
@@ -8740,32 +8745,5 @@ if ("serviceWorker" in navigator) {
 }
 </script>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-  import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-ai.js";
-
-  try {
-    const firebaseConfig = {
-      apiKey: "AIzaSyCX897x7c1-va19xeQajWr97gK_eY4w_ys",
-      authDomain: "b1a4-cc0af.firebaseapp.com",
-      projectId: "b1a4-cc0af",
-      storageBucket: "b1a4-cc0af.firebasestorage.app",
-      messagingSenderId: "1010872861745",
-      appId: "1:1010872861745:web:9bb41e47d8ef06921d0110",
-      measurementId: "G-01H07Z4RGW"
-    };
-    const aiApp = initializeApp(firebaseConfig, "geminiApp");
-    const ai = getAI(aiApp, { backend: new GoogleAIBackend() });
-    const model = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
-
-    window.callGeminiAI = async function (prompt) {
-      const result = await model.generateContent(prompt);
-      return result.response.text();
-    };
-    console.log("✅ Gemini AI (Firebase AI Logic) 已就緒");
-  } catch (e) {
-    console.warn("Gemini AI 初始化失敗，會自動退回複製貼上模式：", e);
-  }
-</script>
 </body>
 </html>
