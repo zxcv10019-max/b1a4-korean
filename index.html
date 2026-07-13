@@ -2790,9 +2790,12 @@ textarea {
               </div>
             </div>
 
-            <label style="display:flex;justify-content:space-between;align-items:center;">
+            <label style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
               <span>🌿 單字花園（<span id="gardenCount">0</span>）</span>
-              <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="toggleBatchPaste()" id="batchPasteToggleBtn">📋 批次貼上</button>
+              <span class="btns" style="margin:0;">
+                <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="aiCheckFolderTypos(this)">✨ AI檢查錯字</button>
+                <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="toggleBatchPaste()" id="batchPasteToggleBtn">📋 批次貼上</button>
+              </span>
             </label>
 
             <div id="cardEditorWrap">
@@ -4640,6 +4643,102 @@ function serializeEditorCards() {
   if (rawEl) rawEl.value = text;
   updateEditorCountLabels();
   return text;
+}
+
+/* ===== ✨ AI 檢查韓文錯字 ===== */
+let typoCheckItems = [];
+function ensureTypoCheckModal() {
+  if (document.getElementById("typoCheckMask")) return;
+  const modal = document.createElement("div");
+  modal.id = "typoCheckMask";
+  modal.className = "hero-modal-mask";
+  modal.innerHTML = `
+    <div class="hero-modal" style="width:min(600px,100%);max-height:85vh;overflow:auto;">
+      <div class="hero-modal-head">
+        <div class="hero-modal-title">✨ AI 錯字檢查結果</div>
+        <button class="hero-modal-close" type="button" onclick="closeTypoCheckModal()">關閉</button>
+      </div>
+      <div id="typoCheckResultsWrap"></div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+function closeTypoCheckModal() {
+  const m = document.getElementById("typoCheckMask");
+  if (m) m.classList.remove("show");
+}
+function aiCheckFolderTypos(btnEl) {
+  const items = editorCards
+    .map((c, i) => ({ index: i, term: c.term.trim(), definition: c.definition.trim() }))
+    .filter(x => x.term);
+  if (!items.length) { alert("這個題庫還沒有任何單字"); return; }
+  const text = `請幫我檢查以下韓文單字有沒有拼字或打字錯誤（例如錯誤的收尾子音、母音打錯、缺字、多字、或不存在的韓文字），並只輸出有效 JSON 陣列，不要輸出 Markdown、程式碼框、標題或其他文字。
+
+單字清單：
+${JSON.stringify(items.map(x => ({ index: x.index, kr: x.term, zh: x.definition })), null, 2)}
+
+請只列出「你有把握是打錯字」的項目，格式：
+[
+  { "index": 0, "issue": "簡短說明錯在哪裡", "suggestion": "建議的正確韓文" }
+]
+
+規則：
+1. 只列真正像是打錯字的（母音錯、收尾子音錯、缺字、多字），不要列「可能有更道地的說法」這種風格建議。
+2. 如果全部都沒問題，回傳空陣列 []。
+3. 不要幫忙翻譯或解釋意思，只專注在「這個韓文字本身打得對不對」。`;
+
+  runAiAssist(btnEl, text, (val) => {
+    try {
+      const result = parseAiJson(val);
+      if (!Array.isArray(result)) throw new Error("回覆不是陣列");
+      typoCheckItems = result.map(r => {
+        const idx = Number(r.index);
+        const orig = items.find(x => x.index === idx);
+        if (!orig || !editorCards[orig.index]) return null;
+        return {
+          cardId: editorCards[orig.index].id,
+          original: orig.term,
+          issue: String(r.issue || "").trim(),
+          suggestion: String(r.suggestion || "").trim()
+        };
+      }).filter(Boolean);
+      renderTypoCheckResults();
+    } catch (error) {
+      console.error("AI 錯字檢查 JSON 錯誤：", error, val);
+      alert("AI 回覆格式無法解析，請再按一次「AI檢查錯字」。");
+    }
+  });
+}
+function renderTypoCheckResults() {
+  ensureTypoCheckModal();
+  const wrap = document.getElementById("typoCheckResultsWrap");
+  if (!typoCheckItems.length) {
+    wrap.innerHTML = `<div class="empty" style="padding:20px 0;">🎉 沒有發現明顯的錯字！</div>`;
+  } else {
+    wrap.innerHTML = typoCheckItems.map((item, i) => `
+      <div class="sen-grammar-card" style="margin-bottom:10px;">
+        <div style="font-weight:900;">${esc(item.original)} → <span style="color:#3f7a1f;">${esc(item.suggestion)}</span></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px;">${esc(item.issue)}</div>
+        <div class="btns" style="margin-top:8px;">
+          <button type="button" class="primary cute-btn" style="font-size:12px;padding:6px 12px;" onclick="applyTypoFix(${i})">✅ 套用修正</button>
+          <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="dismissTypoFix(${i})">忽略</button>
+        </div>
+      </div>`).join("");
+  }
+  document.getElementById("typoCheckMask").classList.add("show");
+}
+function applyTypoFix(i) {
+  const item = typoCheckItems[i];
+  if (!item) return;
+  const card = editorCards.find(c => c.id === item.cardId);
+  if (card) card.term = item.suggestion;
+  typoCheckItems.splice(i, 1);
+  renderCardEditor();
+  serializeEditorCards();
+  renderTypoCheckResults();
+}
+function dismissTypoFix(i) {
+  typoCheckItems.splice(i, 1);
+  renderTypoCheckResults();
 }
 
 const EDITOR_PREVIEW_LIMIT = 8;
