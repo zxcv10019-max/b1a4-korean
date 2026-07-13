@@ -2441,52 +2441,11 @@ textarea {
 .sen-grammar-explain { font-size:13px; color:#3f5634; font-weight:700; margin-top:8px; }
 .sen-grammar-card .gram-example { margin-top:8px; }
 
-.sen-word-edit-card {
-  background:#fff;
-  border:2px solid var(--line);
-  border-radius:16px;
-  padding:14px;
-  margin-bottom:12px;
+.sen-word-edit-row {
+  display:grid; grid-template-columns:1fr 1fr 1fr 1fr auto auto;
+  gap:6px; align-items:center; margin-bottom:8px;
 }
-.sen-word-edit-toprow {
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-  margin-bottom:10px;
-}
-.sen-word-edit-label {
-  display:block;
-  font-size:11px;
-  font-weight:900;
-  color:#9b7a3f;
-  margin-bottom:4px;
-}
-.sen-word-edit-label-row {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin:10px 0 4px;
-}
-.sen-word-edit-inline-btn { display:flex; gap:6px; margin-bottom:10px; }
-.sen-word-edit-inline-btn input { flex:1; min-width:0; }
-.sen-word-edit-card input, .sen-word-edit-card textarea {
-  width:100%;
-  box-sizing:border-box;
-  border:2px solid var(--line);
-  border-radius:10px;
-  padding:9px 10px;
-  font-size:13px;
-  font-family:inherit;
-}
-.sen-word-edit-card textarea { resize:vertical; }
-.sen-word-edit-bottomrow {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-top:10px;
-  padding-top:10px;
-  border-top:1px dashed var(--line);
-}
+.sen-word-edit-row input { border:2px solid var(--line); border-radius:10px; padding:8px; font-size:13px; }
 .sen-vocab-check { display:flex; align-items:center; gap:4px; font-size:11px; font-weight:900; color:#4e8f24; white-space:nowrap; }
 .sen-vocab-check-inline {
   display:flex;
@@ -2500,8 +2459,8 @@ textarea {
   flex:0 0 auto;
 }
 .sen-vocab-check-inline input { flex:0 0 auto; margin:0; }
-@media (max-width:480px) {
-  .sen-word-edit-toprow { grid-template-columns:1fr; }
+@media (max-width:720px) {
+  .sen-word-edit-row { grid-template-columns:1fr 1fr; }
 }
 
 .sen-grammar-edit-row { background:#f6fff0; border:1px solid #d7edb8; border-radius:14px; padding:12px; margin-bottom:10px; }
@@ -3149,18 +3108,6 @@ textarea {
             <span style="color:#83b842;font-weight:900;">進入 ›</span>
           </div>
           <div style="font-size:13px;color:var(--muted);font-weight:700;margin-top:4px;">解析單字／句子／小說／歌詞、文法解釋、自由問答</div>
-        </div>
-
-        <div class="card" style="padding:22px;margin-bottom:18px;">
-          <div class="account-title">🔑 OpenAI API 金鑰</div>
-          <div style="font-size:13px;color:#a94442;font-weight:800;background:#fff3f3;border:1px solid #f0c9c9;border-radius:12px;padding:10px 14px;margin:10px 0;">
-            ⚠️ 安全提醒：這個金鑰只會存在「這台裝置的瀏覽器」裡（localStorage），不會被存進網站的原始碼或雲端同步。但因為這個網站是公開放在 GitHub Pages 上的，任何懂技術的人理論上都可能想辦法從瀏覽器端截取到你正在使用中的金鑰。強烈建議：<br>
-            1. 只在 OpenAI 後台設定「用量上限」（例如每月 $5 美元），避免被盜用後產生大筆費用<br>
-            2. 不要把這個金鑰用在其他重要帳號共用<br>
-            3. 如果覺得不放心，也可以定期到 OpenAI 後台重新產生新金鑰
-          </div>
-          <input id="openAiKeyInput" type="password" placeholder="貼上你的 OpenAI API 金鑰 (sk-...)" class="cute-input" style="margin-bottom:10px;">
-          <button type="button" class="primary cute-btn" style="width:100%;" onclick="saveOpenAiKeyFromInput()">💾 儲存金鑰</button>
         </div>
 
 
@@ -7689,34 +7636,22 @@ function renderSentenceEditorWordRows() {
     return;
   }
   wrap.innerHTML = sentenceEditorWords.map((w, i) => `
-    <div class="sen-word-edit-card">
-      <div class="sen-word-edit-toprow">
-        <div>
-          <label class="sen-word-edit-label">韓文</label>
-          <input type="text" placeholder="韓文" value="${escapeAttr(w.kr)}" oninput="sentenceEditorWords[${i}].kr=this.value">
+    <div class="sen-word-edit-row">
+      <input type="text" placeholder="韓文" value="${escapeAttr(w.kr)}" oninput="sentenceEditorWords[${i}].kr=this.value">
+      <input type="text" placeholder="中文" value="${escapeAttr(w.zh||"")}" oninput="sentenceEditorWords[${i}].zh=this.value">
+      <div style="display:flex;gap:6px;">
+        <input type="text" placeholder="原形(選填)" value="${escapeAttr(w.root||"")}" oninput="sentenceEditorWords[${i}].root=this.value" style="flex:1;min-width:0;">
+        <button type="button" class="ghost" style="white-space:nowrap;font-size:12px;padding:6px 10px;" onclick="guessSentenceWordRoot(${i})">✨ 推測原形</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <label style="font-size:12px;font-weight:900;color:#9b7a3f;">✨ AI解析（選填）</label>
+          <button type="button" class="ghost" style="white-space:nowrap;font-size:12px;padding:6px 10px;" onclick="aiAssistSentenceWordNote(${i}, this)">✨ AI解析</button>
         </div>
-        <div>
-          <label class="sen-word-edit-label">中文</label>
-          <input type="text" placeholder="中文" value="${escapeAttr(w.zh||"")}" oninput="sentenceEditorWords[${i}].zh=this.value">
-        </div>
+        <textarea placeholder="例如貼上 AI 解析結果…&#10;= 인간 + 적 + 인&#10;-적 表示「具有……性」" rows="3" oninput="sentenceEditorWords[${i}].note=this.value" style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:12px;padding:8px 10px;font-size:13px;font-family:inherit;resize:vertical;">${esc(w.note||"")}</textarea>
       </div>
-
-      <label class="sen-word-edit-label">原形（選填）</label>
-      <div class="sen-word-edit-inline-btn">
-        <input type="text" placeholder="原形" value="${escapeAttr(w.root||"")}" oninput="sentenceEditorWords[${i}].root=this.value">
-        <button type="button" class="ghost" onclick="guessSentenceWordRoot(${i})">✨ 推測原形</button>
-      </div>
-
-      <div class="sen-word-edit-label-row">
-        <label class="sen-word-edit-label" style="margin:0;">✨ AI解析（選填）</label>
-        <button type="button" class="ghost" onclick="aiAssistSentenceWordNote(${i}, this)">✨ AI解析</button>
-      </div>
-      <textarea placeholder="例如貼上 AI 解析結果…&#10;= 인간 + 적 + 인&#10;-적 表示「具有……性」" rows="3" oninput="sentenceEditorWords[${i}].note=this.value">${esc(w.note||"")}</textarea>
-
-      <div class="sen-word-edit-bottomrow">
-        <label class="sen-vocab-check"><input type="checkbox" ${w.addToVocab!==false?"checked":""} onchange="sentenceEditorWords[${i}].addToVocab=this.checked">☑加入單字卡</label>
-        <button type="button" class="wc-del" onclick="removeSentenceEditorWordRow(${i})">❌ 刪除</button>
-      </div>
+      <label class="sen-vocab-check"><input type="checkbox" ${w.addToVocab!==false?"checked":""} onchange="sentenceEditorWords[${i}].addToVocab=this.checked">☑加入單字卡</label>
+      <button type="button" class="wc-del" onclick="removeSentenceEditorWordRow(${i})">❌</button>
     </div>`).join("");
 }
 
@@ -7777,12 +7712,7 @@ function guessKoreanRootForm(word) {
 function guessSentenceWordRoot(i) {
   const w = sentenceEditorWords[i];
   if (!w || !w.kr.trim()) { alert("請先輸入韓文"); return; }
-  const guessed = guessKoreanRootForm(w.kr);
-  if (!guessed || guessed === w.kr) {
-    alert(`「${w.kr}」本身就是字典形，不需要另外填原形。`);
-    return;
-  }
-  w.root = guessed;
+  w.root = guessKoreanRootForm(w.kr);
   renderSentenceEditorWordRows();
 }
 
@@ -7838,63 +7768,22 @@ function copyAiPromptText() {
     try { document.execCommand("copy"); } catch (e) {}
   }
 }
-/* ===== 🤖 OpenAI 直接串接 ===== */
-const OPENAI_KEY_STORAGE = "b1a4OpenAiKey";
-function getOpenAiKey() { return localStorage.getItem(OPENAI_KEY_STORAGE) || ""; }
-function saveOpenAiKeyFromInput() {
-  const el = document.getElementById("openAiKeyInput");
-  if (!el) return;
-  localStorage.setItem(OPENAI_KEY_STORAGE, el.value.trim());
-  el.value = getOpenAiKey() ? "••••••••••••••••" : "";
-  el.type = "password";
-  alert(getOpenAiKey() ? "已儲存 API 金鑰（只存在這台裝置上）" : "已清除 API 金鑰");
-}
-async function callAI(prompt) {
-  const key = getOpenAiKey();
-  if (!key) throw new Error("尚未設定 OpenAI API 金鑰，請到「我的」頁面設定");
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
-    body: JSON.stringify({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.3
-    })
-  });
-  if (!res.ok) {
-    let msg = res.status;
-    try { const j = await res.json(); msg = (j.error && j.error.message) || res.status; } catch (e) {}
-    throw new Error("OpenAI 錯誤：" + msg);
-  }
-  const data = await res.json();
-  return (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "";
-}
-function parseAiJson(text) {
-  let cleaned = String(text || "").trim();
-  cleaned = cleaned.replace(/^```json\s*/i, "").replace(/^```\s*/, "").replace(/```\s*$/, "").trim();
-  const start = cleaned.indexOf("{");
-  const end = cleaned.lastIndexOf("}");
-  if (start !== -1 && end !== -1) cleaned = cleaned.slice(start, end + 1);
-  return JSON.parse(cleaned);
+/* ===== 🔮 Gemini 直接串接：由後面新增的 module 腳本覆寫成真正的呼叫方式，這裡是連線失敗時的備援 ===== */
+async function callGeminiAI(prompt) {
+  throw new Error("Gemini 尚未就緒");
 }
 async function runAiAssist(btnEl, prompt, applyFn) {
   const originalText = btnEl ? btnEl.textContent : "";
-  if (btnEl) { btnEl.disabled = true; btnEl.textContent = "⏳ AI 分析中..."; }
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = "⏳ AI分析中..."; }
   try {
-    const result = await callAI(prompt);
+    const result = await callGeminiAI(prompt);
     applyFn(result);
-    if (btnEl) { btnEl.textContent = "✅ 已完成解析"; setTimeout(() => { if (btnEl) btnEl.textContent = originalText; }, 1500); }
     if (typeof showSaveToast === "function") showSaveToast();
   } catch (e) {
-    console.warn("AI 呼叫失敗：", e);
-    if (btnEl) { btnEl.textContent = "❌ 解析失敗，請再試一次"; setTimeout(() => { if (btnEl) btnEl.textContent = originalText; }, 2000); }
-    if (!getOpenAiKey()) {
-      openAiPromptModal(prompt, applyFn);
-    } else {
-      alert("AI 呼叫失敗：" + (e.message || e));
-    }
+    // Gemini 還沒接上或呼叫失敗 → 退回複製貼上模式
+    openAiPromptModal(prompt, applyFn);
   } finally {
-    if (btnEl) btnEl.disabled = false;
+    if (btnEl) { btnEl.disabled = false; btnEl.textContent = originalText; }
   }
 }
 
@@ -7974,7 +7863,7 @@ JSON格式：
 {
   "translation":"自然的繁體中文翻譯",
   "analysis":"3～5行整句解析，每行以•開頭，不逐字解析",
-  "words":[{"kr":"句中形式或有意義語塊","zh":"中文翻譯","root":"原形，沒有則空白","note":"完整單字解析，最後一定有因此："}],
+  "words":[{"kr":"句中形式或有意義語塊","zh":"中文翻譯","root":"原形，沒有則空白","note":"完整單字解析（見下方note規則）"}],
   "grammar":[{"pattern":"完整文法形式","meaning":"中文意思","phrase":"句中實際語塊","note":"簡短用法解析"}]
 }
 
@@ -7982,7 +7871,13 @@ JSON格式：
 1. 單字與文法分開。
 2. 不依空格硬拆；助詞可與名詞一起，完整文法語塊不要拆散。
 3. words只放有學習價值的單字或詞組。
-4. 單字note先說詞類/構詞，有原形則說明；漢字詞或派生詞有價值才拆；最後固定以「因此：」結尾。
+4. 單字note請照這個結構寫（純文字、不要標題符號，可換行分段，不要重複翻譯或原形）：
+   a. 判斷單字類型（一般單字／活用形／漢字詞／派生詞／構詞／助詞），一句話說明。
+   b. 若能拆解構成（漢字詞、派生詞、構詞），拆解並簡短說明每個部分意思；不能可靠拆解就略過。
+   c. 補充2～4個學習重點：正式程度、使用情境、容易混淆的相似字、常見搭配詞，挑有價值的講。
+   d. 另起一段「💡 常一起學」，列出2～4個相關/易混淆的韓文詞（只列韓文詞，用頓號分隔）；想不到可省略。
+   e. 最後一行固定以「因此：」開頭，整理成一句最重要的記憶方式。
+   f. 不舉例句、不用Markdown，整體控制在10～15行。
 5. grammar辨識如-ㄹ 수 있다、-아/어도、-아/어서는 안 되다等完整文法。
 6. 全部使用繁體中文，適合初中級學習者。`;
   runAiAssist(btnEl, prompt, val => {
@@ -8015,11 +7910,11 @@ function aiAssistAllSentenceWords(btnEl) {
     translation: String(item.w.zh || "").trim()
   }));
 
-  const text = `請分析以下韓文單字，並只輸出有效 JSON 陣列。
-不要輸出 Markdown、程式碼框、標題或其他文字。
+  const text = `請分析以下每一個韓文單字，並只輸出有效 JSON 陣列，不要輸出 Markdown、程式碼框、標題或其他文字。
 
 單字資料：
 ${JSON.stringify(list, null, 2)}
+（網站另外有獨立的「原形」欄位，所以每個 analysis 裡不要重複寫原形，把篇幅留給補充重點）
 
 請嚴格按照以下格式輸出：
 [
@@ -8030,22 +7925,29 @@ ${JSON.stringify(list, null, 2)}
   }
 ]
 
-規則：
+root 規則：
 1. 必須依照原本 index 順序輸出，每個單字一筆。
-2. root 只填真正不同的原形。
-3. 名詞、字典形，或原形和單字相同時，root 必須是空字串。
-4. analysis 不要重複已提供的中文翻譯。
-5. analysis 不要再寫「原形」。
-6. 有學習價值才拆解漢字詞、詞根、接辭或語尾，不要硬拆。
-7. 簡短說明詞性、構成、語感或用法。
-8. 不要舉例句。
-9. 每個 analysis 最後一定要有「因此：」。
-10. 每個 analysis 控制在 5～8 行內。
-11. 如果無法可靠判斷原形，不要猜，root 留空。`;
+2. 只填真正不同的原形；名詞、字典形，或原形和單字相同時，root 必須是空字串。
+3. 如果無法可靠判斷，不要猜，root 留空。
+
+每個 analysis 請照這個結構寫（純文字、不要標題符號，但可以換行分段）：
+1. 判斷單字類型（一般單字／活用形／漢字詞／派生詞／構詞／助詞），一句話說明即可，不要重複翻譯或原形。
+2. 若能拆解構成（漢字詞、派生詞、構詞），拆解並簡短說明每個部分的意思；不能可靠拆解就略過這段，不要硬拆。
+3. 補充 2～4 個學習重點：正式程度、使用情境、容易混淆的相似字、常見搭配詞，挑有價值的講，不用每項都寫。
+4. 最後另起一段「💡 常一起學」，列出 2～4 個意思相關、學習者容易搞混或值得一起記的韓文詞（不用翻譯，只列韓文詞本身，用頓號分隔）；真的想不到相關詞可以省略這段。
+5. 全部結束後，最後一行一定要用「因此：」開頭，整理成一句最重要的記憶方式。
+6. 不要舉例句，不要使用 Markdown。
+7. 每個 analysis 整體控制在 10～15 行，內容紮實但容易閱讀。`;
 
   runAiAssist(btnEl, text, (val) => {
     try {
-      const result = parseAiJson(val);
+      const clean = String(val)
+        .replace(/^```json\s*/i, "")
+        .replace(/^```\s*/i, "")
+        .replace(/```$/i, "")
+        .trim();
+
+      const result = JSON.parse(clean);
       if (!Array.isArray(result)) throw new Error("回覆不是陣列");
 
       result.forEach((item, resultIndex) => {
@@ -8077,11 +7979,11 @@ function aiAssistSentenceWordNote(i, btnEl) {
     return;
   }
 
-  const text = `請分析以下韓文單字，並只輸出有效 JSON。
-不要輸出 Markdown、程式碼框、標題或其他文字。
+  const text = `請幫我產生適合韓文學習網站的 AI 解析，並只輸出有效 JSON，不要輸出 Markdown、程式碼框、標題或其他文字。
 
 韓文：${w.kr}
 網站已有中文翻譯：${w.zh || "未填寫"}
+（網站另外有獨立的「原形」欄位，所以 analysis 裡不要重複寫原形，把篇幅留給補充重點）
 
 請輸出以下格式：
 {
@@ -8089,24 +7991,30 @@ function aiAssistSentenceWordNote(i, btnEl) {
   "analysis": ""
 }
 
-規則：
-1. root 只填真正不同的原形。
+root 規則：
+1. 只填真正不同的原形。
 2. 如果是名詞、字典形，或原形和韓文相同，root 必須是空字串。
-3. analysis 不要重複中文翻譯。
-4. analysis 不要再寫「原形」。
-5. 有學習價值才拆解漢字詞、詞根、接辭或語尾，不要硬拆。
-6. 簡短說明詞性、構成、語感或用法。
-7. 不要舉例句。
-8. analysis 最後一定要有「因此：」。
-9. analysis 控制在 5～8 行內。
-10. 如果無法可靠判斷原形，不要猜，root 留空。
+3. 如果無法可靠判斷，不要猜，留空。
 
-例如 인간 的 root 必須是空字串；
-例如 먹었어요 的 root 可以是 먹다。`;
+analysis 請照這個結構寫（純文字、不要標題符號，但可以換行分段）：
+1. 判斷單字類型（一般單字／活用形／漢字詞／派生詞／構詞／助詞），一句話說明即可，不要重複翻譯或原形。
+2. 若能拆解構成（漢字詞、派生詞、構詞），拆解並簡短說明每個部分的意思；不能可靠拆解就略過這段，不要硬拆。
+3. 補充 2～4 個學習重點：正式程度、使用情境、容易混淆的相似字、常見搭配詞，挑有價值的講，不用每項都寫。
+4. 最後另起一段「💡 常一起學」，列出 2～4 個意思相關、學習者容易搞混或值得一起記的韓文詞（不用翻譯，只列韓文詞本身，用頓號分隔）；如果真的想不到相關詞，可以省略這段。
+5. 全部結束後，最後一行一定要用「因此：」開頭，整理成一句最重要的記憶方式。
+6. 不要舉例句。
+7. 不要使用 Markdown（不要用 **、#、- 這些符號）。
+8. analysis 整體控制在 10～15 行，內容紮實但容易閱讀。`;
 
   runAiAssist(btnEl, text, (val) => {
     try {
-      const data = parseAiJson(val);
+      const clean = String(val)
+        .replace(/^```json\s*/i, "")
+        .replace(/^```\s*/i, "")
+        .replace(/```$/i, "")
+        .trim();
+
+      const data = JSON.parse(clean);
       const root = String(data.root || "").trim();
       const analysis = String(data.analysis || "").trim();
 
@@ -8124,95 +8032,77 @@ function aiAssistSentenceWordNote(i, btnEl) {
 function aiAssistSentenceNote(btnEl) {
   const sentence = (document.getElementById("senEditKr")?.value || "").trim();
   if (!sentence) { alert("請先輸入韓文句子"); return; }
-  const text = `請幫我產生適合韓文學習網站的句子補充說明，並只輸出有效 JSON，不要輸出 Markdown、程式碼框、標題或其他文字。
+  const text = `請幫我產生適合韓文學習網站的句子補充說明。
 
 韓文句子：
 ${sentence}
 
-請輸出以下格式：
-{
-  "note": ""
-}
-
-note 請遵守以下規則：
+請遵守以下規則：
 1. 說明整句重點，不要逐字解析。
 2. 可補充語氣、書面語、文化背景或容易誤解的地方。
 3. 中文簡短好懂，適合初中級韓文學習者。
 4. 不要重複翻譯。
 5. 不要舉例句。
-6. 用「•」條列，控制在 3～5 行。`;
+6. 不要使用 Markdown。
+7. 回覆控制在 3～5 行。
+
+回覆格式：
+
+• ...
+• ...
+• ...`;
   runAiAssist(btnEl, text, (val) => {
-    try {
-      const data = parseAiJson(val);
-      const ta = document.getElementById("senEditTeacherNote");
-      if (ta) ta.value = String(data.note || "").trim();
-    } catch (error) {
-      console.error("AI 補充說明 JSON 錯誤：", error, val);
-      alert("AI 回覆格式無法解析，請再按一次 AI補充。");
-    }
+    const ta = document.getElementById("senEditTeacherNote");
+    if (ta) ta.value = val;
   });
 }
 function aiTranslateSentence(btnEl) {
   const kr = (document.getElementById("senEditKr")?.value || "").trim();
   if (!kr) { alert("請先輸入韓文句子"); return; }
-  const text = `請把下面這句韓文翻譯成自然、簡短好懂的中文，適合韓文學習筆記使用。只輸出有效 JSON，不要輸出 Markdown、程式碼框、標題或其他文字。
+  const text = `請把下面這句韓文翻譯成自然、簡短好懂的中文，適合韓文學習筆記使用。
 
 韓文句子：
 ${kr}
 
-請輸出以下格式：
-{
-  "translation": ""
-}
-
-翻譯要通順自然，不要逐字直譯。`;
+規則：
+1. 只回傳翻譯本身，不要加任何說明文字、標題或引號。
+2. 不要使用 Markdown。
+3. 翻譯要通順自然，不要逐字直譯。`;
   runAiAssist(btnEl, text, (val) => {
-    try {
-      const data = parseAiJson(val);
-      const ta = document.getElementById("senEditZh");
-      if (ta) ta.value = String(data.translation || "").trim();
-    } catch (error) {
-      console.error("AI 翻譯 JSON 錯誤：", error, val);
-      alert("AI 回覆格式無法解析，請再按一次 AI翻譯。");
-    }
+    const ta = document.getElementById("senEditZh");
+    if (ta) ta.value = val.trim();
   });
 }
 function aiBreakdownSentence(btnEl) {
   const kr = (document.getElementById("senEditKr")?.value || "").trim();
   if (!kr) { alert("請先輸入韓文句子"); return; }
-  const text = `請幫我把下面這句韓文拆解成一個一個有意義的單字或詞組，適合韓文學習網站使用。只輸出有效 JSON，不要輸出 Markdown、程式碼框、標題或其他文字。
+  const text = `請幫我把下面這句韓文拆解成一個一個有意義的單字或詞組，適合韓文學習網站使用。
 
 韓文句子：
 ${kr}
 
-請輸出以下格式：
-{
-  "words": [
-    { "kr": "", "zh": "", "root": "" }
-  ]
-}
-
-規則：
+請遵守以下規則：
 1. 拆成有意義的單字或詞組，不要拆成單一音節。
-2. root 欄位：如果跟 kr 一樣或沒有活用變化，留空字串。
-3. 不要重複同一個單字。`;
+2. 每一行一個單字，格式固定為（用斜線分隔三個欄位）：
+韓文 / 中文意思 / 原形（如果跟韓文一樣或沒有活用變化，這欄留空）
+3. 不要加任何說明文字、標題或 Markdown，只要輸出單字列表。
+4. 不要重複同一個單字。
+
+範例格式（只是格式範例，不是要你分析這句）：
+인간 / 人、人類 / 
+너무나 / 非常、如此 / 
+인간적인 / 人性的 / 인간적이다`;
   runAiAssist(btnEl, text, (val) => {
-    try {
-      const data = parseAiJson(val);
-      const words = Array.isArray(data.words) ? data.words : [];
-      const parsed = words.map(w => ({
-        id: uid(), kr: String(w.kr || "").trim(), zh: String(w.zh || "").trim(),
-        root: String(w.root || "").trim(), note: "", addToVocab: true
-      })).filter(w => w.kr);
-      if (parsed.length) {
-        sentenceEditorWords = parsed;
-        renderSentenceEditorWordRows();
-      } else {
-        throw new Error("words 陣列是空的");
-      }
-    } catch (error) {
-      console.error("AI 拆解 JSON 錯誤：", error, val);
-      alert("AI 回覆格式無法解析，請再按一次 AI拆解。");
+    const lines = val.split("\n").map(l => l.trim()).filter(Boolean);
+    const parsed = lines.map(line => {
+      const parts = line.split("/").map(p => p.trim());
+      return { id: uid(), kr: parts[0] || "", zh: parts[1] || "", root: parts[2] || "", note: "", addToVocab: true };
+    }).filter(w => w.kr);
+    if (parsed.length) {
+      sentenceEditorWords = parsed;
+      renderSentenceEditorWordRows();
+    } else {
+      alert("AI 回覆的格式無法解析，請檢查貼上的內容是否符合「韓文 / 中文 / 原形」的格式。");
     }
   });
 }
@@ -8899,8 +8789,6 @@ function initFavoritesAndLyrics() {
   renderFavoritesDetail();
   renderGrammarList();
   renderSentenceList();
-  const keyInput = document.getElementById("openAiKeyInput");
-  if (keyInput && getOpenAiKey()) keyInput.placeholder = "已設定金鑰（●●●●●●●●）";
 }
 initFavoritesAndLyrics();
 
@@ -8920,6 +8808,32 @@ if ("serviceWorker" in navigator) {
 }
 </script>
 
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+  import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-ai.js";
+
+  try {
+    const firebaseConfig = {
+      apiKey: "AIzaSyCX897x7c1-va19xeQajWr97gK_eY4w_ys",
+      authDomain: "b1a4-cc0af.firebaseapp.com",
+      projectId: "b1a4-cc0af",
+      storageBucket: "b1a4-cc0af.firebasestorage.app",
+      messagingSenderId: "1010872861745",
+      appId: "1:1010872861745:web:9bb41e47d8ef06921d0110",
+      measurementId: "G-01H07Z4RGW"
+    };
+    const aiApp = initializeApp(firebaseConfig, "geminiApp");
+    const ai = getAI(aiApp, { backend: new GoogleAIBackend() });
+    const model = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
+
+    window.callGeminiAI = async function (prompt) {
+      const result = await model.generateContent(prompt);
+      return result.response.text();
+    };
+    console.log("✅ Gemini AI (Firebase AI Logic) 已就緒");
+  } catch (e) {
+    console.warn("Gemini AI 初始化失敗，會自動退回複製貼上模式：", e);
+  }
 </script>
 </body>
 </html>
