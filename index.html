@@ -2793,6 +2793,7 @@ textarea {
             <label style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
               <span>🌿 單字花園（<span id="gardenCount">0</span>）</span>
               <span class="btns" style="margin:0;">
+                <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="fixMergedKrZhCards()">🔧 修正黏在一起的中文</button>
                 <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="aiCheckFolderTypos(this)">✨ AI檢查錯字</button>
                 <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="toggleBatchPaste()" id="batchPasteToggleBtn">📋 批次貼上</button>
               </span>
@@ -4622,19 +4623,52 @@ function newFolder() {
 let editorCards = [];
 let editorCardSeq = 0;
 
+function splitKoreanChineseBoundary(line) {
+  const hanIdx = line.search(/[\u4E00-\u9FFF]/);
+  const hangulIdx = line.search(/[\uAC00-\uD7A3]/);
+  if (hanIdx > -1 && hangulIdx > -1 && hanIdx > hangulIdx) {
+    return [line.slice(0, hanIdx).trim(), line.slice(hanIdx).trim()];
+  }
+  return null;
+}
 function parseRawLinesLenient(t) {
   return String(t || "").split(/\n+/).map(x => x.trim()).filter(Boolean).map(line => {
     let p;
     if (line.includes("\t")) p = line.split("\t");
     else if (line.includes(" - ")) p = line.split(" - ");
     else if (line.includes(",")) p = line.split(",");
-    else p = line.split(/\s{2,}/);
+    else if (/\s{2,}/.test(line)) p = line.split(/\s{2,}/);
+    else {
+      const scriptSplit = splitKoreanChineseBoundary(line);
+      p = scriptSplit || line.split(/\s+/);
+    }
     return { term:(p[0] || "").trim(), definition:(p.slice(1).join(" ") || "").trim() };
   });
 }
 
 function syncEditorCardsFromContent(content) {
   editorCards = parseRawLinesLenient(content).map(c => ({ id: "wc" + (editorCardSeq++), term: c.term, definition: c.definition }));
+}
+
+function fixMergedKrZhCards() {
+  let fixedCount = 0;
+  editorCards.forEach(c => {
+    if (!c.definition.trim() && c.term.trim()) {
+      const split = splitKoreanChineseBoundary(c.term.trim());
+      if (split && split[0] && split[1]) {
+        c.term = split[0];
+        c.definition = split[1];
+        fixedCount++;
+      }
+    }
+  });
+  if (fixedCount > 0) {
+    renderCardEditor();
+    serializeEditorCards();
+    alert(`已修正 ${fixedCount} 個黏在一起的單字，記得檢查一下再按「儲存」！`);
+  } else {
+    alert("沒有發現需要修正的項目（中文欄位是空的、韓文欄位裡也偵測不到中文字）。");
+  }
 }
 
 function serializeEditorCards() {
