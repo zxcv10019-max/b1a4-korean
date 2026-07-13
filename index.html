@@ -2470,6 +2470,32 @@ textarea {
 }
 .sen-grammar-edit-examples { margin-top:4px; }
 
+/* ===== 📚 閱讀（小說章節）Kindle 風格 ===== */
+.reading-block {
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:16px 18px;
+  margin-bottom:14px;
+}
+.reading-kr {
+  font-size:19px;
+  font-weight:900;
+  color:#20351f;
+  line-height:1.7;
+}
+.reading-detail {
+  margin-top:10px;
+  padding-top:10px;
+  border-top:1px dashed var(--line);
+}
+.reading-zh {
+  font-size:14px;
+  color:var(--muted);
+  font-weight:700;
+  line-height:1.6;
+}
+
 .sen-tags-row { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
 .sen-tag-chip { background:#e8f2ff; color:#3a6ea5; font-weight:900; font-size:11px; padding:4px 10px; border-radius:999px; }
 .sen-teacher-note {
@@ -2571,6 +2597,7 @@ textarea {
         <button data-page="flash" onclick="goPage('flash')">▤ 單字卡</button>
         <button data-page="grammar" onclick="goPage('grammar')">🌸 文法</button>
         <button data-page="sentence" onclick="goPage('sentence')">📝 短句</button>
+        <button data-page="reading" onclick="goPage('reading')">📚 閱讀</button>
         <button data-page="match" onclick="goPage('match')">⌘ 配對</button>
         <button data-page="listen" onclick="goPage('listen')">🔊 聽力</button>
       </div>
@@ -2777,48 +2804,42 @@ textarea {
         </div>
         <input id="sentenceSearchInput" class="folder-search-input" type="text" placeholder="🔍 搜尋短句..." oninput="renderSentenceList()">
         <div id="sentenceListWrap"></div>
+      </section>
 
-        <div id="sentenceEditorMask" class="hero-modal-mask">
-          <div class="hero-modal" style="width:min(680px,100%);max-height:88vh;overflow:auto;">
-            <div class="hero-modal-head">
-              <div class="hero-modal-title" id="sentenceEditorTitle">📝 新增短句</div>
-              <button class="hero-modal-close" type="button" onclick="closeSentenceEditor()">關閉</button>
-            </div>
-            <div style="display:grid;gap:12px;">
-              <label style="font-weight:900;color:#4e8f24;">🇰🇷 韓文句子</label>
-              <textarea id="senEditKr" rows="2" placeholder="例如：인간, 너무나 인간적인 존재" style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;"></textarea>
-              <div style="display:flex;justify-content:space-between;align-items:center;">
-                <label style="font-weight:900;color:#4e8f24;">🇹🇼 整句翻譯</label>
-                <button type="button" class="ghost" style="white-space:nowrap;font-size:12px;padding:6px 10px;" onclick="aiTranslateSentence(this)">✨ AI翻譯</button>
-              </div>
-              <textarea id="senEditZh" rows="2" placeholder="這句話的中文意思..." style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;"></textarea>
-              <div class="btns" style="flex-wrap:wrap;">
-                <button type="button" class="ghost" style="flex:1;min-width:140px;" onclick="autoExtractSentenceWordsIntoEditor()">🔍 字典拆解</button>
-                <button type="button" class="ghost" style="flex:1;min-width:140px;" onclick="aiBreakdownSentence(this)">✨ AI拆解</button>
-              </div>
-              <div class="hero-help">字典拆解：內建常用字典比對，速度快但涵蓋範圍有限。AI拆解：呼叫 Gemini 分析，涵蓋範圍更廣，但需要 Gemini 連線成功。兩種都可以拆完後再手動調整。</div>
+      <section id="reading" class="page">
+        <div id="readingHomeView">
+          <div class="topbar">
+            <h2>📚 閱讀</h2>
+            <button class="primary" onclick="newNovel()">＋ 新增小說</button>
+          </div>
+          <div id="novelListWrap"></div>
+        </div>
 
-              <div>
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                  <label style="font-weight:900;color:#4e8f24;">🧩 句子解析</label>
-                  <button type="button" class="ghost" style="white-space:nowrap;font-size:12px;padding:6px 10px;" onclick="aiAssistAllSentenceWords(this)">✨ 一次解析全部單字</button>
-                </div>
-                <div id="senEditWordsWrap"></div>
-                <button type="button" class="ghost" style="width:100%;" onclick="addSentenceEditorWordRow()">➕ 新增解析</button>
-              </div>
-
-              <div style="display:flex;justify-content:space-between;align-items:center;">
-                <label style="font-weight:900;color:#4e8f24;">📝 補充說明（選填）</label>
-                <button type="button" class="ghost" style="white-space:nowrap;font-size:12px;padding:6px 10px;" onclick="aiAssistSentenceNote(this)">✨ AI補充</button>
-              </div>
-              <textarea id="senEditTeacherNote" rows="3" placeholder="例如：인간적인 不是「像人」，而是「人性的」；容易跟 인간답다 搞混；這個考過" style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;"></textarea>
-
-              <label style="font-weight:900;color:#4e8f24;">🏷 標籤（選填，用逗號分隔）</label>
-              <input id="senEditTags" type="text" placeholder="例如：第1課, 閱讀, 哲學, 世宗, TOPIK" class="cute-input">
-
-              <button class="primary cute-btn" type="button" onclick="saveSentenceEntry()">💾 儲存短句</button>
+        <div id="novelChaptersView" style="display:none">
+          <div class="topbar">
+            <button class="ghost" onclick="closeNovelView()">‹ 返回小說列表</button>
+            <div class="btns">
+              <button class="ghost" onclick="renameNovel(currentNovelId)">✏️ 改名</button>
+              <button class="ghost" onclick="deleteNovel(currentNovelId)">🗑 刪除小說</button>
             </div>
           </div>
+          <h2 id="novelChaptersTitle" style="margin:6px 0 14px;"></h2>
+          <div id="chapterListWrap"></div>
+          <button type="button" class="add-word-btn" style="margin-top:12px;" onclick="newChapter(currentNovelId)">➕ 新增章節</button>
+        </div>
+
+        <div id="chapterReadingView" style="display:none">
+          <div class="topbar">
+            <button class="ghost" onclick="closeChapterView()">‹ 返回章節列表</button>
+            <div class="btns">
+              <button class="ghost" id="hideTranslationBtn" onclick="toggleHideTranslations()">🙈 隱藏全部翻譯</button>
+              <button class="ghost" onclick="renameChapter(currentChapterId)">✏️ 章節改名</button>
+              <button class="ghost" onclick="deleteChapter(currentChapterId)">🗑 刪除章節</button>
+            </div>
+          </div>
+          <h2 id="chapterReadingTitle" style="margin:6px 0 14px;"></h2>
+          <div id="chapterSentencesWrap"></div>
+          <button type="button" class="add-word-btn" style="margin-top:12px;" onclick="addSentenceToCurrentChapter()">➕ 新增句子／段落</button>
         </div>
       </section>
 
@@ -3125,6 +3146,49 @@ textarea {
     <div class="save-toast-emoji">🌱</div>
     <div class="save-toast-text">已經幫你種進森林啦！</div>
     <div class="save-toast-sub">✓ 儲存完成</div>
+  </div>
+
+  <div id="sentenceEditorMask" class="hero-modal-mask">
+    <div class="hero-modal" style="width:min(680px,100%);max-height:88vh;overflow:auto;">
+      <div class="hero-modal-head">
+        <div class="hero-modal-title" id="sentenceEditorTitle">📝 新增短句</div>
+        <button class="hero-modal-close" type="button" onclick="closeSentenceEditor()">關閉</button>
+      </div>
+      <div style="display:grid;gap:12px;">
+        <label style="font-weight:900;color:#4e8f24;">🇰🇷 韓文句子</label>
+        <textarea id="senEditKr" rows="2" placeholder="例如：인간, 너무나 인간적인 존재" style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;"></textarea>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <label style="font-weight:900;color:#4e8f24;">🇹🇼 整句翻譯</label>
+          <button type="button" class="ghost" style="white-space:nowrap;font-size:12px;padding:6px 10px;" onclick="aiTranslateSentence(this)">✨ AI翻譯</button>
+        </div>
+        <textarea id="senEditZh" rows="2" placeholder="這句話的中文意思..." style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;"></textarea>
+        <div class="btns" style="flex-wrap:wrap;">
+          <button type="button" class="ghost" style="flex:1;min-width:140px;" onclick="autoExtractSentenceWordsIntoEditor()">🔍 字典拆解</button>
+          <button type="button" class="ghost" style="flex:1;min-width:140px;" onclick="aiBreakdownSentence(this)">✨ AI拆解</button>
+        </div>
+        <div class="hero-help">字典拆解：內建常用字典比對，速度快但涵蓋範圍有限。AI拆解：呼叫 Gemini 分析，涵蓋範圍更廣，但需要 Gemini 連線成功。兩種都可以拆完後再手動調整。</div>
+
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <label style="font-weight:900;color:#4e8f24;">🧩 句子解析</label>
+            <button type="button" class="ghost" style="white-space:nowrap;font-size:12px;padding:6px 10px;" onclick="aiAssistAllSentenceWords(this)">✨ 一次解析全部單字</button>
+          </div>
+          <div id="senEditWordsWrap"></div>
+          <button type="button" class="ghost" style="width:100%;" onclick="addSentenceEditorWordRow()">➕ 新增解析</button>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <label style="font-weight:900;color:#4e8f24;">📝 補充說明（選填）</label>
+          <button type="button" class="ghost" style="white-space:nowrap;font-size:12px;padding:6px 10px;" onclick="aiAssistSentenceNote(this)">✨ AI補充</button>
+        </div>
+        <textarea id="senEditTeacherNote" rows="3" placeholder="例如：인간적인 不是「像人」，而是「人性的」；容易跟 인간답다 搞混；這個考過" style="width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:15px;font-family:inherit;"></textarea>
+
+        <label style="font-weight:900;color:#4e8f24;">🏷 標籤（選填，用逗號分隔）</label>
+        <input id="senEditTags" type="text" placeholder="例如：第1課, 閱讀, 哲學, 世宗, TOPIK" class="cute-input">
+
+        <button class="primary cute-btn" type="button" onclick="saveSentenceEntry()">💾 儲存短句</button>
+      </div>
+    </div>
   </div>
 
   <div id="searchMask" class="hero-modal-mask">
@@ -3564,7 +3628,7 @@ function getCloudPayload() {
     masteryData, wrongBookData, graduationData,
     folderPracticeStats, flashSeenData, voiceSpeed,
     activityLog,
-    lyricsSongs, favorites, grammarPoints, grammarCategories, sentenceEntries,
+    lyricsSongs, favorites, grammarPoints, grammarCategories, sentenceEntries, novels, novelChapters,
     updatedAt: new Date().toISOString()
   };
 }
@@ -3599,6 +3663,8 @@ async function loadCloudData() {
       grammarPoints = Array.isArray(data.grammarPoints) ? data.grammarPoints : (grammarPoints || []);
       grammarCategories = Array.isArray(data.grammarCategories) ? data.grammarCategories : (grammarCategories || []);
       sentenceEntries = Array.isArray(data.sentenceEntries) ? data.sentenceEntries : (sentenceEntries || []);
+      novels = Array.isArray(data.novels) ? data.novels : (novels || []);
+      novelChapters = Array.isArray(data.novelChapters) ? data.novelChapters : (novelChapters || []);
       current = folders.length ? 0 : null;
       writeLocalOnly();
       localStorage.setItem("b1a4MasteryData", JSON.stringify(masteryData));
@@ -3610,6 +3676,8 @@ async function loadCloudData() {
       localStorage.setItem(GRAMMAR_STORAGE_KEY, JSON.stringify(grammarPoints));
       localStorage.setItem(GRAMMAR_CATEGORY_KEY, JSON.stringify(grammarCategories));
       localStorage.setItem(SENTENCE_STORAGE_KEY, JSON.stringify(sentenceEntries));
+      localStorage.setItem(NOVEL_STORAGE_KEY, JSON.stringify(novels));
+      localStorage.setItem(CHAPTER_STORAGE_KEY, JSON.stringify(novelChapters));
       renderFolders();
       if (current !== null) loadFolder(current); else voiceSpeed = Number(data.voiceSpeed || voiceSpeed || 0.65);
       initVoiceSpeedUI();
@@ -3621,6 +3689,7 @@ async function loadCloudData() {
       if (typeof renderFavoritesDetail === "function") renderFavoritesDetail();
       if (typeof renderGrammarList === "function") renderGrammarList();
       if (typeof renderSentenceList === "function") renderSentenceList();
+      if (typeof renderReadingHome === "function") renderReadingHome();
       if (typeof renderLearningCalendar === "function") renderLearningCalendar();
       if (typeof renderDetailedStats === "function") renderDetailedStats();
       if (typeof updateHeroStats === "function") updateHeroStats();
@@ -3982,8 +4051,8 @@ function esc(s) { return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;
 function norm(v) { return String(v||"").trim().toLowerCase().replace(/[，。！？、,.!?]/g,"").replace(/\s+/g," "); }
 function today() { return new Date().toISOString().slice(0,10).replaceAll("-","/"); }
 
-const BOTTOM_TAB_MAP = { home:"home", library:"vocab", flash:"vocab", match:"vocab", listen:"vocab", grammar:"vocab", sentence:"vocab", test:"test", lyrics:"lyrics", profile:"profile" };
-const VOCAB_PAGES = ["library","flash","grammar","sentence","match","listen"];
+const BOTTOM_TAB_MAP = { home:"home", library:"vocab", flash:"vocab", match:"vocab", listen:"vocab", grammar:"vocab", sentence:"vocab", reading:"vocab", test:"test", lyrics:"lyrics", profile:"profile" };
+const VOCAB_PAGES = ["library","flash","grammar","sentence","reading","match","listen"];
 
 function updateBottomNav(id) {
   document.querySelectorAll(".bottom-nav button").forEach(b => b.classList.remove("active"));
@@ -4020,6 +4089,7 @@ function goPage(id) {
   if (id === "profile") { renderLearningCalendar(); renderDetailedStats(); }
   if (id === "grammar" && typeof renderGrammarList === "function") renderGrammarList();
   if (id === "sentence" && typeof renderSentenceList === "function") renderSentenceList();
+  if (id === "reading" && typeof renderReadingHome === "function") renderReadingHome();
   const floatBtn = document.getElementById("floatingSaveBtn");
   if (floatBtn) {
     const editorOpen = id === "library" && document.getElementById("editorWrap").style.display !== "none";
@@ -6784,6 +6854,7 @@ let teacherRevealed = {};
 let hiddenItems = {};
 let noteExpanded = {};
 let sentenceEditingId = null;
+let sentenceEditorContext = null;
 let sentenceEditorWords = [];
 let sentenceEditorGrammar = [];
 
@@ -6840,12 +6911,222 @@ function loadSentenceEntries() {
     if (!Array.isArray(s.tags)) s.tags = [];
     if (typeof s.favorite !== "boolean") s.favorite = false;
     if (typeof s.linkedFolderIdx !== "number") s.linkedFolderIdx = null;
+    if (typeof s.novelId !== "string") s.novelId = "";
+    if (typeof s.chapterId !== "string") s.chapterId = "";
   });
 }
 function saveSentenceEntries() {
   localStorage.setItem(SENTENCE_STORAGE_KEY, JSON.stringify(sentenceEntries));
   if (typeof scheduleCloudSave === "function") scheduleCloudSave();
 }
+
+/* ===== 📚 閱讀（小說／章節） ===== */
+const NOVEL_STORAGE_KEY = "b1a4Novels";
+const CHAPTER_STORAGE_KEY = "b1a4NovelChapters";
+let novels = [];
+let novelChapters = [];
+let currentNovelId = null;
+let currentChapterId = null;
+let hideAllTranslations = {};
+let sentenceBlockExpanded = {};
+
+function loadNovels() {
+  try { novels = JSON.parse(localStorage.getItem(NOVEL_STORAGE_KEY) || "[]"); } catch (e) { novels = []; }
+  if (!Array.isArray(novels)) novels = [];
+  try { novelChapters = JSON.parse(localStorage.getItem(CHAPTER_STORAGE_KEY) || "[]"); } catch (e) { novelChapters = []; }
+  if (!Array.isArray(novelChapters)) novelChapters = [];
+  novels.forEach(n => { if (typeof n.lastReadChapterId !== "string") n.lastReadChapterId = ""; });
+}
+function saveNovels() {
+  localStorage.setItem(NOVEL_STORAGE_KEY, JSON.stringify(novels));
+  if (typeof scheduleCloudSave === "function") scheduleCloudSave();
+}
+function saveNovelChapters() {
+  localStorage.setItem(CHAPTER_STORAGE_KEY, JSON.stringify(novelChapters));
+  if (typeof scheduleCloudSave === "function") scheduleCloudSave();
+}
+
+function renderReadingHome() {
+  const wrap = document.getElementById("novelListWrap");
+  if (!wrap) return;
+  document.getElementById("readingHomeView").style.display = "block";
+  document.getElementById("novelChaptersView").style.display = "none";
+  document.getElementById("chapterReadingView").style.display = "none";
+  if (!novels.length) {
+    wrap.innerHTML = `<div class="empty-fox"><span class="ef-icon">📚</span>還沒有任何小說哦～<div class="ef-sub">按「＋ 新增小說」開始建立你的第一本閱讀教材吧！</div></div>`;
+    return;
+  }
+  wrap.innerHTML = `<div class="folder-card-grid">${novels.map(n => {
+    const chCount = novelChapters.filter(c => c.novelId === n.id).length;
+    const lastCh = novelChapters.find(c => c.id === n.lastReadChapterId);
+    return `<div class="forest-folder-card" onclick="openNovel('${n.id}')">
+      <div class="ffc-head"><span class="ffc-folder-ico">📖</span><span class="ffc-name-inline">${esc(n.title)}</span></div>
+      <div class="ffc-meta" style="margin-top:8px;"><span>📃 ${chCount} 章</span></div>
+      <div class="ffc-date">${lastCh ? "上次讀到：" + esc(lastCh.title) : "尚未開始閱讀"}</div>
+    </div>`;
+  }).join("")}</div>`;
+}
+
+function newNovel() {
+  const title = prompt("小說名稱：");
+  if (!title || !title.trim()) return;
+  novels.push({ id: uid(), title: title.trim(), lastReadChapterId: "" });
+  saveNovels();
+  renderReadingHome();
+}
+function renameNovel(id) {
+  const n = novels.find(x => x.id === id);
+  if (!n) return;
+  const title = prompt("重新命名小說：", n.title);
+  if (!title || !title.trim()) return;
+  n.title = title.trim();
+  saveNovels();
+  renderReadingHome();
+  if (currentNovelId === id) document.getElementById("novelChaptersTitle").textContent = "📖 " + n.title;
+}
+function deleteNovel(id) {
+  if (!confirm("刪除這本小說？裡面的章節跟句子也會一併刪除，此動作無法復原。")) return;
+  const chapterIds = novelChapters.filter(c => c.novelId === id).map(c => c.id);
+  novelChapters = novelChapters.filter(c => c.novelId !== id);
+  sentenceEntries = sentenceEntries.filter(s => !chapterIds.includes(s.chapterId));
+  novels = novels.filter(n => n.id !== id);
+  saveNovels();
+  saveNovelChapters();
+  saveSentenceEntries();
+  closeNovelView();
+}
+
+function openNovel(novelId) {
+  currentNovelId = novelId;
+  const n = novels.find(x => x.id === novelId);
+  if (!n) return;
+  document.getElementById("readingHomeView").style.display = "none";
+  document.getElementById("novelChaptersView").style.display = "block";
+  document.getElementById("chapterReadingView").style.display = "none";
+  document.getElementById("novelChaptersTitle").textContent = "📖 " + n.title;
+  renderChapterList();
+}
+function closeNovelView() {
+  currentNovelId = null;
+  renderReadingHome();
+}
+
+function renderChapterList() {
+  const wrap = document.getElementById("chapterListWrap");
+  if (!wrap) return;
+  const chapters = novelChapters.filter(c => c.novelId === currentNovelId);
+  if (!chapters.length) {
+    wrap.innerHTML = `<div class="empty-fox"><span class="ef-icon">📃</span>還沒有章節～<div class="ef-sub">按下面「➕ 新增章節」開始寫第一章吧！</div></div>`;
+    return;
+  }
+  wrap.innerHTML = chapters.map(c => {
+    const count = sentenceEntries.filter(s => s.chapterId === c.id).length;
+    return `<div class="forest-folder-card" style="min-height:auto;" onclick="openChapter('${c.id}')">
+      <div class="ffc-head"><span class="ffc-folder-ico">📃</span><span class="ffc-name-inline">${esc(c.title)}</span></div>
+      <div class="ffc-meta" style="margin-top:8px;"><span>📝 ${count} 句</span></div>
+      <button type="button" class="ffc-start-btn" onclick="event.stopPropagation();openChapter('${c.id}')">▶ 開始閱讀</button>
+    </div>`;
+  }).join("");
+  wrap.className = "folder-card-grid";
+}
+
+function newChapter(novelId) {
+  const title = prompt("章節名稱，例如：第一章");
+  if (!title || !title.trim()) return;
+  novelChapters.push({ id: uid(), novelId, title: title.trim() });
+  saveNovelChapters();
+  renderChapterList();
+}
+function renameChapter(id) {
+  const c = novelChapters.find(x => x.id === id);
+  if (!c) return;
+  const title = prompt("重新命名章節：", c.title);
+  if (!title || !title.trim()) return;
+  c.title = title.trim();
+  saveNovelChapters();
+  if (currentChapterId === id) document.getElementById("chapterReadingTitle").textContent = "📃 " + c.title;
+  else renderChapterList();
+}
+function deleteChapter(id) {
+  if (!confirm("刪除這個章節？裡面的句子也會一併刪除，此動作無法復原。")) return;
+  sentenceEntries = sentenceEntries.filter(s => s.chapterId !== id);
+  novelChapters = novelChapters.filter(c => c.id !== id);
+  saveNovelChapters();
+  saveSentenceEntries();
+  closeChapterView();
+}
+
+function openChapter(chapterId) {
+  currentChapterId = chapterId;
+  const c = novelChapters.find(x => x.id === chapterId);
+  if (!c) return;
+  const n = novels.find(x => x.id === c.novelId);
+  if (n) { n.lastReadChapterId = chapterId; saveNovels(); }
+  document.getElementById("novelChaptersView").style.display = "none";
+  document.getElementById("chapterReadingView").style.display = "block";
+  document.getElementById("chapterReadingTitle").textContent = "📃 " + c.title;
+  renderChapterReading();
+}
+function closeChapterView() {
+  currentChapterId = null;
+  if (currentNovelId) openNovel(currentNovelId);
+  else renderReadingHome();
+}
+
+function toggleHideTranslations() {
+  hideAllTranslations[currentChapterId] = !hideAllTranslations[currentChapterId];
+  const btn = document.getElementById("hideTranslationBtn");
+  if (btn) btn.textContent = hideAllTranslations[currentChapterId] ? "👁 顯示全部翻譯" : "🙈 隱藏全部翻譯";
+  renderChapterReading();
+}
+
+function renderChapterReading() {
+  const wrap = document.getElementById("chapterSentencesWrap");
+  if (!wrap) return;
+  const list = sentenceEntries.filter(s => s.chapterId === currentChapterId);
+  if (!list.length) {
+    wrap.innerHTML = `<div class="empty-fox"><span class="ef-icon">📝</span>這一章還沒有內容～<div class="ef-sub">按下面「➕ 新增句子／段落」開始寫吧！</div></div>`;
+    return;
+  }
+  const hideAll = !!hideAllTranslations[currentChapterId];
+  wrap.innerHTML = list.map(s => readingBlockHtml(s, hideAll)).join("");
+}
+
+function readingBlockHtml(s, hideAll) {
+  const expanded = hideAll ? !!sentenceBlockExpanded[s.id] : true;
+  const wordCount = s.items ? s.items.length : 0;
+  return `
+    <div class="reading-block">
+      <div class="reading-kr" ${hideAll ? `onclick="toggleReadingBlock('${s.id}')" style="cursor:pointer;"` : ""}>${esc(s.kr)}</div>
+      ${expanded ? `
+      <div class="reading-detail">
+        <div class="reading-zh">🇹🇼 ${esc(s.zh || "（尚未填寫翻譯）")}</div>
+        <div class="btns" style="margin-top:8px;">
+          <button class="ghost" onclick="speakKorean('${jsAttr(s.kr)}')">🔊 播放</button>
+          <button class="ghost" onclick="speakKoreanSlow('${jsAttr(s.kr)}')">🐢 慢速</button>
+          <button class="gram-icon-btn" onclick="toggleSentenceFavorite('${s.id}');renderChapterReading();" title="收藏">${s.favorite ? "🔖" : "📑"}</button>
+          <button class="gram-icon-btn" onclick="openSentenceEditor('${s.id}')" title="編輯／單字解析／AI">✏️</button>
+          <button class="gram-icon-btn" onclick="deleteSentenceFromChapter('${s.id}')" title="刪除">🗑</button>
+        </div>
+        ${wordCount ? `<div style="font-size:11px;color:var(--muted);font-weight:800;margin-top:6px;">🧩 已有 ${wordCount} 個單字解析（點 ✏️ 查看／編輯）</div>` : ""}
+        ${s.teacherNote ? `<div class="sen-teacher-note" style="margin-top:8px;">${esc(s.teacherNote).replace(/\n/g,"<br>")}</div>` : ""}
+      </div>` : ""}
+    </div>`;
+}
+function toggleReadingBlock(id) {
+  sentenceBlockExpanded[id] = !sentenceBlockExpanded[id];
+  renderChapterReading();
+}
+function deleteSentenceFromChapter(id) {
+  if (!confirm("刪除這一句／段落？")) return;
+  sentenceEntries = sentenceEntries.filter(s => s.id !== id);
+  saveSentenceEntries();
+  renderChapterReading();
+}
+function addSentenceToCurrentChapter() {
+  openSentenceEditor(null, { novelId: currentNovelId, chapterId: currentChapterId });
+}
+
 
 function jsAttr(s) { return String(s == null ? "" : s).replace(/\\/g, "\\\\").replace(/'/g, "\\'"); }
 
@@ -6865,17 +7146,18 @@ let collapsedSentenceTags = JSON.parse(localStorage.getItem("b1a4_collapsed_sen_
 function renderSentenceList() {
   const wrap = document.getElementById("sentenceListWrap");
   if (!wrap) return;
-  if (!sentenceEntries.length) {
+  const standalone = sentenceEntries.filter(s => !s.chapterId);
+  if (!standalone.length) {
     wrap.innerHTML = `<div class="empty-fox"><span class="ef-icon">📝</span>還沒有任何短句解析哦～<div class="ef-sub">按右上角「＋ 新增短句」開始建立吧！</div></div>`;
     return;
   }
   const q = (document.getElementById("sentenceSearchInput")?.value || "").trim().toLowerCase();
   const filtered = q
-    ? sentenceEntries.filter(s =>
+    ? standalone.filter(s =>
         (s.kr||"").toLowerCase().includes(q) ||
         (s.zh||"").toLowerCase().includes(q) ||
         (s.tags||[]).some(t => t.toLowerCase().includes(q)))
-    : sentenceEntries;
+    : standalone;
   if (q && !filtered.length) {
     wrap.innerHTML = `<div class="empty-fox"><span class="ef-icon">🍂</span>找不到符合「${esc(q)}」的短句</div>`;
     return;
@@ -7150,8 +7432,9 @@ function deleteSentenceEntry(id) {
 }
 
 /* ---- 新增/編輯短句 ---- */
-function openSentenceEditor(id) {
+function openSentenceEditor(id, context) {
   sentenceEditingId = id;
+  sentenceEditorContext = context || null;
   const title = document.getElementById("sentenceEditorTitle");
   if (id) {
     const s = sentenceEntries.find(x => x.id === id);
@@ -7162,6 +7445,7 @@ function openSentenceEditor(id) {
     document.getElementById("senEditTeacherNote").value = s.teacherNote || "";
     document.getElementById("senEditTags").value = (s.tags || []).join(", ");
     sentenceEditorWords = (s.items || []).map(it => ({ ...it }));
+    if (s.chapterId) sentenceEditorContext = { novelId: s.novelId, chapterId: s.chapterId };
   } else {
     title.textContent = "📝 新增短句";
     document.getElementById("senEditKr").value = "";
@@ -7491,12 +7775,20 @@ function saveSentenceEntry() {
     s = sentenceEntries.find(x => x.id === sentenceEditingId);
     if (s) Object.assign(s, { kr, zh, items, teacherNote, tags });
   } else {
-    s = { id: uid(), kr, zh, items, teacherNote, tags, favorite: false, linkedFolderIdx: null };
+    s = {
+      id: uid(), kr, zh, items, teacherNote, tags, favorite: false, linkedFolderIdx: null,
+      novelId: (sentenceEditorContext && sentenceEditorContext.novelId) || "",
+      chapterId: (sentenceEditorContext && sentenceEditorContext.chapterId) || ""
+    };
     sentenceEntries.push(s);
   }
   saveSentenceEntries();
   closeSentenceEditor();
-  renderSentenceList();
+  if (sentenceEditorContext && sentenceEditorContext.chapterId) {
+    if (typeof renderChapterReading === "function") renderChapterReading();
+  } else {
+    renderSentenceList();
+  }
   if (typeof showSaveToast === "function") showSaveToast();
 
   const toSync = s ? items.filter(it => it.addToVocab !== false && it.kr.trim()) : [];
@@ -8135,6 +8427,7 @@ function initFavoritesAndLyrics() {
   loadLyricsSongs();
   loadGrammarPoints();
   loadSentenceEntries();
+  loadNovels();
   renderLyricsSongGrid();
   renderFavoritesSummary();
   renderFavoritesDetail();
