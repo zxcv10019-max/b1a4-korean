@@ -5266,7 +5266,10 @@ function isFuzzyCorrect(userAnswer, correctAnswer) {
   const user = normalizeAnswerText(userAnswer);
   if (!user) return false;
 
-  const answers = splitAcceptableAnswers(correctAnswer);
+  // 除了逐一比對用逗號拆開的每個同義答案，也要保留「完整原文」當作一個可接受答案。
+  // 否則像「星期（周），星期幾」這種本來就是一句完整答案、只是中間帶頓號說明的情況，
+  // 使用者把顯示出來的完整正確答案照抄一字不漏，反而會被拆成兩截各自比對而判定答錯。
+  const answers = [correctAnswer, ...splitAcceptableAnswers(correctAnswer)];
   return answers.some(ans => {
     const target = normalizeAnswerText(ans);
     if (!target) return false;
