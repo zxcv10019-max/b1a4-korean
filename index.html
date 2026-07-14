@@ -2641,7 +2641,6 @@ textarea {
 .ptn-group-body{padding:6px 18px 14px;}
 .ptn-item{padding:12px 0;border-bottom:1px dashed var(--line);}
 .ptn-item:last-child{border-bottom:0;}
-.ptn-stars{color:#e0a500;font-size:13px;margin-bottom:2px;}
 .ptn-kr{font-weight:1000;font-size:16px;}
 .ptn-zh{color:var(--muted);font-size:13px;margin-top:2px;}
 .ptn-note{color:#4e8f24;font-size:13px;margin-top:6px;background:var(--green-soft);border-radius:10px;padding:8px 10px;}
@@ -2651,7 +2650,7 @@ textarea {
 .dlg-pattern-group{border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;background:#fbfff6;}
 .dlg-pattern-group-head{display:flex;gap:8px;margin-bottom:10px;}
 .dlg-pattern-group-head input{flex:1;border:1px solid var(--line);border-radius:10px;padding:8px;font-weight:900;}
-.dlg-pattern-item-row{display:grid;grid-template-columns:74px 1fr 1fr 1fr 36px;gap:8px;margin-bottom:8px;align-items:center;}
+.dlg-pattern-item-row{display:grid;grid-template-columns:1fr 1fr 1fr 36px;gap:8px;margin-bottom:8px;align-items:center;}
 .dlg-pattern-item-row select,.dlg-pattern-item-row input{border:1px solid var(--line);border-radius:10px;padding:8px;font-size:13px;font-family:inherit;}
 @media (max-width:700px){
   .dlg-pattern-item-row{grid-template-columns:1fr 1fr;}
@@ -9437,25 +9436,25 @@ function defaultDialogues() {
         id: uid(),
         heading: "👋 大家好",
         items: [
-          { id: uid(), stars: 3, kr: "안녕하세요?", zh: "你好。", note: "最常用、口語也常用的招呼語。" },
-          { id: uid(), stars: 2, kr: "안녕하십니까?", zh: "你好。", note: "更正式，常用於軍隊、播報等場合。" }
+          { id: uid(), kr: "안녕하세요?", zh: "你好。", note: "最常用、口語也常用的招呼語。" },
+          { id: uid(), kr: "안녕하십니까?", zh: "你好。", note: "更正式，常用於軍隊、播報等場合。" }
         ]
       },
       {
         id: uid(),
         heading: "👤 我叫OOO",
         items: [
-          { id: uid(), stars: 3, kr: "저는 OOO입니다.", zh: "我是OOO。", note: "基本、自我介紹最常用。" },
-          { id: uid(), stars: 2, kr: "제 이름은 OOO입니다.", zh: "我的名字是OOO。", note: "較正式。" },
-          { id: uid(), stars: 1, kr: "저는 OOO라고 합니다.", zh: "我叫做OOO。", note: "正式介紹、演講時常用。" }
+          { id: uid(), kr: "저는 OOO입니다.", zh: "我是OOO。", note: "基本、自我介紹最常用。" },
+          { id: uid(), kr: "제 이름은 OOO입니다.", zh: "我的名字是OOO。", note: "較正式。" },
+          { id: uid(), kr: "저는 OOO라고 합니다.", zh: "我叫做OOO。", note: "正式介紹、演講時常用。" }
         ]
       },
       {
         id: uid(),
         heading: "🌏 國籍",
         items: [
-          { id: uid(), stars: 3, kr: "어느 나라 사람입니까?", zh: "你是哪國人？", note: "" },
-          { id: uid(), stars: 3, kr: "저는 대만 사람입니다.", zh: "我是台灣人。", note: "" }
+          { id: uid(), kr: "어느 나라 사람입니까?", zh: "你是哪國人？", note: "" },
+          { id: uid(), kr: "저는 대만 사람입니다.", zh: "我是台灣人。", note: "" }
         ]
       }
     ],
@@ -9487,7 +9486,7 @@ function loadDialogues() {
     d.lines.forEach(l => { if (l.role !== "A" && l.role !== "B") l.role = "A"; });
     d.patterns.forEach(g => {
       if (!Array.isArray(g.items)) g.items = [];
-      g.items.forEach(it => { if (typeof it.stars !== "number") it.stars = 2; if (typeof it.note !== "string") it.note = ""; });
+      g.items.forEach(it => { if (typeof it.note !== "string") it.note = ""; });
     });
   });
   try {
@@ -9634,7 +9633,7 @@ function openDialogueEditor(id) {
     renderDialogueLineRows(d.lines.length ? d.lines.map(l => ({ role: l.role, kr: l.kr, zh: l.zh })) : [{ role: "A", kr: "", zh: "" }]);
     renderDialoguePatternGroups(d.patterns && d.patterns.length ? d.patterns.map(g => ({
       heading: g.heading,
-      items: g.items.map(it => ({ stars: it.stars, kr: it.kr, zh: it.zh, note: it.note }))
+      items: g.items.map(it => ({ kr: it.kr, zh: it.zh, note: it.note }))
     })) : []);
   } else {
     title.textContent = "💬 新增對話";
@@ -9724,11 +9723,6 @@ function renderDialoguePatternGroups(groups) {
       <div class="dlg-pattern-items">
         ${(g.items || []).map((it, ii) => `
           <div class="dlg-pattern-item-row" data-iidx="${ii}">
-            <select class="dlg-pattern-star">
-              <option value="3" ${it.stars === 3 ? "selected" : ""}>⭐⭐⭐</option>
-              <option value="2" ${it.stars === 2 ? "selected" : ""}>⭐⭐</option>
-              <option value="1" ${it.stars === 1 ? "selected" : ""}>⭐</option>
-            </select>
             <input type="text" placeholder="韓文句型" value="${escapeAttr(it.kr || "")}" class="dlg-pattern-kr">
             <input type="text" placeholder="中文翻譯" value="${escapeAttr(it.zh || "")}" class="dlg-pattern-zh">
             <input type="text" placeholder="備註（選填）" value="${escapeAttr(it.note || "")}" class="dlg-pattern-note">
@@ -9742,7 +9736,6 @@ function collectDialoguePatternGroups() {
   return Array.from(document.querySelectorAll("#dlgPatternGroupsWrap .dlg-pattern-group")).map(gEl => ({
     heading: gEl.querySelector(".dlg-pattern-heading").value,
     items: Array.from(gEl.querySelectorAll(".dlg-pattern-item-row")).map(r => ({
-      stars: Number(r.querySelector(".dlg-pattern-star").value) || 1,
       kr: r.querySelector(".dlg-pattern-kr").value,
       zh: r.querySelector(".dlg-pattern-zh").value,
       note: r.querySelector(".dlg-pattern-note").value
@@ -9751,7 +9744,7 @@ function collectDialoguePatternGroups() {
 }
 function addDialoguePatternGroup() {
   const groups = collectDialoguePatternGroups();
-  groups.push({ heading: "", items: [{ stars: 3, kr: "", zh: "", note: "" }] });
+  groups.push({ heading: "", items: [{ kr: "", zh: "", note: "" }] });
   renderDialoguePatternGroups(groups);
 }
 function removeDialoguePatternGroup(gi) {
@@ -9761,13 +9754,13 @@ function removeDialoguePatternGroup(gi) {
 }
 function addDialoguePatternItem(gi) {
   const groups = collectDialoguePatternGroups();
-  groups[gi].items.push({ stars: 2, kr: "", zh: "", note: "" });
+  groups[gi].items.push({ kr: "", zh: "", note: "" });
   renderDialoguePatternGroups(groups);
 }
 function removeDialoguePatternItem(gi, ii) {
   const groups = collectDialoguePatternGroups();
   groups[gi].items.splice(ii, 1);
-  if (!groups[gi].items.length) groups[gi].items.push({ stars: 2, kr: "", zh: "", note: "" });
+  if (!groups[gi].items.length) groups[gi].items.push({ kr: "", zh: "", note: "" });
   renderDialoguePatternGroups(groups);
 }
 
@@ -9782,7 +9775,7 @@ function saveDialogue() {
     .map(g => ({
       id: uid(),
       heading: g.heading.trim(),
-      items: g.items.map(it => ({ id: uid(), stars: it.stars, kr: it.kr.trim(), zh: it.zh.trim(), note: it.note.trim() })).filter(it => it.kr)
+      items: g.items.map(it => ({ id: uid(), kr: it.kr.trim(), zh: it.zh.trim(), note: it.note.trim() })).filter(it => it.kr)
     }))
     .filter(g => g.heading || g.items.length);
   if (!rows.length && !patternGroups.length) { alert("請至少輸入一句對話，或一句句型"); return; }
@@ -9847,7 +9840,7 @@ function importDialogues(file) {
             id: uid(),
             heading: g.heading || "",
             items: Array.isArray(g.items) ? g.items.map(it => ({
-              id: uid(), stars: typeof it.stars === "number" ? it.stars : 2, kr: it.kr || "", zh: it.zh || "", note: it.note || ""
+              id: uid(), kr: it.kr || "", zh: it.zh || "", note: it.note || ""
             })) : []
           })) : []
         });
@@ -9969,7 +9962,7 @@ function renderDialoguePatternsView(d) {
   const favKey = dlgPatternFavKey(d.id);
   wrap.innerHTML = groups.map(g => {
     const collapsed = collapsedPatternGroups.includes(g.id);
-    const sorted = [...(g.items || [])].sort((a, b) => (b.stars || 0) - (a.stars || 0));
+    const items = g.items || [];
     return `
     <div class="ptn-group">
       <div class="ptn-group-head" onclick="togglePatternGroup('${g.id}')">
@@ -9977,11 +9970,10 @@ function renderDialoguePatternsView(d) {
         <span class="ptn-toggle">${collapsed ? "▸ 展開" : "▾ 收合"}</span>
       </div>
       <div class="ptn-group-body" style="${collapsed ? "display:none;" : ""}">
-        ${sorted.map(it => {
+        ${items.map(it => {
           const isFav = typeof isSentenceFav === "function" && isSentenceFav(favKey, it.id);
           return `
           <div class="ptn-item">
-            <div class="ptn-stars">${"⭐".repeat(it.stars || 1)}</div>
             <div class="ptn-kr">${esc(it.kr)}<button type="button" class="dlg-bubble-speak" onclick="speakKorean('${escapeAttr(it.kr).replace(/'/g, "\\'")}')">🔊</button></div>
             ${it.zh ? `<div class="ptn-zh">${esc(it.zh)}</div>` : ""}
             ${it.note ? `<div class="ptn-note">💡 ${esc(it.note)}</div>` : ""}
