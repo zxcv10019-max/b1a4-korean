@@ -2615,6 +2615,30 @@ textarea {
 .sen-grammar-edit-row{border-color:#cfe0ff!important;background:#f8fbff!important}
 .sentence-card .sen-section-toggle{margin-top:12px}
 </style>
+
+<style>
+/* ===== 💬 會話 Dialogue ===== */
+.dlg-mode-toggle,.dlg-role-toggle{display:flex;gap:8px;flex-wrap:wrap;}
+.dlg-toggle-btn{background:#fff;border:1px solid var(--line);color:#4e8f24;font-weight:900;padding:9px 14px;border-radius:14px;cursor:pointer;font-size:14px;}
+.dlg-toggle-btn.active{background:#83b842;color:#fff;border-color:#83b842;}
+.dlg-bubble-row{display:flex;gap:10px;margin:14px 0;align-items:flex-end;}
+.dlg-bubble-row.role-B{flex-direction:row-reverse;}
+.dlg-bubble-ico{font-size:26px;flex:0 0 auto;}
+.dlg-bubble{max-width:72%;background:#eef6e3;border:1px solid var(--line);border-radius:18px;padding:12px 16px;}
+.dlg-bubble-row.role-B .dlg-bubble{background:#eaf2ff;}
+.dlg-bubble-kr{font-weight:1000;font-size:16px;}
+.dlg-bubble-zh{color:var(--muted);font-size:13px;margin-top:4px;}
+.dlg-bubble-speak{border:0;background:transparent;cursor:pointer;font-size:15px;margin-left:6px;vertical-align:middle;}
+.dlg-line-row{display:grid;grid-template-columns:82px 1fr 1fr 36px;gap:8px;margin-bottom:8px;align-items:center;}
+.dlg-line-row select{border:1px solid var(--line);border-radius:10px;padding:8px;font-weight:800;}
+.dlg-line-row input{border:1px solid var(--line);border-radius:10px;padding:8px;font-size:14px;font-family:inherit;}
+.dlg-step-nav{display:flex;justify-content:center;gap:12px;margin-top:18px;flex-wrap:wrap;}
+@media (max-width:600px){
+  .dlg-line-row{grid-template-columns:64px 1fr 36px;}
+  .dlg-line-row input.dlg-zh-input{grid-column:2 / 3;}
+  .dlg-bubble{max-width:82%;}
+}
+</style>
 </head>
 <body>
 <div class="app">
@@ -2889,10 +2913,11 @@ textarea {
 
       <section id="readingHub" class="page">
         <div class="topbar"><h2>📖 閱讀</h2></div>
-        <div class="quick-icons-row" style="grid-template-columns:repeat(3,1fr);">
+        <div class="quick-icons-row" style="grid-template-columns:repeat(4,1fr);">
           <div class="quick-icon-tile" onclick="goPage('reading')"><span class="qi-ico">📚</span>小說</div>
           <div class="quick-icon-tile" onclick="goPage('lyrics')"><span class="qi-ico">🎵</span>歌詞</div>
           <div class="quick-icon-tile" onclick="goPage('sentence')"><span class="qi-ico">📝</span>短句</div>
+          <div class="quick-icon-tile" onclick="goPage('dialogue')"><span class="qi-ico">💬</span>會話</div>
         </div>
       </section>
 
@@ -3127,6 +3152,64 @@ textarea {
               </label>
               <div class="hero-help">建立後可以在歌詞讀本裡逐句補上中文翻譯、單字和文法。</div>
               <button class="primary" type="button" onclick="createSongFromEditor()">建立歌曲</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="dialogue" class="page">
+        <div class="topbar">
+          <h2>💬 會話練習</h2>
+          <div class="btns">
+            <button class="ghost" onclick="triggerDialogueImport()">📥 匯入</button>
+            <button class="ghost" onclick="exportDialogues()">📤 匯出</button>
+            <button class="primary" onclick="openDialogueEditor(null)">＋ 新增對話</button>
+          </div>
+          <input id="dialogueImportFile" type="file" accept="application/json" style="display:none" onchange="importDialogues(this.files[0])">
+        </div>
+
+        <div id="dialogueListView">
+          <input id="dialogueSearchInput" class="folder-search-input" type="text" placeholder="🔍 搜尋會話，例如：初次見面" oninput="renderDialogueList()">
+          <div id="dialogueGrid" class="folder-grid"></div>
+        </div>
+
+        <div id="dialogueReaderView" style="display:none">
+          <div class="topbar">
+            <button class="ghost" onclick="closeDialogueReader()">‹ 返回會話列表</button>
+            <div class="btns">
+              <button class="ghost" onclick="openDialogueEditor(currentDialogueId)">✏️ 編輯</button>
+              <button class="ghost" onclick="deleteCurrentDialogue()">🗑 刪除這段對話</button>
+            </div>
+          </div>
+          <div class="card" style="padding:24px;">
+            <div id="dialogueReaderTitle" style="text-align:center;font-weight:1000;font-size:20px;margin-bottom:16px;"></div>
+            <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px;">
+              <div class="dlg-mode-toggle" id="dialogueModeToggle"></div>
+              <div class="dlg-role-toggle" id="dialogueRoleToggle"></div>
+            </div>
+            <div id="dialogueContent"></div>
+          </div>
+        </div>
+
+        <div id="dialogueEditorMask" class="hero-modal-mask">
+          <div class="hero-modal" role="dialog" aria-modal="true" style="width:min(680px,100%);max-height:85vh;overflow:auto;">
+            <div class="hero-modal-head">
+              <div class="hero-modal-title" id="dialogueEditorTitle">💬 新增對話</div>
+              <button class="hero-modal-close" type="button" onclick="closeDialogueEditor()">關閉</button>
+            </div>
+            <div style="display:grid;gap:12px;">
+              <input id="dlgTitle" type="text" placeholder="對話標題，例如：Lesson 1 初次見面 · 對話一" class="cute-input">
+              <div>
+                <label style="font-weight:900;color:#4e8f24;display:block;margin-bottom:8px;">💬 對話內容（依序輸入 A／B 說的話）</label>
+                <div id="dlgLinesWrap"></div>
+                <button type="button" class="ghost" style="width:100%;" onclick="addDialogueLineRow()">➕ 新增一句</button>
+              </div>
+              <div>
+                <label style="font-weight:900;color:#4e8f24;display:block;margin-bottom:8px;">📋 快速貼上（選填）</label>
+                <textarea id="dlgPasteArea" rows="4" placeholder="每行一句，用 Tab 或「｜」分隔角色／韓文／中文，例如：&#10;A｜안녕하세요?｜你好。&#10;B｜안녕하세요.｜你好。&#10;（也可以只貼「韓文｜中文」兩欄，角色會自動 A／B 交替）" style="width:100%;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:14px;font-family:inherit;"></textarea>
+                <button type="button" class="ghost" style="width:100%;margin-top:8px;" onclick="applyDialoguePaste()">📥 貼上並加入對話</button>
+              </div>
+              <button class="primary cute-btn" type="button" onclick="saveDialogue()">💬 儲存對話</button>
             </div>
           </div>
         </div>
@@ -3732,7 +3815,7 @@ function getCloudPayload() {
     masteryData, wrongBookData, graduationData,
     folderPracticeStats, flashSeenData, voiceSpeed,
     activityLog,
-    lyricsSongs, favorites, grammarPoints, grammarCategories, sentenceEntries, novels, novelChapters,
+    lyricsSongs, favorites, grammarPoints, grammarCategories, sentenceEntries, novels, novelChapters, dialogues,
     updatedAt: new Date().toISOString()
   };
 }
@@ -3769,6 +3852,7 @@ async function loadCloudData() {
       sentenceEntries = Array.isArray(data.sentenceEntries) ? data.sentenceEntries : (sentenceEntries || []);
       novels = Array.isArray(data.novels) ? data.novels : (novels || []);
       novelChapters = Array.isArray(data.novelChapters) ? data.novelChapters : (novelChapters || []);
+      dialogues = Array.isArray(data.dialogues) ? data.dialogues : (dialogues || []);
       current = folders.length ? 0 : null;
       writeLocalOnly();
       localStorage.setItem("b1a4MasteryData", JSON.stringify(masteryData));
@@ -3782,6 +3866,7 @@ async function loadCloudData() {
       localStorage.setItem(SENTENCE_STORAGE_KEY, JSON.stringify(sentenceEntries));
       localStorage.setItem(NOVEL_STORAGE_KEY, JSON.stringify(novels));
       localStorage.setItem(CHAPTER_STORAGE_KEY, JSON.stringify(novelChapters));
+      localStorage.setItem(DIALOGUE_STORAGE_KEY, JSON.stringify(dialogues));
       renderFolders();
       if (current !== null) loadFolder(current); else voiceSpeed = Number(data.voiceSpeed || voiceSpeed || 0.65);
       initVoiceSpeedUI();
@@ -3793,6 +3878,7 @@ async function loadCloudData() {
       if (typeof renderFavoritesDetail === "function") renderFavoritesDetail();
       if (typeof renderGrammarList === "function") renderGrammarList();
       if (typeof renderSentenceList === "function") renderSentenceList();
+      if (typeof renderDialogueList === "function") renderDialogueList();
       if (typeof renderReadingHome === "function") renderReadingHome();
       if (typeof renderLearningCalendar === "function") renderLearningCalendar();
       if (typeof renderDetailedStats === "function") renderDetailedStats();
@@ -4184,7 +4270,7 @@ function today() { return new Date().toISOString().slice(0,10).replaceAll("-","/
 
 const BOTTOM_TAB_MAP = {
   home:"home",
-  readingHub:"readingHub", reading:"readingHub", lyrics:"readingHub", sentence:"readingHub",
+  readingHub:"readingHub", reading:"readingHub", lyrics:"readingHub", sentence:"readingHub", dialogue:"readingHub",
   practiceHub:"practiceHub", flash:"practiceHub", test:"practiceHub", match:"practiceHub", listen:"practiceHub",
   libraryHub:"libraryHub", library:"libraryHub", grammar:"libraryHub",
   aiHub:"profile", // 保留給任何遺留連結，實際頁面已移除
@@ -4223,6 +4309,7 @@ function goPage(id) {
   if (id === "profile") { renderLearningCalendar(); renderDetailedStats(); }
   if (id === "grammar" && typeof renderGrammarList === "function") renderGrammarList();
   if (id === "sentence" && typeof renderSentenceList === "function") renderSentenceList();
+  if (id === "dialogue" && typeof renderDialogueList === "function") renderDialogueList();
   if (id === "reading" && typeof renderReadingHome === "function") renderReadingHome();
   const floatBtn = document.getElementById("floatingSaveBtn");
   if (floatBtn) {
@@ -9257,17 +9344,453 @@ function finishGrammarQuiz() {
   if (typeof logActivity === "function") logActivity("grammar", total);
 }
 
+/* ===== 💬 會話 Dialogue (對話卡) ===== */
+const DIALOGUE_STORAGE_KEY = "b1a4Dialogues";
+const ROLE_ICON = { A: "👩", B: "👦" };
+let dialogues = [];
+let currentDialogueId = null;
+let dialogueEditingId = null;
+let dialogueRoleFilter = "all"; // "all" | "A" | "B"
+let dialogueMode = "full";      // "full" | "step" | "practice"
+let dialogueStepIndex = 0;
+let dialoguePracticeQuestions = [];
+let dialoguePracticeIndex = 0;
+let dialoguePracticeResults = [];
+
+function defaultDialogues() {
+  return [{
+    id: uid(),
+    title: "Lesson 1 初次見面 · 對話一",
+    lines: [
+      { id: uid(), role: "A", kr: "안녕하세요?", zh: "你好。" },
+      { id: uid(), role: "B", kr: "안녕하세요.", zh: "你好。" },
+      { id: uid(), role: "A", kr: "자기소개 해 보세요.", zh: "請自我介紹一下。" },
+      { id: uid(), role: "B", kr: "저는 영입니다.", zh: "我是泳儀。" },
+      { id: uid(), role: "A", kr: "어느 나라 사람입니까?", zh: "你是哪國人？" },
+      { id: uid(), role: "B", kr: "저는 대만 사람입니다.", zh: "我是台灣人。" },
+      { id: uid(), role: "A", kr: "이름이 뭐예요?", zh: "名字是什麼？" },
+      { id: uid(), role: "B", kr: "저는 영이라고 합니다.", zh: "我叫泳儀。" }
+    ]
+  }];
+}
+
+function loadDialogues() {
+  try {
+    const raw = localStorage.getItem(DIALOGUE_STORAGE_KEY);
+    dialogues = raw ? JSON.parse(raw) : defaultDialogues();
+  } catch (e) {
+    dialogues = defaultDialogues();
+  }
+  if (!Array.isArray(dialogues)) dialogues = defaultDialogues();
+  dialogues.forEach(d => {
+    if (!Array.isArray(d.lines)) d.lines = [];
+    d.lines.forEach(l => { if (l.role !== "A" && l.role !== "B") l.role = "A"; });
+  });
+}
+function saveDialogues() {
+  localStorage.setItem(DIALOGUE_STORAGE_KEY, JSON.stringify(dialogues));
+  if (typeof scheduleCloudSave === "function") scheduleCloudSave();
+}
+
+function renderDialogueList() {
+  const grid = document.getElementById("dialogueGrid");
+  if (!grid) return;
+  const kw = (document.getElementById("dialogueSearchInput")?.value || "").trim();
+  const list = kw
+    ? dialogues.filter(d => (d.title || "").includes(kw) || (d.lines || []).some(l => (l.kr || "").includes(kw) || (l.zh || "").includes(kw)))
+    : dialogues;
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty">還沒有任何會話。<br>點右上角「＋ 新增對話」開始建立你的對話卡吧！</div>`;
+    return;
+  }
+  grid.innerHTML = list.map(d => {
+    const total = (d.lines || []).length;
+    const preview = (d.lines[0] || {}).kr || "";
+    return `
+    <div class="folder card" onclick="openDialogueReader('${d.id}')">
+      <div class="folder-inner">
+        <div class="folder-title">💬 ${esc(d.title)}</div>
+        <div class="folder-meta">
+          共 ${total} 句對話<br>
+          ${esc(preview)}
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+/* --- 編輯器 --- */
+function openDialogueEditor(id) {
+  dialogueEditingId = id;
+  const title = document.getElementById("dialogueEditorTitle");
+  document.getElementById("dlgPasteArea").value = "";
+  if (id) {
+    const d = dialogues.find(x => x.id === id);
+    if (!d) return;
+    title.textContent = "✏️ 編輯對話";
+    document.getElementById("dlgTitle").value = d.title || "";
+    renderDialogueLineRows(d.lines.length ? d.lines.map(l => ({ role: l.role, kr: l.kr, zh: l.zh })) : [{ role: "A", kr: "", zh: "" }]);
+  } else {
+    title.textContent = "💬 新增對話";
+    document.getElementById("dlgTitle").value = "";
+    renderDialogueLineRows([{ role: "A", kr: "", zh: "" }, { role: "B", kr: "", zh: "" }]);
+  }
+  document.getElementById("dialogueEditorMask").classList.add("show");
+}
+function closeDialogueEditor() {
+  document.getElementById("dialogueEditorMask").classList.remove("show");
+}
+
+function renderDialogueLineRows(lines) {
+  const wrap = document.getElementById("dlgLinesWrap");
+  wrap.innerHTML = lines.map((l, i) => `
+    <div class="dlg-line-row" data-idx="${i}">
+      <select class="dlg-role-select">
+        <option value="A" ${l.role === "A" ? "selected" : ""}>👩 A</option>
+        <option value="B" ${l.role === "B" ? "selected" : ""}>👦 B</option>
+      </select>
+      <input type="text" placeholder="韓文" value="${escapeAttr(l.kr || "")}" class="dlg-kr-input">
+      <input type="text" placeholder="中文翻譯" value="${escapeAttr(l.zh || "")}" class="dlg-zh-input">
+      <button type="button" class="wc-del" onclick="removeDialogueLineRow(${i})">❌</button>
+    </div>`).join("");
+}
+function collectDialogueLineRows() {
+  return Array.from(document.querySelectorAll("#dlgLinesWrap .dlg-line-row")).map(r => ({
+    role: r.querySelector(".dlg-role-select").value,
+    kr: r.querySelector(".dlg-kr-input").value,
+    zh: r.querySelector(".dlg-zh-input").value
+  }));
+}
+function addDialogueLineRow() {
+  const rows = collectDialogueLineRows();
+  const lastRole = rows.length ? rows[rows.length - 1].role : "B";
+  rows.push({ role: lastRole === "A" ? "B" : "A", kr: "", zh: "" });
+  renderDialogueLineRows(rows);
+}
+function removeDialogueLineRow(idx) {
+  const rows = collectDialogueLineRows();
+  rows.splice(idx, 1);
+  renderDialogueLineRows(rows.length ? rows : [{ role: "A", kr: "", zh: "" }]);
+}
+
+function applyDialoguePaste() {
+  const raw = document.getElementById("dlgPasteArea").value;
+  if (!raw.trim()) return;
+  const rawLines = raw.split("\n").map(l => l.trim()).filter(Boolean);
+  let lastRole = "B"; // 讓第一句沒標角色時預設為 A
+  const parsed = rawLines.map(line => {
+    const parts = line.split(/\t|｜|\|/).map(s => s.trim());
+    let role, kr, zh;
+    if (parts.length >= 3 && /^[ab]$/i.test(parts[0])) {
+      role = parts[0].toUpperCase();
+      kr = parts[1];
+      zh = parts.slice(2).join(" ");
+    } else if (parts.length === 2) {
+      role = lastRole === "A" ? "B" : "A";
+      kr = parts[0];
+      zh = parts[1];
+    } else {
+      role = lastRole === "A" ? "B" : "A";
+      kr = parts[0];
+      zh = "";
+    }
+    lastRole = role;
+    return { role, kr, zh };
+  }).filter(l => l.kr);
+  if (!parsed.length) return;
+  const existing = collectDialogueLineRows().filter(l => l.kr || l.zh);
+  renderDialogueLineRows(existing.concat(parsed));
+  document.getElementById("dlgPasteArea").value = "";
+}
+
+function saveDialogue() {
+  const title = document.getElementById("dlgTitle").value.trim();
+  if (!title) { alert("請先輸入對話標題"); return; }
+  const rows = collectDialogueLineRows()
+    .map(r => ({ id: uid(), role: r.role === "B" ? "B" : "A", kr: r.kr.trim(), zh: r.zh.trim() }))
+    .filter(l => l.kr);
+  if (!rows.length) { alert("請至少輸入一句對話"); return; }
+
+  if (dialogueEditingId) {
+    const d = dialogues.find(x => x.id === dialogueEditingId);
+    if (d) { d.title = title; d.lines = rows; }
+  } else {
+    dialogues.push({ id: uid(), title, lines: rows });
+  }
+  saveDialogues();
+  closeDialogueEditor();
+  renderDialogueList();
+  if (dialogueEditingId && currentDialogueId === dialogueEditingId) renderDialogueReader();
+}
+
+function deleteCurrentDialogue() {
+  if (!currentDialogueId) return;
+  if (!confirm("確定要刪除這個對話嗎？此動作無法復原。")) return;
+  dialogues = dialogues.filter(d => d.id !== currentDialogueId);
+  saveDialogues();
+  closeDialogueReader();
+}
+
+/* --- 匯入／匯出 --- */
+function exportDialogues() {
+  const blob = new Blob([JSON.stringify(dialogues, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "bana-dialogues.json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+function triggerDialogueImport() {
+  document.getElementById("dialogueImportFile").click();
+}
+function importDialogues(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      const incoming = Array.isArray(parsed) ? parsed : [parsed];
+      let count = 0;
+      incoming.forEach(d => {
+        if (!d || !d.title) return;
+        dialogues.push({
+          id: uid(),
+          title: d.title,
+          lines: Array.isArray(d.lines) ? d.lines.map(l => ({
+            id: uid(),
+            role: l.role === "B" ? "B" : "A",
+            kr: l.kr || "",
+            zh: l.zh || ""
+          })) : []
+        });
+        count++;
+      });
+      saveDialogues();
+      renderDialogueList();
+      alert(`匯入完成，新增了 ${count} 段對話。`);
+    } catch (e) {
+      alert("匯入失敗，請確認這是從「匯出」下載的 JSON 檔案。");
+    }
+  };
+  reader.readAsText(file);
+  document.getElementById("dialogueImportFile").value = "";
+}
+
+/* --- 閱讀器：完整對話／逐句播放／練習模式／角色切換 --- */
+function openDialogueReader(id) {
+  currentDialogueId = id;
+  dialogueMode = "full";
+  dialogueRoleFilter = "all";
+  dialogueStepIndex = 0;
+  document.getElementById("dialogueListView").style.display = "none";
+  document.getElementById("dialogueReaderView").style.display = "block";
+  renderDialogueReader();
+}
+function closeDialogueReader() {
+  currentDialogueId = null;
+  document.getElementById("dialogueReaderView").style.display = "none";
+  document.getElementById("dialogueListView").style.display = "block";
+  renderDialogueList();
+}
+function getCurrentDialogue() {
+  return dialogues.find(d => d.id === currentDialogueId) || null;
+}
+function setDialogueMode(mode) {
+  dialogueMode = mode;
+  dialogueStepIndex = 0;
+  renderDialogueReader();
+}
+function setDialogueRoleFilter(role) {
+  dialogueRoleFilter = role;
+  dialogueStepIndex = 0;
+  renderDialogueReader();
+}
+function getFilteredDialogueLines(d) {
+  if (dialogueRoleFilter === "all") return d.lines;
+  return d.lines.filter(l => l.role === dialogueRoleFilter);
+}
+
+function renderDialogueReader() {
+  const d = getCurrentDialogue();
+  if (!d) return;
+  document.getElementById("dialogueReaderTitle").textContent = "💬 " + d.title;
+
+  const modeToggle = document.getElementById("dialogueModeToggle");
+  modeToggle.innerHTML = [
+    { id: "full", label: "📖 完整對話" },
+    { id: "step", label: "▶ 一句一句播放" },
+    { id: "practice", label: "✏️ 練習模式" }
+  ].map(m => `<button type="button" class="dlg-toggle-btn ${dialogueMode === m.id ? "active" : ""}" onclick="setDialogueMode('${m.id}')">${m.label}</button>`).join("");
+
+  const roleToggle = document.getElementById("dialogueRoleToggle");
+  roleToggle.innerHTML = [
+    { id: "all", label: "👥 全部" },
+    { id: "A", label: "👩 A" },
+    { id: "B", label: "👦 B" }
+  ].map(r => `<button type="button" class="dlg-toggle-btn ${dialogueRoleFilter === r.id ? "active" : ""}" onclick="setDialogueRoleFilter('${r.id}')">${r.label}</button>`).join("");
+
+  if (dialogueMode === "full") {
+    document.getElementById("dialogueContent").innerHTML = renderDialogueBubbles(getFilteredDialogueLines(d));
+  } else if (dialogueMode === "step") {
+    renderDialogueStep(d);
+  } else if (dialogueMode === "practice") {
+    startDialoguePractice(d);
+  }
+}
+
+function renderDialogueBubbleLine(l) {
+  const ico = ROLE_ICON[l.role] || "🙂";
+  return `
+    <div class="dlg-bubble-row role-${l.role}">
+      <div class="dlg-bubble-ico">${ico}</div>
+      <div class="dlg-bubble">
+        <div class="dlg-bubble-kr">${esc(l.kr)}<button type="button" class="dlg-bubble-speak" onclick="speakKorean('${escapeAttr(l.kr).replace(/'/g, "\\'")}')">🔊</button></div>
+        ${l.zh ? `<div class="dlg-bubble-zh">${esc(l.zh)}</div>` : ""}
+      </div>
+    </div>`;
+}
+function renderDialogueBubbles(lines) {
+  if (!lines.length) return `<div class="empty">這個角色篩選下沒有對話句子，試試切換成「全部」。</div>`;
+  return lines.map(renderDialogueBubbleLine).join("");
+}
+
+function renderDialogueStep(d) {
+  const lines = getFilteredDialogueLines(d);
+  const content = document.getElementById("dialogueContent");
+  if (!lines.length) { content.innerHTML = `<div class="empty">這個角色篩選下沒有對話句子，試試切換成「全部」。</div>`; return; }
+  if (dialogueStepIndex >= lines.length) dialogueStepIndex = lines.length - 1;
+  const shown = lines.slice(0, dialogueStepIndex + 1);
+  content.innerHTML = `
+    ${renderDialogueBubbles(shown)}
+    <div class="dlg-step-nav">
+      <button type="button" class="ghost" ${dialogueStepIndex <= 0 ? "disabled" : ""} onclick="dialogueStepMove(-1)">‹ 上一句</button>
+      <button type="button" class="primary" ${dialogueStepIndex >= lines.length - 1 ? "disabled" : ""} onclick="dialogueStepMove(1)">下一句 ▶</button>
+      <button type="button" class="ghost" onclick="dialogueStepRestart()">🔁 從頭開始</button>
+    </div>`;
+}
+function dialogueStepMove(delta) {
+  dialogueStepIndex += delta;
+  renderDialogueReader();
+}
+function dialogueStepRestart() {
+  dialogueStepIndex = 0;
+  renderDialogueReader();
+}
+
+/* --- 練習模式：根據對話自動出題 --- */
+function buildDialoguePracticeQuestions(d) {
+  const lines = d.lines;
+  if (lines.length < 2) return [];
+  const pool = lines.map(l => l.kr);
+  const questions = [];
+  for (let i = 0; i < lines.length - 1; i++) {
+    const target = lines[i + 1];
+    if (dialogueRoleFilter !== "all" && target.role !== dialogueRoleFilter) continue;
+    const distractors = shuffle(pool.filter(k => k !== target.kr)).slice(0, 2);
+    const options = distractors.length === 2 ? shuffle([target.kr, ...distractors]) : null;
+    questions.push({ contextLine: lines[i], correct: target.kr, role: target.role, options });
+  }
+  return questions;
+}
+function startDialoguePractice(d) {
+  dialoguePracticeQuestions = buildDialoguePracticeQuestions(d);
+  dialoguePracticeResults = new Array(dialoguePracticeQuestions.length).fill(null);
+  if (!dialoguePracticeQuestions.length) {
+    document.getElementById("dialogueContent").innerHTML = `<div class="empty">這個對話（或角色篩選）句數不夠，無法產生練習題。<br>先切換成「全部」，或去編輯新增更多句子吧！</div>`;
+    return;
+  }
+  renderDialoguePracticeQuestion(0);
+}
+function renderDialoguePracticeQuestion(i) {
+  dialoguePracticeIndex = i;
+  const q = dialoguePracticeQuestions[i];
+  const saved = dialoguePracticeResults[i];
+  const total = dialoguePracticeQuestions.length;
+  const content = document.getElementById("dialogueContent");
+  const ico = ROLE_ICON[q.contextLine.role] || "🙂";
+  const targetIco = ROLE_ICON[q.role] || "🙂";
+
+  let inputHtml = "";
+  if (q.options) {
+    inputHtml = `<div class="gram-quiz-options">${q.options.map(opt => `
+      <button type="button" class="gram-quiz-option ${saved ? (opt === saved.userAnswer ? "picked" : "") : ""} ${saved && opt === q.correct ? "correct-reveal" : ""}"
+        ${saved ? "disabled" : ""} onclick="submitDialoguePracticeAnswer('${escapeAttr(opt).replace(/'/g, "\\'")}')">${esc(opt)}</button>`).join("")}</div>`;
+  } else {
+    inputHtml = `<input id="dlgPracticeAns" placeholder="請輸入韓文..." value="${saved ? escapeAttr(saved.userAnswer) : ""}" ${saved ? "readonly" : ""}
+      onkeydown="if(event.key==='Enter'){event.preventDefault(); ${saved ? (i < total - 1 ? `renderDialoguePracticeQuestion(${i + 1})` : "finishDialoguePractice()") : "submitDialoguePracticeAnswer()"};}">`;
+  }
+
+  let feedbackHtml = "";
+  let actionHtml = "";
+  if (saved) {
+    feedbackHtml = saved.ok
+      ? `<div class="result-ok" style="font-size:16px;margin-top:10px;">✔ 答對了！</div>`
+      : `<div class="result-bad" style="font-size:16px;margin-top:10px;">✘ 答錯了，正確答案：${esc(q.correct)}</div>`;
+    actionHtml = (i < total - 1)
+      ? `<button type="button" class="primary" style="width:100%;margin-top:14px;" onclick="renderDialoguePracticeQuestion(${i + 1})">下一題 ›</button>`
+      : `<button type="button" class="primary" style="width:100%;margin-top:14px;" onclick="finishDialoguePractice()">🎉 查看成績</button>`;
+  } else if (!q.options) {
+    actionHtml = `<button type="button" class="primary" style="width:100%;margin-top:14px;" onclick="submitDialoguePracticeAnswer()">✅ 送出答案</button>`;
+  }
+
+  content.innerHTML = `
+    <div class="q" style="max-width:520px;margin-left:auto;margin-right:auto;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);font-weight:900;">
+        <span>第 ${i + 1} / ${total} 題</span><span>對方說了這句，你會怎麼回答？</span>
+      </div>
+      <div class="prompt-box">${ico} ${esc(q.contextLine.kr)}<div style="font-size:13px;color:var(--muted);margin-top:6px;">${esc(q.contextLine.zh || "")}</div></div>
+      <div style="text-align:center;margin:10px 0;font-size:20px;">↓</div>
+      <div class="prompt-box" style="background:#f4faed;">${targetIco} ？</div>
+      ${inputHtml}
+      ${feedbackHtml}
+      ${actionHtml}
+    </div>`;
+
+  if (!q.options) setTimeout(() => { const el = document.getElementById("dlgPracticeAns"); if (el) el.focus(); }, 30);
+}
+function submitDialoguePracticeAnswer(pickedOption) {
+  const i = dialoguePracticeIndex;
+  const q = dialoguePracticeQuestions[i];
+  let userAnswer = pickedOption;
+  if (!q.options) {
+    const el = document.getElementById("dlgPracticeAns");
+    userAnswer = el ? el.value : "";
+  }
+  const ok = q.options ? (userAnswer === q.correct) : isFuzzyCorrect(userAnswer, q.correct);
+  dialoguePracticeResults[i] = { ok, userAnswer };
+  renderDialoguePracticeQuestion(i);
+}
+function finishDialoguePractice() {
+  const total = dialoguePracticeQuestions.length;
+  const correct = dialoguePracticeResults.filter(r => r && r.ok).length;
+  const content = document.getElementById("dialogueContent");
+  const encourage = correct === total ? "🎉 全部答對！這段對話都記住了！" : correct / total >= 0.7 ? "👏 表現很不錯！" : "🌱 再多練習幾次就會了！";
+  content.innerHTML = `
+    <div class="q" style="max-width:520px;margin-left:auto;margin-right:auto;text-align:center;">
+      <div style="font-size:20px;font-weight:1000;margin-bottom:6px;">${encourage}</div>
+      <div style="font-size:15px;color:var(--muted);font-weight:800;margin-bottom:14px;">正確 ${correct} ／ ${total} 題</div>
+      <div class="btns" style="justify-content:center;">
+        <button type="button" class="primary" onclick="startDialoguePractice(getCurrentDialogue())">🔁 重新測驗</button>
+        <button type="button" class="ghost" onclick="setDialogueMode('full')">‹ 返回完整對話</button>
+      </div>
+    </div>`;
+  if (typeof logActivity === "function") logActivity("dialogue", total);
+}
+
 function initFavoritesAndLyrics() {
   loadFavorites();
   loadLyricsSongs();
   loadGrammarPoints();
   loadSentenceEntries();
   loadNovels();
+  loadDialogues();
   renderLyricsSongGrid();
   renderFavoritesSummary();
   renderFavoritesDetail();
   renderGrammarList();
   renderSentenceList();
+  renderDialogueList();
   const keyInput = document.getElementById("openAiKeyInput");
   if (keyInput && getOpenAiKey()) keyInput.placeholder = "已設定金鑰（●●●●●●●●）";
 }
