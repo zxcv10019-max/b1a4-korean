@@ -2629,9 +2629,12 @@ textarea {
 .dlg-bubble-kr{font-weight:1000;font-size:16px;}
 .dlg-bubble-zh{color:var(--muted);font-size:13px;margin-top:4px;}
 .dlg-bubble-speak{border:0;background:transparent;cursor:pointer;font-size:15px;margin-left:6px;vertical-align:middle;}
-.dlg-line-row{display:grid;grid-template-columns:82px 1fr 1fr 36px;gap:8px;margin-bottom:8px;align-items:center;}
+.dlg-line-row{display:grid;grid-template-columns:82px 1fr 1fr 36px 36px;gap:8px;margin-bottom:8px;align-items:center;}
 .dlg-line-row select{border:1px solid var(--line);border-radius:10px;padding:8px;font-weight:800;}
 .dlg-line-row input{border:1px solid var(--line);border-radius:10px;padding:8px;font-size:14px;font-family:inherit;}
+.dlg-line-translate-btn{border:0;background:#eaf5dd;color:#4e8f24;font-size:14px;padding:8px 4px;border-radius:10px;cursor:pointer;white-space:nowrap;}
+.dlg-line-translate-btn:hover{background:#d7ecc0;}
+.dlg-line-translate-btn:disabled{opacity:.6;cursor:wait;}
 .dlg-step-nav{display:flex;justify-content:center;gap:12px;margin-top:18px;flex-wrap:wrap;}
 .dlg-section-tabs{display:flex;gap:8px;margin-bottom:18px;border-bottom:2px solid var(--line);padding-bottom:14px;flex-wrap:wrap;}
 .ptn-group{border:1px solid var(--line);border-radius:16px;margin-bottom:14px;overflow:hidden;background:#fff;}
@@ -2656,7 +2659,7 @@ textarea {
   .dlg-pattern-item-row{grid-template-columns:1fr 1fr;}
 }
 @media (max-width:600px){
-  .dlg-line-row{grid-template-columns:64px 1fr 36px;}
+  .dlg-line-row{grid-template-columns:64px 1fr 36px 36px;}
   .dlg-line-row input.dlg-zh-input{grid-column:2 / 3;}
   .dlg-bubble{max-width:82%;}
 }
@@ -3247,7 +3250,11 @@ textarea {
               <div>
                 <label style="font-weight:900;color:#4e8f24;display:block;margin-bottom:8px;">💬 對話內容（依序輸入 A／B 說的話）</label>
                 <div id="dlgLinesWrap"></div>
-                <button type="button" class="ghost" style="width:100%;" onclick="addDialogueLineRow()">➕ 新增一句</button>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <button type="button" class="ghost" style="flex:1;min-width:120px;" onclick="addDialogueLineRow()">➕ 新增一句</button>
+                  <button type="button" class="soft" style="flex:1;min-width:160px;" onclick="aiTranslateAllDialogueLines(this)">🤖 AI自動翻譯全部空白句</button>
+                </div>
+                <div class="hero-help" style="margin-top:6px;">點每一句後面的 🤖 可以單句翻譯，或按「AI自動翻譯全部空白句」一次補齊所有還沒填中文的句子。</div>
               </div>
               <div>
                 <label style="font-weight:900;color:#4e8f24;display:block;margin-bottom:8px;">📋 快速貼上對話（選填）</label>
@@ -9658,6 +9665,7 @@ function renderDialogueLineRows(lines) {
       </select>
       <input type="text" placeholder="韓文" value="${escapeAttr(l.kr || "")}" class="dlg-kr-input">
       <input type="text" placeholder="中文翻譯" value="${escapeAttr(l.zh || "")}" class="dlg-zh-input">
+      <button type="button" class="dlg-line-translate-btn" title="AI自動翻譯這一句" onclick="aiTranslateDialogueLineRow(this)">🤖</button>
       <button type="button" class="wc-del" onclick="removeDialogueLineRow(${i})">❌</button>
     </div>`).join("");
 }
@@ -9678,6 +9686,57 @@ function removeDialogueLineRow(idx) {
   const rows = collectDialogueLineRows();
   rows.splice(idx, 1);
   renderDialogueLineRows(rows.length ? rows : [{ role: "A", kr: "", zh: "" }]);
+}
+
+async function aiTranslateDialogueLineRow(btnEl) {
+  const row = btnEl.closest(".dlg-line-row");
+  if (!row) return;
+  const kr = row.querySelector(".dlg-kr-input").value.trim();
+  const zhInput = row.querySelector(".dlg-zh-input");
+  if (!kr) { alert("請先輸入這一句的韓文，才能自動翻譯。"); return; }
+  const prompt = `請將下面這句韓文翻譯成自然、口語的繁體中文。只輸出翻譯結果本身，不要加引號、不要加任何說明或Markdown。
+
+韓文：${kr}`;
+  await runAiAssist(btnEl, prompt, val => {
+    zhInput.value = String(val || "").trim().replace(/^[「"]|[」"]$/g, "");
+  });
+}
+
+async function aiTranslateAllDialogueLines(btnEl) {
+  const rows = Array.from(document.querySelectorAll("#dlgLinesWrap .dlg-line-row"));
+  const targets = rows.map(r => ({
+    kr: r.querySelector(".dlg-kr-input").value.trim(),
+    zhInput: r.querySelector(".dlg-zh-input")
+  })).filter(t => t.kr && !t.zhInput.value.trim());
+
+  if (!targets.length) { alert("目前每一句都已經有中文翻譯了，或是韓文欄位都是空的。"); return; }
+
+  const originalText = btnEl ? btnEl.textContent : "";
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = "⏳ AI 翻譯中..."; }
+  const prompt = `請將下面依編號列出的韓文句子，翻譯成自然、口語的繁體中文。
+只輸出一個JSON陣列，不要加說明或Markdown，格式為：["第1句翻譯","第2句翻譯",...]
+陣列的順序與長度必須跟輸入的句子完全一致，總共${targets.length}句。
+
+韓文句子：
+${targets.map((t, i) => `${i + 1}. ${t.kr}`).join("\n")}`;
+
+  try {
+    const result = await callAI(prompt);
+    const arr = parseAiJson(result);
+    if (!Array.isArray(arr)) throw new Error("AI回傳格式不是陣列");
+    targets.forEach((t, i) => { if (arr[i] != null && String(arr[i]).trim()) t.zhInput.value = String(arr[i]).trim(); });
+    if (btnEl) { btnEl.textContent = "✅ 已完成翻譯"; setTimeout(() => { if (btnEl) btnEl.textContent = originalText; }, 1500); }
+  } catch (e) {
+    console.warn("AI 批次翻譯失敗：", e);
+    if (btnEl) { btnEl.textContent = "❌ 翻譯失敗，請再試一次"; setTimeout(() => { if (btnEl) btnEl.textContent = originalText; }, 2000); }
+    if (!getOpenAiKey()) {
+      alert("尚未設定 OpenAI API 金鑰，請先到「我的」頁面設定，才能使用 AI 自動翻譯。");
+    } else {
+      alert("AI 翻譯失敗：" + (e.message || e));
+    }
+  } finally {
+    if (btnEl) btnEl.disabled = false;
+  }
 }
 
 function applyDialoguePaste() {
