@@ -2204,6 +2204,29 @@ textarea {
   100% { transform:translateY(50px) rotate(25deg); opacity:0; }
 }
 
+/* ===== 單字卡 2.0：檢視模式（參考題庫單字設計） ===== */
+.word-card.word-card-v2 { align-items:stretch; }
+.wc-content { flex:1; min-width:0; }
+.wc-view-head { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.wc-term { font-weight:1000; font-size:17px; color:#20351f; }
+.wc-tag {
+  background:var(--green-soft); color:#4e8f24; font-size:11px; font-weight:900;
+  padding:3px 10px; border-radius:999px;
+}
+.wc-book { font-size:14px; opacity:.7; }
+.wc-view-sub { margin-top:4px; display:flex; flex-direction:column; gap:2px; }
+.wc-romanized { font-size:12px; color:var(--muted); font-style:italic; }
+.wc-def { font-size:14px; color:#586a4f; font-weight:700; }
+.wc-edit { flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
+.wc-actions { display:flex; align-items:center; gap:2px; flex-shrink:0; }
+.wc-icon-btn {
+  border:0; background:transparent; cursor:pointer; font-size:15px;
+  padding:6px; border-radius:50%; transition:.15s; flex:0 0 auto;
+}
+.wc-icon-btn:hover { background:#eef6e2; transform:scale(1.1); }
+.wc-icon-btn.wc-speak { color:#4e8f24; }
+.wc-icon-btn.wc-del:hover { background:#ffe3e8; }
+
 .add-word-btn {
   width:100%;
   border:2px dashed #b9dd8d;
@@ -2546,6 +2569,15 @@ textarea {
 
 .sen-tags-row { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
 .sen-tag-chip { background:#e8f2ff; color:#3a6ea5; font-weight:900; font-size:11px; padding:4px 10px; border-radius:999px; }
+
+/* ===== 短文卡：逐句對照 / 音檔 / 摘取單字 ===== */
+.reading-vocab-row {
+  background:#fff; border:1px solid var(--line); border-radius:14px;
+  padding:12px 16px; cursor:pointer;
+}
+.reading-vocab-row-head {
+  display:flex; justify-content:space-between; align-items:center; font-weight:900;
+}
 .sen-teacher-note {
   background:#fff8e0; border:1px solid #f0dfa0; border-radius:14px;
   padding:12px 14px; font-size:13px; color:#6f5310; font-weight:700; line-height:1.6;
@@ -2748,8 +2780,6 @@ textarea {
           </div>
         </div>
 
-        <div id="graduationPanel" class="graduation-panel"></div>
-
         <div id="voiceSpeedPanel" class="voice-speed-panel" style="display:none">
           <input id="voiceSpeedRange" type="range" min="0.5" max="1.2" step="0.05" value="0.65" oninput="setVoiceSpeed(this.value)">
           <span id="voiceSpeedValue">0.65</span>
@@ -2801,6 +2831,8 @@ textarea {
           <div style="display:flex;align-items:center;gap:12px"><h2 id="editorTitle">🌿 單字花園</h2><button class="ghost" onclick="closeEditor()">✕ 關閉</button><button class="ghost" onclick="newFolder()">＋ 新增題庫</button></div>
           <span id="countBadge" class="soft" style="padding:8px 14px;border-radius:999px;font-weight:900;">🍀 0 張小葉子</span>
         </div>
+
+        <div id="graduationPanel" class="graduation-panel"></div>
 
         <div class="editor-layout forest-editor">
           <div class="card editor forest-card-editor compact-editor">
@@ -2925,7 +2957,6 @@ textarea {
           <div class="topbar">
             <button class="ghost" onclick="closeChapterView()">‹ 返回章節列表</button>
             <div class="btns">
-              <button class="ghost" id="hideTranslationBtn" onclick="toggleHideTranslations()">🙈 隱藏全部翻譯</button>
               <button class="ghost" onclick="renameChapter(currentChapterId)">✏️ 章節改名</button>
               <button class="ghost" onclick="deleteChapter(currentChapterId)">🗑 刪除章節</button>
             </div>
@@ -3149,6 +3180,7 @@ textarea {
               <button class="primary cute-btn" id="lyricsModeBtn" onclick="toggleLyricsMode()">📖 學習模式</button>
               <button class="ghost" onclick="autoDetectSong()">🪄 自動偵測全部單字文法</button>
               <button class="ghost" onclick="aiAnalyzeAllLyrics(this)">✨ AI解析全部句子</button>
+              <button class="ghost" id="lyricsVocabPanelBtn" onclick="toggleLyricsVocabGrammarPanel()">📋 單字/文法列表</button>
               <button class="ghost" onclick="addLyricsLine()">＋ 新增一句</button>
               <button class="ghost" onclick="deleteCurrentSong()">🗑 刪除這首歌</button>
             </div>
@@ -3157,6 +3189,7 @@ textarea {
             <div id="lyricsReaderTitle" style="text-align:center;font-weight:1000;font-size:20px;margin-bottom:4px;"></div>
             <div id="lyricsReaderArtist" style="text-align:center;color:var(--muted);font-weight:800;margin-bottom:8px;"></div>
             <div id="lyricsStudyProgress" style="display:none;text-align:center;margin-bottom:16px;"></div>
+            <div id="lyricsVocabGrammarPanel" style="display:none;margin-bottom:18px;"></div>
             <div id="lyricsLinesWrap"></div>
           </div>
         </div>
@@ -4004,6 +4037,7 @@ function logActivity(category, amount) {
   localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(activityLog));
   renderLearningCalendar();
   if (typeof renderHomeQuestDesign === "function") renderHomeQuestDesign();
+  if (typeof updateHeroStats === "function") updateHeroStats();
   if (typeof scheduleCloudSave === "function") scheduleCloudSave();
 }
 
@@ -4319,6 +4353,23 @@ function parseCards(t) {
 }
 function shuffle(a) { return [...a].sort(() => Math.random() - .5); }
 function esc(s) { return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m])); }
+
+/* ===== 韓文羅馬拼音（簡易版，無連音規則，僅供參考） ===== */
+const ROMANIZE_CHO = ["g","kk","n","d","tt","r","m","b","pp","s","ss","","j","jj","ch","k","t","p","h"];
+const ROMANIZE_JUNG = ["a","ae","ya","yae","eo","e","yeo","ye","o","wa","wae","oe","yo","u","wo","we","wi","yu","eu","ui","i"];
+const ROMANIZE_JONG = ["","g","kk","gs","n","nj","nh","d","l","lg","lm","lb","ls","lt","lp","lh","m","b","bs","s","ss","ng","j","ch","k","t","p","h"];
+function romanizeHangul(text) {
+  let out = "";
+  for (const ch of String(text || "")) {
+    const code = ch.charCodeAt(0) - 0xAC00;
+    if (code < 0 || code > 11171) { out += ch; continue; }
+    const cho = Math.floor(code / 588);
+    const jung = Math.floor((code % 588) / 28);
+    const jong = code % 28;
+    out += ROMANIZE_CHO[cho] + ROMANIZE_JUNG[jung] + ROMANIZE_JONG[jong];
+  }
+  return out;
+}
 function norm(v) { return String(v||"").trim().toLowerCase().replace(/[，。！？、,.!?]/g,"").replace(/\s+/g," "); }
 function today() { return new Date().toISOString().slice(0,10).replaceAll("-","/"); }
 
@@ -4788,6 +4839,7 @@ function parseRawLinesLenient(t) {
 }
 
 function syncEditorCardsFromContent(content) {
+  wordCardEditState = {};
   editorCards = parseRawLinesLenient(content).map(c => ({ id: "wc" + (editorCardSeq++), term: c.term, definition: c.definition }));
 }
 
@@ -4918,6 +4970,7 @@ function dismissTypoFix(i) {
 
 const EDITOR_PREVIEW_LIMIT = 8;
 let editorExpanded = false;
+let wordCardEditState = {};
 
 function computeFolderAccuracy(idx) {
   const rec = masteryData[idx] || {};
@@ -4967,14 +5020,37 @@ function renderCardEditor(highlightId) {
   const visible = showAll ? filtered : filtered.slice(0, EDITOR_PREVIEW_LIMIT);
   const remaining = filtered.length - visible.length;
 
-  list.innerHTML = visible.map(c => `
-    <div class="word-card${c.id === highlightId ? " card-drop-in" : ""}" data-id="${c.id}">
-      <span class="wc-flag">🇰🇷</span>
-      <input type="text" placeholder="韓文" value="${escapeAttr(c.term)}" oninput="updateEditorCard('${c.id}','term',this.value)" onkeydown="handleWordCardEnter(event)">
-      <span class="wc-flag">🇹🇼</span>
-      <input type="text" placeholder="中文" value="${escapeAttr(c.definition)}" oninput="updateEditorCard('${c.id}','definition',this.value)" onkeydown="handleWordCardEnter(event)">
-      <button type="button" class="wc-del" title="刪除" onclick="deleteEditorCard('${c.id}')">❌</button>
-    </div>`).join("");
+  list.innerHTML = visible.map(c => {
+    const editing = c.id === highlightId || !!wordCardEditState[c.id];
+    const romanized = c.term ? romanizeHangul(c.term) : "";
+    return `
+    <div class="word-card word-card-v2${c.id === highlightId ? " card-drop-in" : ""}" data-id="${c.id}">
+      <div class="wc-content">
+        ${editing ? `
+          <div class="wc-edit">
+            <input type="text" placeholder="韓文" value="${escapeAttr(c.term)}" oninput="updateEditorCard('${c.id}','term',this.value)" onkeydown="handleWordCardEnter(event)">
+            <input type="text" placeholder="中文" value="${escapeAttr(c.definition)}" oninput="updateEditorCard('${c.id}','definition',this.value)" onkeydown="handleWordCardEnter(event)">
+          </div>
+        ` : `
+          <div class="wc-view-head">
+            <span class="wc-term">${esc(c.term) || "（未命名）"}</span>
+            <span class="wc-tag">custom</span>
+            <span class="wc-book">📖</span>
+          </div>
+          <div class="wc-view-sub">
+            ${romanized ? `<span class="wc-romanized">${esc(romanized)}</span>` : ""}
+            <span class="wc-def">${esc(c.definition) || "（尚無翻譯）"}</span>
+          </div>
+        `}
+      </div>
+      <div class="wc-actions">
+        <button type="button" class="wc-icon-btn wc-speak" title="發音" onclick="speakKorean('${jsAttr(c.term)}')">🔊</button>
+        <button type="button" class="wc-icon-btn" title="搬到其他題庫" onclick="moveEditorCardToFolder('${c.id}')">📁</button>
+        <button type="button" class="wc-icon-btn" title="${editing ? "收合" : "編輯"}" onclick="toggleWordCardEdit('${c.id}')">${editing ? "▴" : "▾"}</button>
+        <button type="button" class="wc-icon-btn wc-del" title="刪除" onclick="deleteEditorCard('${c.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join("");
 
   if (remaining > 0) {
     list.innerHTML += `<button type="button" class="expand-more-btn" onclick="expandEditorCards()">🌳 還有 ${remaining} 個單字，點我展開</button>`;
@@ -4983,6 +5059,31 @@ function renderCardEditor(highlightId) {
   }
 
   updateEditorCountLabels();
+}
+
+function toggleWordCardEdit(id) {
+  wordCardEditState[id] = !wordCardEditState[id];
+  renderCardEditor();
+}
+
+function moveEditorCardToFolder(id) {
+  const c = editorCards.find(x => x.id === id);
+  if (!c) return;
+  if (!c.term.trim()) { alert("請先輸入韓文單字再搬移。"); return; }
+  openFolderPicker((idx) => {
+    if (idx === current) return;
+    const target = folders[idx];
+    if (!target) return;
+    const line = `${c.term}\t${c.definition}`;
+    target.content = (target.content ? target.content + "\n" : "") + line;
+    target.updated = today();
+    saveStorage();
+    editorCards = editorCards.filter(x => x.id !== id);
+    delete wordCardEditState[id];
+    serializeEditorCards();
+    renderCardEditor();
+    alert(`已搬到「${target.name}」`);
+  });
 }
 
 function expandEditorCards() { editorExpanded = true; renderCardEditor(); }
@@ -5087,6 +5188,7 @@ function loadFolder(i) {
   document.getElementById("floatingSaveBtn")?.classList.add("show");
   renderFolders();
   resetViews();
+  renderGraduationPanel();
 }
 function setColor(c) {
   currentColor = c;
@@ -6406,10 +6508,13 @@ function getActiveHeroSlides() {
 }
 
 
+function getTotalActivityCount() {
+  return Object.values(activityLog).reduce((sum, day) => sum + dayTotal(day), 0);
+}
+
 function updateHeroStats() {
-  const learned = (typeof getAllWords === "function" ? getAllWords().filter(w => w.learned).length : 0);
-  const totalPractice = (typeof getTotalPracticeCount === "function" ? getTotalPracticeCount() : 0);
-  const xp = Math.max(0, learned * 10 + totalPractice * 5);
+  const totalCount = getTotalActivityCount();
+  const xp = Math.max(0, totalCount * 5);
   const level = Math.floor(xp / 100);
   const nowXp = xp % 100;
   const streakEl = document.getElementById("heroStreak");
@@ -7090,6 +7195,9 @@ function createSongFromEditor() {
 function openLyricsReader(songId) {
   currentSongId = songId;
   localStorage.setItem(LAST_SONG_KEY, songId);
+  lyricsVocabPanelOpen = false;
+  const vgBtn = document.getElementById("lyricsVocabPanelBtn");
+  if (vgBtn) vgBtn.textContent = "📋 單字/文法列表";
   document.getElementById("lyricsListView").style.display = "none";
   document.getElementById("lyricsReaderView").style.display = "block";
   renderLyricsReader();
@@ -7148,6 +7256,55 @@ function renderLyricsReader() {
 
   if (lyricsViewMode === "study") renderLyricsStudyView(song);
   else renderLyricsEditView(song);
+  renderLyricsVocabGrammarPanel(song);
+}
+
+/* ===== 全曲單字／文法彙整列表 ===== */
+let lyricsVocabPanelOpen = false;
+function getSongWordList(song) {
+  const map = new Map();
+  (song.lines || []).forEach(ln => (ln.words || []).forEach(w => {
+    if (w.k && !map.has(w.k)) map.set(w.k, w.z || "");
+  }));
+  return Array.from(map, ([k, z]) => ({ k, z }));
+}
+function getSongGrammarList(song) {
+  const map = new Map();
+  (song.lines || []).forEach(ln => (ln.grammar || []).forEach(g => {
+    if (g.p && !map.has(g.p)) map.set(g.p, g.n || "");
+  }));
+  return Array.from(map, ([p, n]) => ({ p, n }));
+}
+function toggleLyricsVocabGrammarPanel() {
+  lyricsVocabPanelOpen = !lyricsVocabPanelOpen;
+  const btn = document.getElementById("lyricsVocabPanelBtn");
+  if (btn) btn.textContent = lyricsVocabPanelOpen ? "📋 隱藏單字/文法列表" : "📋 單字/文法列表";
+  const song = getCurrentSong();
+  if (song) renderLyricsVocabGrammarPanel(song);
+}
+function renderLyricsVocabGrammarPanel(song) {
+  const box = document.getElementById("lyricsVocabGrammarPanel");
+  if (!box) return;
+  if (!lyricsVocabPanelOpen) { box.style.display = "none"; box.innerHTML = ""; return; }
+  box.style.display = "block";
+  const words = getSongWordList(song);
+  const grammar = getSongGrammarList(song);
+  box.innerHTML = `
+    <div class="card panel" style="margin-bottom:14px;background:#f9fdf3;">
+      <div style="font-weight:1000;font-size:16px;margin-bottom:10px;">🧩 單字列表（共 ${words.length} 個）</div>
+      ${words.length ? `<div style="display:flex;flex-direction:column;gap:8px;">${words.map(w => `
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#ffffff;border:1px solid var(--line);border-radius:14px;">
+          <button type="button" class="ghost" style="padding:6px 10px;flex-shrink:0;" onclick="speakKorean('${jsAttr(w.k)}')">🔊</button>
+          <div><b>${esc(w.k)}</b>${w.z ? `<span style="color:var(--muted);margin-left:10px;">${esc(w.z)}</span>` : ""}</div>
+        </div>`).join("")}</div>` : `<div class="empty" style="padding:16px 0;">還沒有單字資料，先按「AI解析全部句子」或「自動偵測全部單字文法」吧！</div>`}
+    </div>
+    <div class="card panel" style="background:#f9fdf3;">
+      <div style="font-weight:1000;font-size:16px;margin-bottom:10px;">📚 文法列表（共 ${grammar.length} 個）</div>
+      ${grammar.length ? `<div style="display:flex;flex-direction:column;gap:8px;">${grammar.map(g => `
+        <div style="padding:10px 14px;background:#ffffff;border:1px solid var(--line);border-radius:14px;">
+          <b>${esc(g.p)}</b>${g.n ? `<div style="color:var(--muted);margin-top:4px;">${esc(g.n)}</div>` : ""}
+        </div>`).join("")}</div>` : `<div class="empty" style="padding:16px 0;">還沒有文法資料，先按「AI解析全部句子」或「自動偵測全部單字文法」吧！</div>`}
+    </div>`;
 }
 
 function renderLyricsEditView(song) {
@@ -7203,7 +7360,7 @@ function renderLyricsStudyView(song) {
         <div style="font-size:13px;color:var(--muted);margin-top:4px;">完成上一句才能解鎖</div>
       </div>`;
     }
-    const revealed = !!lyricsRevealState[ln.id];
+    const detailOpen = !!lyricsRevealState[ln.id];
     const sentFav = isSentenceFav(song.id, ln.id);
     const wordChips = (ln.words || []).map(w => {
       const chipKey = ln.id + "_" + w.k;
@@ -7217,21 +7374,27 @@ function renderLyricsStudyView(song) {
 
     return `
     <div class="lyrics-line-card lyrics-study-card ${ln.understood ? "understood" : ""}">
-      <div class="btns" style="justify-content:space-between;margin-bottom:10px;">
-        <span style="font-weight:900;color:var(--muted);">第 ${i + 1} 句</span>
-        <button class="ghost" type="button" onclick="toggleLineUnderstood('${ln.id}')">${ln.understood ? "✅ 已理解" : "☐ 已理解"}</button>
-      </div>
-      <div style="font-weight:1000;font-size:19px;color:#20351f;line-height:1.6;">${esc(ln.kr)}</div>
-      <div class="btns" style="margin-top:10px;">
-        <button class="ghost" type="button" onclick="speakLyricsLine('${ln.id}')">🔊 播放</button>
-        ${!revealed ? `<button class="primary cute-btn" type="button" onclick="toggleLineReveal('${ln.id}')">👁 查看翻譯</button>` : ""}
+      <div style="display:flex;align-items:flex-start;gap:10px;">
+        <span style="font-weight:900;color:var(--muted);font-size:13px;padding-top:4px;">${i + 1}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:1000;font-size:19px;color:#20351f;line-height:1.5;">${esc(ln.kr)}</div>
+          ${ln.romanization ? `<div style="font-size:13px;color:var(--muted);font-style:italic;margin-top:4px;">${esc(ln.romanization)}</div>` : ""}
+          <div style="font-size:14px;color:var(--muted);font-weight:700;margin-top:4px;">🇹🇼 ${esc(ln.zh || "（尚未填寫翻譯）")}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;">
+          <button class="gram-icon-btn" type="button" onclick="speakLyricsLine('${ln.id}')" title="播放">🔊</button>
+          <button class="gram-icon-btn" type="button" onclick="toggleLineReveal('${ln.id}')" title="展開細節">${detailOpen ? "▴" : "▾"}</button>
+        </div>
       </div>
 
-      ${revealed ? `
+      ${detailOpen ? `
       <div style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);">
-        <div style="color:var(--muted);font-weight:700;">🇹🇼 ${esc(ln.zh || "（尚未填寫翻譯）")}</div>
+        <div class="btns" style="justify-content:space-between;margin-bottom:10px;">
+          <button class="ghost" type="button" onclick="toggleLineUnderstood('${ln.id}')">${ln.understood ? "✅ 已理解" : "☐ 標記已理解"}</button>
+          <button class="ghost" type="button" onclick="toggleSentenceFav('${song.id}','${ln.id}', ${JSON.stringify(ln.kr).replace(/"/g, "&quot;")}, ${JSON.stringify(ln.zh || "").replace(/"/g, "&quot;")})">${sentFav ? "❤️ 已收藏句子" : "🤍 收藏句子"}</button>
+        </div>
 
-        ${wordChips ? `<div class="sen-section-label" style="margin-top:12px;">🧩 單字（點字看解析）</div><div style="display:flex;flex-wrap:wrap;gap:8px;">${wordChips}</div>` : ""}
+        ${wordChips ? `<div class="sen-section-label">🧩 單字（點字看解析）</div><div style="display:flex;flex-wrap:wrap;gap:8px;">${wordChips}</div>` : ""}
 
         <div class="sen-section-label" style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;">
           <span>📚 AI解析（句子文法／語氣）</span>
@@ -7241,7 +7404,6 @@ function renderLyricsStudyView(song) {
 
         <div class="btns" style="margin-top:12px;">
           <button class="ghost" type="button" onclick="addWordsFav('${song.id}','${ln.id}', ${JSON.stringify(ln.words || []).replace(/"/g, "&quot;")})">⭐ 加入單字</button>
-          <button class="ghost" type="button" onclick="toggleSentenceFav('${song.id}','${ln.id}', ${JSON.stringify(ln.kr).replace(/"/g, "&quot;")}, ${JSON.stringify(ln.zh || "").replace(/"/g, "&quot;")})">${sentFav ? "❤️ 已收藏句子" : "🤍 收藏句子"}</button>
         </div>
       </div>` : ""}
     </div>`;
@@ -7687,6 +7849,9 @@ function deleteChapter(id) {
 
 function openChapter(chapterId) {
   currentChapterId = chapterId;
+  chapterTranslationOpen = false;
+  chapterVocabOpen = false;
+  chapterVocabItemExpand = {};
   const c = novelChapters.find(x => x.id === chapterId);
   if (!c) return;
   const n = novels.find(x => x.id === c.novelId);
@@ -7720,6 +7885,46 @@ function toggleHideTranslations() {
   renderChapterReading();
 }
 
+let chapterTranslationOpen = false;
+let chapterVocabOpen = false;
+let chapterVocabItemExpand = {};
+
+function toggleChapterTranslation() {
+  chapterTranslationOpen = !chapterTranslationOpen;
+  renderChapterReading();
+}
+function toggleChapterVocabPanel() {
+  chapterVocabOpen = !chapterVocabOpen;
+  renderChapterReading();
+}
+function toggleChapterVocabItem(key) {
+  chapterVocabItemExpand[key] = !chapterVocabItemExpand[key];
+  renderChapterReading();
+}
+function getChapterVocabList(list) {
+  const map = new Map();
+  list.forEach(s => (s.items || []).forEach(it => {
+    if (it.kr && it.kr.trim() && !map.has(it.kr)) {
+      map.set(it.kr, { kr: it.kr, zh: it.zh || "", root: it.root || "", note: it.note || "" });
+    }
+  }));
+  return Array.from(map.values());
+}
+function speakChapterAll(list) {
+  if (!("speechSynthesis" in window)) { alert("這個瀏覽器不支援發音功能"); return; }
+  speechSynthesis.cancel();
+  list.forEach(s => {
+    if (!s.kr || !s.kr.trim()) return;
+    const u = new SpeechSynthesisUtterance(s.kr);
+    u.lang = "ko-KR"; u.rate = 0.82; u.pitch = 1;
+    speechSynthesis.speak(u);
+  });
+}
+function speakCurrentChapterAll() {
+  const list = sentenceEntries.filter(s => s.chapterId === currentChapterId);
+  speakChapterAll(list);
+}
+
 function renderChapterReading() {
   const wrap = document.getElementById("chapterSentencesWrap");
   if (!wrap) return;
@@ -7728,34 +7933,64 @@ function renderChapterReading() {
     wrap.innerHTML = `<div class="empty-fox"><span class="ef-icon">📝</span>這一章還沒有內容～<div class="ef-sub">按下面「➕ 新增句子／段落」開始寫吧！</div></div>`;
     return;
   }
-  const hideAll = !!hideAllTranslations[currentChapterId];
-  wrap.innerHTML = list.map(s => readingBlockHtml(s, hideAll)).join("");
-}
 
-function readingBlockHtml(s, hideAll) {
-  const expanded = hideAll ? !!sentenceBlockExpanded[s.id] : true;
-  const wordCount = s.items ? s.items.length : 0;
-  return `
-    <div class="reading-block">
-      <div class="reading-kr" ${hideAll ? `onclick="toggleReadingBlock('${s.id}')" style="cursor:pointer;"` : ""}>${esc(s.kr)}</div>
-      ${expanded ? `
-      <div class="reading-detail">
-        <div class="reading-zh">🇹🇼 ${esc(s.zh || "（尚未填寫翻譯）")}</div>
-        <div class="btns" style="margin-top:8px;">
-          <button class="ghost" onclick="speakKorean('${jsAttr(s.kr)}')">🔊 播放</button>
-          <button class="ghost" onclick="speakKoreanSlow('${jsAttr(s.kr)}')">🐢 慢速</button>
-          <button class="gram-icon-btn" onclick="toggleSentenceFavorite('${s.id}');renderChapterReading();" title="收藏">${s.favorite ? "🔖" : "📑"}</button>
-          <button class="gram-icon-btn" onclick="openSentenceEditor('${s.id}')" title="編輯／單字解析／AI">✏️</button>
-          <button class="gram-icon-btn" onclick="deleteSentenceFromChapter('${s.id}')" title="刪除">🗑</button>
-        </div>
-        ${wordCount ? `<div style="font-size:11px;color:var(--muted);font-weight:800;margin-top:6px;">🧩 已有 ${wordCount} 個單字解析（點 ✏️ 查看／編輯）</div>` : ""}
-        ${s.teacherNote ? `<div class="sen-teacher-note" style="margin-top:8px;">${esc(s.teacherNote).replace(/\n/g,"<br>")}</div>` : ""}
+  const paragraphHtml = list.map(s => esc(s.kr)).join("<br><br>");
+
+  const translationRowsHtml = list.map(s => `
+    <div class="reading-block" style="margin-bottom:10px;">
+      <div class="reading-kr">${esc(s.kr)}</div>
+      <div class="reading-zh" style="margin-top:6px;">🇹🇼 ${esc(s.zh || "（尚未填寫翻譯）")}</div>
+      <div class="btns" style="margin-top:8px;">
+        <button class="ghost" onclick="event.stopPropagation();speakKorean('${jsAttr(s.kr)}')">🔊 播放</button>
+        <button class="ghost" onclick="event.stopPropagation();speakKoreanSlow('${jsAttr(s.kr)}')">🐢 慢速</button>
+        <button class="gram-icon-btn" onclick="event.stopPropagation();toggleSentenceFavorite('${s.id}');renderChapterReading();" title="收藏">${s.favorite ? "🔖" : "📑"}</button>
+        <button class="gram-icon-btn" onclick="event.stopPropagation();openSentenceEditor('${s.id}')" title="編輯／單字解析／AI">✏️</button>
+        <button class="gram-icon-btn" onclick="event.stopPropagation();deleteSentenceFromChapter('${s.id}')" title="刪除">🗑</button>
+      </div>
+      ${s.teacherNote ? `<div class="sen-teacher-note" style="margin-top:8px;">${esc(s.teacherNote).replace(/\n/g,"<br>")}</div>` : ""}
+    </div>`).join("");
+
+  const vocabList = getChapterVocabList(list);
+  const vocabHtml = vocabList.length ? vocabList.map(v => {
+    const expanded = !!chapterVocabItemExpand[v.kr];
+    return `
+    <div class="reading-vocab-row" onclick="toggleChapterVocabItem('${jsAttr(v.kr)}')">
+      <div class="reading-vocab-row-head">
+        <div><b>${esc(v.kr)}</b><span style="color:var(--muted);margin-left:8px;font-weight:700;">${esc(v.zh)}</span></div>
+        <span>${expanded ? "▴" : "▾"}</span>
+      </div>
+      ${expanded ? `<div style="margin-top:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;" onclick="event.stopPropagation()">
+        <button class="ghost" style="padding:6px 10px;" onclick="speakKorean('${jsAttr(v.kr)}')">🔊</button>
+        ${v.root ? `<span style="font-size:12px;color:var(--muted);">原形：${esc(v.root)}</span>` : ""}
+        ${v.note ? `<div style="width:100%;font-size:12px;color:var(--muted);margin-top:4px;">${esc(v.note).replace(/\n/g,"<br>")}</div>` : ""}
       </div>` : ""}
     </div>`;
-}
-function toggleReadingBlock(id) {
-  sentenceBlockExpanded[id] = !sentenceBlockExpanded[id];
-  renderChapterReading();
+  }).join("") : `<div class="empty" style="padding:16px 0;">這一章還沒有摘取的單字，去「✏️」編輯句子時做單字解析吧！</div>`;
+
+  wrap.innerHTML = `
+    <div class="card panel" style="margin-bottom:16px;">
+      <div style="font-size:18px;line-height:2;font-weight:800;color:#20351f;">${paragraphHtml}</div>
+    </div>
+
+    <div class="card panel" style="margin-bottom:16px;cursor:pointer;" onclick="toggleChapterTranslation()">
+      <div style="display:flex;justify-content:space-between;align-items:center;font-weight:1000;">
+        <span>逐句翻譯對照</span><span>${chapterTranslationOpen ? "▴" : "▾"}</span>
+      </div>
+      ${chapterTranslationOpen ? `<div style="margin-top:14px;" onclick="event.stopPropagation()">${translationRowsHtml}</div>` : ""}
+    </div>
+
+    <div class="card panel" style="margin-bottom:16px;">
+      <div style="font-weight:1000;margin-bottom:12px;">音檔</div>
+      <button type="button" class="primary cute-btn" style="width:100%;" onclick="speakCurrentChapterAll()">▶ 朗讀整段</button>
+    </div>
+
+    <div class="card panel" style="cursor:pointer;" onclick="toggleChapterVocabPanel()">
+      <div style="display:flex;justify-content:space-between;align-items:center;font-weight:1000;">
+        <span>📖 摘取的單字 (${vocabList.length})</span><span>${chapterVocabOpen ? "▴" : "▾"}</span>
+      </div>
+      ${chapterVocabOpen ? `<div style="margin-top:14px;display:flex;flex-direction:column;gap:8px;" onclick="event.stopPropagation()">${vocabHtml}</div>` : ""}
+    </div>
+  `;
 }
 function deleteSentenceFromChapter(id) {
   if (!confirm("刪除這一句／段落？")) return;
@@ -8760,6 +8995,7 @@ function mergeDetectedIntoLine(line, detected) {
   detected.grammar.forEach(g => {
     if (!line.grammar.some(x => x.p === g.p)) line.grammar.push(g);
   });
+  if (detected.romanization) line.romanization = detected.romanization;
 }
 
 function aiAnalyzeLyricsLine(lineId, btnEl) {
@@ -8775,21 +9011,24 @@ ${line.zh ? `已有中文翻譯：${line.zh}` : ""}
 
 請輸出以下格式：
 {
+  "romanization": "",
   "words": [ { "k": "", "z": "" } ],
   "grammar": [ { "p": "", "n": "" } ]
 }
 
 規則：
-1. words：挑出這句裡值得學習的單字，k=韓文，z=簡短中文意思。
-2. grammar：挑出這句用到的文法點，p=文法點，n=簡短說明。
-3. 不要每個字都列，只挑對學習者有價值的。
-4. 沒有值得列的就給空陣列，不要硬湊。`;
+1. romanization：這句歌詞的韓文羅馬拼音（例如 gamanhi ana gwi giukyeo），單字間用空格分隔。
+2. words：挑出這句裡值得學習的單字，k=韓文，z=簡短中文意思。
+3. grammar：挑出這句用到的文法點，p=文法點，n=簡短說明。
+4. 不要每個字都列，只挑對學習者有價值的。
+5. 沒有值得列的就給空陣列，不要硬湊。`;
   runAiAssist(btnEl, text, (val) => {
     try {
       const data = parseAiJson(val);
       const words = Array.isArray(data.words) ? data.words.map(w => ({ k: String(w.k||"").trim(), z: String(w.z||"").trim() })).filter(w=>w.k) : [];
       const grammar = Array.isArray(data.grammar) ? data.grammar.map(g => ({ p: String(g.p||"").trim(), n: String(g.n||"").trim() })).filter(g=>g.p) : [];
-      mergeDetectedIntoLine(line, { words, grammar });
+      const romanization = String(data.romanization || "").trim();
+      mergeDetectedIntoLine(line, { words, grammar, romanization });
       saveLyricsSongs();
       renderLyricsReader();
     } catch (error) {
@@ -8814,6 +9053,7 @@ ${JSON.stringify(list, null, 2)}
 [
   {
     "index": 1,
+    "romanization": "",
     "words": [ { "k": "", "z": "" } ],
     "grammar": [ { "p": "", "n": "" } ]
   }
@@ -8821,9 +9061,10 @@ ${JSON.stringify(list, null, 2)}
 
 規則：
 1. 必須依照原本 index 順序輸出，每句一筆，就算是空陣列也要輸出該筆。
-2. words：挑出這句裡值得學習的單字，k=韓文，z=簡短中文意思，不用每個字都列。
-3. grammar：挑出這句用到的文法點，p=文法點，n=簡短說明。
-4. 沒有值得列的就給空陣列，不要硬湊。`;
+2. romanization：這句歌詞的韓文羅馬拼音（例如 gamanhi ana gwi giukyeo），單字間用空格分隔。
+3. words：挑出這句裡值得學習的單字，k=韓文，z=簡短中文意思，不用每個字都列。
+4. grammar：挑出這句用到的文法點，p=文法點，n=簡短說明。
+5. 沒有值得列的就給空陣列，不要硬湊。`;
   runAiAssist(btnEl, text, (val) => {
     try {
       const result = parseAiJson(val);
@@ -8835,8 +9076,9 @@ ${JSON.stringify(list, null, 2)}
         if (!line) return;
         const words = Array.isArray(item.words) ? item.words.map(w => ({ k: String(w.k||"").trim(), z: String(w.z||"").trim() })).filter(w=>w.k) : [];
         const grammar = Array.isArray(item.grammar) ? item.grammar.map(g => ({ p: String(g.p||"").trim(), n: String(g.n||"").trim() })).filter(g=>g.p) : [];
+        const romanization = String(item.romanization || "").trim();
         if (words.length || grammar.length) count++;
-        mergeDetectedIntoLine(line, { words, grammar });
+        mergeDetectedIntoLine(line, { words, grammar, romanization });
       });
       saveLyricsSongs();
       renderLyricsReader();
