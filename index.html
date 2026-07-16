@@ -2588,6 +2588,77 @@ textarea {
 .wc-edit { flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
 .wc-classic-actions { display:flex; align-items:center; gap:2px; flex-shrink:0; }
 
+/* ===== 單字花園：簡易版（KR / TW 標籤）===== */
+.word-card.word-card-simple {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:11px 14px;
+  cursor:pointer;
+}
+.word-card.word-card-simple .wc-simple-label {
+  font-size:11px;
+  font-weight:900;
+  color:#9aa694;
+  letter-spacing:.03em;
+  flex:0 0 auto;
+}
+.word-card.word-card-simple .wc-simple-term {
+  font-weight:1000;
+  font-size:15px;
+  color:#20351f;
+  flex:0 1 auto;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.word-card.word-card-simple .wc-simple-def {
+  font-weight:800;
+  font-size:14.5px;
+  color:#2f6fae;
+  flex:1;
+  min-width:0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.word-card.word-card-simple .wc-simple-del {
+  border:0;
+  background:transparent;
+  color:#ff5d7a;
+  font-size:15px;
+  font-weight:900;
+  cursor:pointer;
+  padding:5px 7px;
+  border-radius:50%;
+  flex:0 0 auto;
+  transition:.15s;
+}
+.word-card.word-card-simple .wc-simple-del:hover { background:#ffe3e8; transform:scale(1.15); }
+.word-card.word-card-simple .wc-edit {
+  flex:1;
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.word-card.word-card-simple .wc-edit input {
+  flex:1;
+  min-width:0;
+  border:1px solid #dce9cc;
+  border-radius:10px;
+  padding:7px 9px;
+  font-weight:800;
+  font-size:14px;
+  background:#fbfdf7;
+}
+.word-card.word-card-simple .wc-edit input:focus {
+  outline:none;
+  border-color:#83b842;
+  background:#fff;
+  box-shadow:0 0 0 3px rgba(131,184,66,.15);
+}
+
 .add-word-btn {
   width:100%;
   border:2px dashed #b9dd8d;
@@ -5958,30 +6029,20 @@ function renderCardEditor(highlightId) {
   list.innerHTML = visible.map(c => {
     const editing = c.id === highlightId || !!wordCardEditState[c.id];
     return `
-    <div class="word-card word-card-classic${c.id === highlightId ? " card-drop-in" : ""}" data-id="${c.id}">
-      <div class="wc-content">
-        ${editing ? `
-          <div class="wc-edit">
-            <input type="text" placeholder="韓文" value="${escapeAttr(c.term)}" oninput="updateEditorCard('${c.id}','term',this.value)" onkeydown="handleWordCardEnter(event)">
-            <input type="text" placeholder="中文" value="${escapeAttr(c.definition)}" oninput="updateEditorCard('${c.id}','definition',this.value)" onkeydown="handleWordCardEnter(event)">
-          </div>
-        ` : `
-          <div class="wc-view-head">
-            <span class="wc-term">${esc(c.term) || "（未命名）"}</span>
-            <span class="wc-tag">custom</span>
-            <span class="wc-book">📖</span>
-          </div>
-          <div class="wc-view-sub">
-            <span class="wc-def">${esc(c.definition) || "（尚無翻譯）"}</span>
-          </div>
-        `}
-      </div>
-      <div class="wc-classic-actions">
-        <button type="button" class="wc-icon-btn wc-speak" title="發音" onclick="speakKorean('${jsAttr(c.term)}')">🔊</button>
-        <button type="button" class="wc-icon-btn" title="搬到其他題庫" onclick="moveEditorCardToFolder('${c.id}')">📁</button>
-        <button type="button" class="wc-icon-btn" title="${editing ? "收合" : "編輯"}" onclick="toggleWordCardEdit('${c.id}')">${editing ? "▴" : "▾"}</button>
-        <button type="button" class="wc-icon-btn wc-del" title="刪除" onclick="deleteEditorCard('${c.id}')">🗑</button>
-      </div>
+    <div class="word-card word-card-simple${c.id === highlightId ? " card-drop-in" : ""}" data-id="${c.id}"${editing ? "" : ` onclick="toggleWordCardEdit('${c.id}')"`}>
+      ${editing ? `
+        <div class="wc-edit" onclick="event.stopPropagation()">
+          <input type="text" placeholder="韓文" value="${escapeAttr(c.term)}" oninput="updateEditorCard('${c.id}','term',this.value)" onkeydown="handleWordCardEnter(event)">
+          <input type="text" placeholder="中文" value="${escapeAttr(c.definition)}" oninput="updateEditorCard('${c.id}','definition',this.value)" onkeydown="handleWordCardEnter(event)">
+        </div>
+        <button type="button" class="wc-simple-del" title="完成" onclick="event.stopPropagation();toggleWordCardEdit('${c.id}')">✓</button>
+      ` : `
+        <span class="wc-simple-label">KR</span>
+        <span class="wc-simple-term">${esc(c.term) || "（未命名）"}</span>
+        <span class="wc-simple-label">TW</span>
+        <span class="wc-simple-def">${esc(c.definition) || "（尚無翻譯）"}</span>
+        <button type="button" class="wc-simple-del" title="刪除" onclick="event.stopPropagation();deleteEditorCard('${c.id}')">✕</button>
+      `}
     </div>`;
   }).join("");
 
