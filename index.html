@@ -2494,6 +2494,7 @@ textarea {
 }
 .wc-icon-btn:hover { background:#eef6e2; transform:scale(1.1); }
 .wc-icon-btn.wc-speak { color:#4e8f24; }
+.wc-icon-btn.wc-del:hover { background:#ffe3e8; }
 .wc-icon-btn.wc-expand-toggle { color:#7a8a72; font-size:12px; }
 
 .wc-divider { height:1px; background:#e5efd8; margin:8px 0 10px; }
@@ -2518,6 +2519,21 @@ textarea {
 .wc-action-btn:hover { background:#eef8df; }
 .wc-action-btn.wc-action-del { color:#c3465a; border-color:#f3d4da; background:#fff6f7; }
 .wc-action-btn.wc-action-del:hover { background:#ffe3e8; }
+
+/* ===== 單字花園編輯頁：普通編輯樣式 ===== */
+.word-card.word-card-classic { align-items:center; }
+.wc-content { flex:1; min-width:0; }
+.wc-view-head { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.wc-view-head .wc-term { font-size:17px; }
+.wc-tag {
+  background:var(--green-soft); color:#4e8f24; font-size:11px; font-weight:900;
+  padding:3px 10px; border-radius:999px;
+}
+.wc-book { font-size:14px; opacity:.7; }
+.wc-view-sub { margin-top:4px; }
+.wc-view-sub .wc-def { font-size:14px; color:#586a4f; display:block; white-space:normal; overflow:visible; text-overflow:clip; }
+.wc-edit { flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
+.wc-classic-actions { display:flex; align-items:center; gap:2px; flex-shrink:0; }
 
 .add-word-btn {
   width:100%;
@@ -5220,30 +5236,12 @@ function renderWordList() {
           ${expanded ? `
           <div class="wc-divider"></div>
           <div class="wc-detail">
-            <div class="wc-detail-field">
-              <div class="wc-detail-label">AI解析</div>
-              ${editing
-                ? `<textarea rows="2" placeholder="貼上 AI 解析結果…" oninput="wlUpdateField(${idx},'aiNote',this.value)" onclick="event.stopPropagation()">${esc(c.aiNote)}</textarea>`
-                : `<div class="wc-detail-value${c.aiNote ? "" : " wc-detail-empty"}">${c.aiNote ? esc(c.aiNote).replace(/\n/g,"<br>") : "尚無 AI 解析"}</div>`}
-            </div>
-            <div class="wc-detail-field">
-              <div class="wc-detail-label">原型</div>
-              ${editing
-                ? `<input type="text" placeholder="原形（選填）" value="${escapeAttr(c.root)}" oninput="wlUpdateField(${idx},'root',this.value)" onclick="event.stopPropagation()">`
-                : `<div class="wc-detail-value${c.root ? "" : " wc-detail-empty"}">${c.root ? esc(c.root) : "—"}</div>`}
-            </div>
-            <div class="wc-detail-field">
-              <div class="wc-detail-label">備註</div>
-              ${editing
-                ? `<textarea rows="2" placeholder="備註（選填）" oninput="wlUpdateField(${idx},'note',this.value)" onclick="event.stopPropagation()">${esc(c.note)}</textarea>`
-                : `<div class="wc-detail-value${c.note ? "" : " wc-detail-empty"}">${c.note ? esc(c.note).replace(/\n/g,"<br>") : "—"}</div>`}
-            </div>
             ${wlEditMode ? `
             <div class="wc-detail-actions">
               <button type="button" class="wc-action-btn" onclick="event.stopPropagation();wlToggleEditRow(${idx})">${editing ? "✅ 完成" : "✏️ 編輯"}</button>
               <button type="button" class="wc-action-btn" onclick="event.stopPropagation();wlMoveWord(${idx})">📂 移動</button>
               <button type="button" class="wc-action-btn wc-action-del" onclick="event.stopPropagation();wlDeleteWord(${idx})">🗑️ 刪除</button>
-            </div>` : ""}
+            </div>` : `<div class="wc-detail-value wc-detail-empty">點右上角 ⚙️ 開啟編輯後才能移動／刪除</div>`}
           </div>` : ""}
         </div>`;
       }).join("");
@@ -5902,53 +5900,31 @@ function renderCardEditor(highlightId) {
 
   list.innerHTML = visible.map(c => {
     const editing = c.id === highlightId || !!wordCardEditState[c.id];
-    const expanded = c.id === highlightId || !!wordCardExpandState[c.id];
     return `
-    <div class="word-card word-card-v2${expanded ? " wc-expanded" : ""}${c.id === highlightId ? " card-drop-in" : ""}" data-id="${c.id}" onclick="toggleWordCardExpand('${c.id}')">
-      <div class="wc-main">
-        <div class="wc-term-row">
-          ${editing
-            ? `<input type="text" class="wc-term-input" placeholder="韓文" value="${escapeAttr(c.term)}" oninput="updateEditorCard('${c.id}','term',this.value)" onkeydown="handleWordCardEnter(event)" onclick="event.stopPropagation()">`
-            : `<span class="wc-term">${esc(c.term) || "（未命名）"}</span>`}
-        </div>
-        <div class="wc-sub-row">
-          ${editing
-            ? `<input type="text" class="wc-def-input" placeholder="中文" value="${escapeAttr(c.definition)}" oninput="updateEditorCard('${c.id}','definition',this.value)" onkeydown="handleWordCardEnter(event)" onclick="event.stopPropagation()">`
-            : `<span class="wc-def">${esc(c.definition) || "（尚無翻譯）"}</span>`}
-          <div class="wc-icons">
-            <button type="button" class="wc-icon-btn wc-speak" title="發音" onclick="event.stopPropagation();speakKorean('${jsAttr(c.term)}')">🔊</button>
-            <button type="button" class="wc-icon-btn" title="搬到其他題庫" onclick="event.stopPropagation();moveEditorCardToFolder('${c.id}')">📁</button>
-            <button type="button" class="wc-icon-btn wc-expand-toggle" title="${expanded ? "收合" : "展開"}" onclick="event.stopPropagation();toggleWordCardExpand('${c.id}')">${expanded ? "▲" : "▼"}</button>
+    <div class="word-card word-card-classic${c.id === highlightId ? " card-drop-in" : ""}" data-id="${c.id}">
+      <div class="wc-content">
+        ${editing ? `
+          <div class="wc-edit">
+            <input type="text" placeholder="韓文" value="${escapeAttr(c.term)}" oninput="updateEditorCard('${c.id}','term',this.value)" onkeydown="handleWordCardEnter(event)">
+            <input type="text" placeholder="中文" value="${escapeAttr(c.definition)}" oninput="updateEditorCard('${c.id}','definition',this.value)" onkeydown="handleWordCardEnter(event)">
           </div>
-        </div>
+        ` : `
+          <div class="wc-view-head">
+            <span class="wc-term">${esc(c.term) || "（未命名）"}</span>
+            <span class="wc-tag">custom</span>
+            <span class="wc-book">📖</span>
+          </div>
+          <div class="wc-view-sub">
+            <span class="wc-def">${esc(c.definition) || "（尚無翻譯）"}</span>
+          </div>
+        `}
       </div>
-      ${expanded ? `
-      <div class="wc-divider"></div>
-      <div class="wc-detail">
-        <div class="wc-detail-field">
-          <div class="wc-detail-label">AI解析</div>
-          ${editing
-            ? `<textarea rows="2" placeholder="貼上 AI 解析結果…" oninput="updateEditorCard('${c.id}','aiNote',this.value)" onclick="event.stopPropagation()">${esc(c.aiNote)}</textarea>`
-            : `<div class="wc-detail-value${c.aiNote ? "" : " wc-detail-empty"}">${c.aiNote ? esc(c.aiNote).replace(/\n/g,"<br>") : "尚無 AI 解析"}</div>`}
-        </div>
-        <div class="wc-detail-field">
-          <div class="wc-detail-label">原型</div>
-          ${editing
-            ? `<input type="text" placeholder="原形（選填）" value="${escapeAttr(c.root)}" oninput="updateEditorCard('${c.id}','root',this.value)" onclick="event.stopPropagation()">`
-            : `<div class="wc-detail-value${c.root ? "" : " wc-detail-empty"}">${c.root ? esc(c.root) : "—"}</div>`}
-        </div>
-        <div class="wc-detail-field">
-          <div class="wc-detail-label">備註</div>
-          ${editing
-            ? `<textarea rows="2" placeholder="備註（選填）" oninput="updateEditorCard('${c.id}','note',this.value)" onclick="event.stopPropagation()">${esc(c.note)}</textarea>`
-            : `<div class="wc-detail-value${c.note ? "" : " wc-detail-empty"}">${c.note ? esc(c.note).replace(/\n/g,"<br>") : "—"}</div>`}
-        </div>
-        <div class="wc-detail-actions">
-          <button type="button" class="wc-action-btn" onclick="event.stopPropagation();toggleWordCardEdit('${c.id}')">${editing ? "✅ 完成" : "✏️ 編輯"}</button>
-          <button type="button" class="wc-action-btn" onclick="event.stopPropagation();moveEditorCardToFolder('${c.id}')">📂 移動</button>
-          <button type="button" class="wc-action-btn wc-action-del" onclick="event.stopPropagation();deleteEditorCard('${c.id}')">🗑️ 刪除</button>
-        </div>
-      </div>` : ""}
+      <div class="wc-classic-actions">
+        <button type="button" class="wc-icon-btn wc-speak" title="發音" onclick="speakKorean('${jsAttr(c.term)}')">🔊</button>
+        <button type="button" class="wc-icon-btn" title="搬到其他題庫" onclick="moveEditorCardToFolder('${c.id}')">📁</button>
+        <button type="button" class="wc-icon-btn" title="${editing ? "收合" : "編輯"}" onclick="toggleWordCardEdit('${c.id}')">${editing ? "▴" : "▾"}</button>
+        <button type="button" class="wc-icon-btn wc-del" title="刪除" onclick="deleteEditorCard('${c.id}')">🗑</button>
+      </div>
     </div>`;
   }).join("");
 
