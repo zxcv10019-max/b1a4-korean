@@ -2461,28 +2461,63 @@ textarea {
   100% { transform:translateY(50px) rotate(25deg); opacity:0; }
 }
 
-/* ===== 單字卡 2.0：檢視模式（參考題庫單字設計） ===== */
-.word-card.word-card-v2 { align-items:stretch; }
-.wc-content { flex:1; min-width:0; }
-.wc-view-head { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-.wc-term { font-weight:1000; font-size:17px; color:#20351f; }
-.wc-tag {
-  background:var(--green-soft); color:#4e8f24; font-size:11px; font-weight:900;
-  padding:3px 10px; border-radius:999px;
+/* ===== 單字卡 2.0：精簡摺疊版 ===== */
+.word-card.word-card-v2 {
+  display:block;
+  align-items:stretch;
+  padding:8px 12px;
+  cursor:pointer;
+  transition:box-shadow .15s, border-color .15s;
 }
-.wc-book { font-size:14px; opacity:.7; }
-.wc-view-sub { margin-top:4px; display:flex; flex-direction:column; gap:2px; }
-.wc-romanized { font-size:12px; color:var(--muted); font-style:italic; }
-.wc-def { font-size:14px; color:#586a4f; font-weight:700; }
-.wc-edit { flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
-.wc-actions { display:flex; align-items:center; gap:2px; flex-shrink:0; }
+.word-card.word-card-v2:hover { border-color:#cde3ab; box-shadow:0 8px 18px rgba(72,108,39,.1); }
+.word-card.word-card-v2.wc-expanded { padding-bottom:12px; }
+.wc-main { display:flex; flex-direction:column; gap:2px; }
+.wc-term-row { line-height:1.15; }
+.wc-term { font-weight:1000; font-size:23px; color:#20351f; }
+.wc-term-input {
+  width:100%; font-size:20px !important; font-weight:1000; border:1px solid transparent;
+  border-radius:10px; padding:5px 8px !important; background:#fbfdf7; min-width:0;
+}
+.wc-sub-row { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.wc-def {
+  font-size:12.5px; color:#8b9887; font-weight:700; flex:1; min-width:0;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.wc-def-input {
+  flex:1; font-size:13px; border:1px solid transparent; border-radius:9px;
+  padding:5px 8px; background:#fbfdf7; min-width:0; font-weight:700;
+}
+.wc-icons { display:flex; align-items:center; gap:0px; flex-shrink:0; }
 .wc-icon-btn {
-  border:0; background:transparent; cursor:pointer; font-size:15px;
-  padding:6px; border-radius:50%; transition:.15s; flex:0 0 auto;
+  border:0; background:transparent; cursor:pointer; font-size:14px;
+  padding:5px; border-radius:50%; transition:.15s; flex:0 0 auto;
 }
 .wc-icon-btn:hover { background:#eef6e2; transform:scale(1.1); }
 .wc-icon-btn.wc-speak { color:#4e8f24; }
-.wc-icon-btn.wc-del:hover { background:#ffe3e8; }
+.wc-icon-btn.wc-expand-toggle { color:#7a8a72; font-size:12px; }
+
+.wc-divider { height:1px; background:#e5efd8; margin:8px 0 10px; }
+.wc-detail { display:flex; flex-direction:column; gap:8px; }
+.wc-detail-field { display:flex; flex-direction:column; gap:3px; }
+.wc-detail-label { font-size:11px; font-weight:900; color:#4e8f24; }
+.wc-detail-value { font-size:13px; color:#586a4f; font-weight:700; line-height:1.5; }
+.wc-detail-value.wc-detail-empty { color:#adb8a5; font-weight:600; }
+.wc-detail-field input, .wc-detail-field textarea {
+  width:100%; box-sizing:border-box; border:1px solid #dce9cc; border-radius:10px;
+  padding:7px 9px; font-size:13px; font-family:inherit; background:#fbfdf7; resize:vertical;
+}
+.wc-detail-field input:focus, .wc-detail-field textarea:focus {
+  outline:none; border-color:#83b842; background:#fff; box-shadow:0 0 0 3px rgba(131,184,66,.15);
+}
+.wc-detail-actions { display:flex; gap:6px; margin-top:2px; }
+.wc-action-btn {
+  flex:1; border:1px solid #dce9cc; background:#f8fdf3; color:#4e8f24;
+  font-weight:900; font-size:12.5px; padding:7px 6px; border-radius:10px;
+  cursor:pointer; transition:.15s; white-space:nowrap;
+}
+.wc-action-btn:hover { background:#eef8df; }
+.wc-action-btn.wc-action-del { color:#c3465a; border-color:#f3d4da; background:#fff6f7; }
+.wc-action-btn.wc-action-del:hover { background:#ffe3e8; }
 
 .add-word-btn {
   width:100%;
@@ -5562,6 +5597,7 @@ function newFolder() {
 /* ===== 題庫內容：小卡編輯引擎 ===== */
 let editorCards = [];
 let editorCardSeq = 0;
+let wordCardExpandState = {};
 
 function splitKoreanChineseBoundary(line) {
   const hanIdx = line.search(/[\u4E00-\u9FFF]/);
@@ -5588,7 +5624,12 @@ function parseRawLinesLenient(t) {
 
 function syncEditorCardsFromContent(content) {
   wordCardEditState = {};
-  editorCards = parseRawLinesLenient(content).map(c => ({ id: "wc" + (editorCardSeq++), term: c.term, definition: c.definition }));
+  wordCardExpandState = {};
+  const meta = (current !== null && current !== undefined && folders[current] && folders[current].cardMeta) || {};
+  editorCards = parseRawLinesLenient(content).map(c => {
+    const m = meta[c.term] || {};
+    return { id: "wc" + (editorCardSeq++), term: c.term, definition: c.definition, root: m.root || "", aiNote: m.aiNote || "", note: m.note || "" };
+  });
 }
 
 function fixMergedKrZhCards() {
@@ -5616,6 +5657,15 @@ function serializeEditorCards() {
   const text = editorCards.map(c => `${c.term}\t${c.definition}`).join("\n");
   const rawEl = document.getElementById("raw");
   if (rawEl) rawEl.value = text;
+  if (current !== null && current !== undefined && folders[current]) {
+    const meta = {};
+    editorCards.forEach(c => {
+      if (c.term && (c.root || c.aiNote || c.note)) {
+        meta[c.term] = { root: c.root || "", aiNote: c.aiNote || "", note: c.note || "" };
+      }
+    });
+    folders[current].cardMeta = meta;
+  }
   updateEditorCountLabels();
   return text;
 }
@@ -5770,33 +5820,53 @@ function renderCardEditor(highlightId) {
 
   list.innerHTML = visible.map(c => {
     const editing = c.id === highlightId || !!wordCardEditState[c.id];
-    const romanized = c.term ? romanizeHangul(c.term) : "";
+    const expanded = c.id === highlightId || !!wordCardExpandState[c.id];
     return `
-    <div class="word-card word-card-v2${c.id === highlightId ? " card-drop-in" : ""}" data-id="${c.id}">
-      <div class="wc-content">
-        ${editing ? `
-          <div class="wc-edit">
-            <input type="text" placeholder="韓文" value="${escapeAttr(c.term)}" oninput="updateEditorCard('${c.id}','term',this.value)" onkeydown="handleWordCardEnter(event)">
-            <input type="text" placeholder="中文" value="${escapeAttr(c.definition)}" oninput="updateEditorCard('${c.id}','definition',this.value)" onkeydown="handleWordCardEnter(event)">
+    <div class="word-card word-card-v2${expanded ? " wc-expanded" : ""}${c.id === highlightId ? " card-drop-in" : ""}" data-id="${c.id}" onclick="toggleWordCardExpand('${c.id}')">
+      <div class="wc-main">
+        <div class="wc-term-row">
+          ${editing
+            ? `<input type="text" class="wc-term-input" placeholder="韓文" value="${escapeAttr(c.term)}" oninput="updateEditorCard('${c.id}','term',this.value)" onkeydown="handleWordCardEnter(event)" onclick="event.stopPropagation()">`
+            : `<span class="wc-term">${esc(c.term) || "（未命名）"}</span>`}
+        </div>
+        <div class="wc-sub-row">
+          ${editing
+            ? `<input type="text" class="wc-def-input" placeholder="中文" value="${escapeAttr(c.definition)}" oninput="updateEditorCard('${c.id}','definition',this.value)" onkeydown="handleWordCardEnter(event)" onclick="event.stopPropagation()">`
+            : `<span class="wc-def">${esc(c.definition) || "（尚無翻譯）"}</span>`}
+          <div class="wc-icons">
+            <button type="button" class="wc-icon-btn wc-speak" title="發音" onclick="event.stopPropagation();speakKorean('${jsAttr(c.term)}')">🔊</button>
+            <button type="button" class="wc-icon-btn" title="搬到其他題庫" onclick="event.stopPropagation();moveEditorCardToFolder('${c.id}')">📁</button>
+            <button type="button" class="wc-icon-btn wc-expand-toggle" title="${expanded ? "收合" : "展開"}" onclick="event.stopPropagation();toggleWordCardExpand('${c.id}')">${expanded ? "▲" : "▼"}</button>
           </div>
-        ` : `
-          <div class="wc-view-head">
-            <span class="wc-term">${esc(c.term) || "（未命名）"}</span>
-            <span class="wc-tag">custom</span>
-            <span class="wc-book">📖</span>
-          </div>
-          <div class="wc-view-sub">
-            ${romanized ? `<span class="wc-romanized">${esc(romanized)}</span>` : ""}
-            <span class="wc-def">${esc(c.definition) || "（尚無翻譯）"}</span>
-          </div>
-        `}
+        </div>
       </div>
-      <div class="wc-actions">
-        <button type="button" class="wc-icon-btn wc-speak" title="發音" onclick="speakKorean('${jsAttr(c.term)}')">🔊</button>
-        <button type="button" class="wc-icon-btn" title="搬到其他題庫" onclick="moveEditorCardToFolder('${c.id}')">📁</button>
-        <button type="button" class="wc-icon-btn" title="${editing ? "收合" : "編輯"}" onclick="toggleWordCardEdit('${c.id}')">${editing ? "▴" : "▾"}</button>
-        <button type="button" class="wc-icon-btn wc-del" title="刪除" onclick="deleteEditorCard('${c.id}')">🗑</button>
-      </div>
+      ${expanded ? `
+      <div class="wc-divider"></div>
+      <div class="wc-detail">
+        <div class="wc-detail-field">
+          <div class="wc-detail-label">AI解析</div>
+          ${editing
+            ? `<textarea rows="2" placeholder="貼上 AI 解析結果…" oninput="updateEditorCard('${c.id}','aiNote',this.value)" onclick="event.stopPropagation()">${esc(c.aiNote)}</textarea>`
+            : `<div class="wc-detail-value${c.aiNote ? "" : " wc-detail-empty"}">${c.aiNote ? esc(c.aiNote).replace(/\n/g,"<br>") : "尚無 AI 解析"}</div>`}
+        </div>
+        <div class="wc-detail-field">
+          <div class="wc-detail-label">原型</div>
+          ${editing
+            ? `<input type="text" placeholder="原形（選填）" value="${escapeAttr(c.root)}" oninput="updateEditorCard('${c.id}','root',this.value)" onclick="event.stopPropagation()">`
+            : `<div class="wc-detail-value${c.root ? "" : " wc-detail-empty"}">${c.root ? esc(c.root) : "—"}</div>`}
+        </div>
+        <div class="wc-detail-field">
+          <div class="wc-detail-label">備註</div>
+          ${editing
+            ? `<textarea rows="2" placeholder="備註（選填）" oninput="updateEditorCard('${c.id}','note',this.value)" onclick="event.stopPropagation()">${esc(c.note)}</textarea>`
+            : `<div class="wc-detail-value${c.note ? "" : " wc-detail-empty"}">${c.note ? esc(c.note).replace(/\n/g,"<br>") : "—"}</div>`}
+        </div>
+        <div class="wc-detail-actions">
+          <button type="button" class="wc-action-btn" onclick="event.stopPropagation();toggleWordCardEdit('${c.id}')">${editing ? "✅ 完成" : "✏️ 編輯"}</button>
+          <button type="button" class="wc-action-btn" onclick="event.stopPropagation();moveEditorCardToFolder('${c.id}')">📂 移動</button>
+          <button type="button" class="wc-action-btn wc-action-del" onclick="event.stopPropagation();deleteEditorCard('${c.id}')">🗑️ 刪除</button>
+        </div>
+      </div>` : ""}
     </div>`;
   }).join("");
 
@@ -5814,6 +5884,12 @@ function toggleWordCardEdit(id) {
   renderCardEditor();
 }
 
+function toggleWordCardExpand(id) {
+  wordCardExpandState[id] = !wordCardExpandState[id];
+  if (!wordCardExpandState[id]) wordCardEditState[id] = false;
+  renderCardEditor();
+}
+
 function moveEditorCardToFolder(id) {
   const c = editorCards.find(x => x.id === id);
   if (!c) return;
@@ -5825,9 +5901,14 @@ function moveEditorCardToFolder(id) {
     const line = `${c.term}\t${c.definition}`;
     target.content = (target.content ? target.content + "\n" : "") + line;
     target.updated = today();
+    if (c.root || c.aiNote || c.note) {
+      target.cardMeta = target.cardMeta || {};
+      target.cardMeta[c.term] = { root: c.root || "", aiNote: c.aiNote || "", note: c.note || "" };
+    }
     saveStorage();
     editorCards = editorCards.filter(x => x.id !== id);
     delete wordCardEditState[id];
+    delete wordCardExpandState[id];
     serializeEditorCards();
     renderCardEditor();
     alert(`已搬到「${target.name}」`);
@@ -5865,7 +5946,7 @@ function handleWordCardEnter(e) {
 }
 
 function addEditorCard() {
-  const c = { id: "wc" + (editorCardSeq++), term: "", definition: "" };
+  const c = { id: "wc" + (editorCardSeq++), term: "", definition: "", root: "", aiNote: "", note: "" };
   editorCards.push(c);
   editorExpanded = true;
   serializeEditorCards();
@@ -5881,6 +5962,8 @@ function deleteEditorCard(id) {
   if (el) el.classList.add("leaf-away");
   setTimeout(() => {
     editorCards = editorCards.filter(c => c.id !== id);
+    delete wordCardEditState[id];
+    delete wordCardExpandState[id];
     serializeEditorCards();
     renderCardEditor();
   }, el ? 420 : 0);
