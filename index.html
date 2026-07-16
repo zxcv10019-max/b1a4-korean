@@ -1569,6 +1569,59 @@ textarea {
   .hero-nav-btn { display:none; }
 }
 
+
+/* ===== 單字清單：設定後回到韓文／中文並排編輯 ===== */
+.wl-edit-head{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) 112px;
+  gap:8px;
+  padding:0 12px 6px;
+  color:#4e8f24;
+  font-size:12px;
+  font-weight:1000;
+}
+.wl-edit-row{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) 112px;
+  align-items:center;
+  gap:8px;
+  padding:8px 10px !important;
+  cursor:default !important;
+}
+.wl-edit-row input{
+  width:100%;
+  min-width:0;
+  border:1px solid #dce9cc !important;
+  border-radius:10px;
+  padding:8px 10px !important;
+  background:#fbfdf7;
+  font-size:14px !important;
+  font-weight:800;
+}
+.wl-edit-row input:focus{
+  outline:none;
+  border-color:#83b842 !important;
+  background:#fff;
+  box-shadow:0 0 0 3px rgba(131,184,66,.15);
+}
+.wl-edit-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:2px;
+}
+@media(max-width:520px){
+  .wl-edit-head,
+  .wl-edit-row{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr) 84px;
+    gap:5px;
+  }
+  .wl-edit-head{padding-left:8px;padding-right:8px;}
+  .wl-edit-row{padding:7px 7px !important;}
+  .wl-edit-row input{padding:7px 8px !important;font-size:13px !important;}
+  .wl-edit-actions .wc-icon-btn{padding:4px;font-size:13px;}
+}
+
 /* ===== Android-style bottom navigation ===== */
 .app {
   grid-template-columns: 1fr !important;
@@ -5210,25 +5263,34 @@ function renderWordList() {
   if (body) {
     if (!wlCards.length) {
       body.innerHTML = `<div class="empty" style="padding:30px 0;">這個題庫還沒有單字，點右下角「＋」開始新增。</div>`;
+    } else if (wlEditMode) {
+      body.innerHTML = `
+        <div class="wl-edit-head">
+          <span>韓文</span>
+          <span>中文</span>
+          <span></span>
+        </div>
+        ${wlCards.map((c, idx) => `
+          <div class="word-card wl-edit-row" data-idx="${idx}">
+            <input type="text" class="wc-term-input" placeholder="韓文" value="${escapeAttr(c.term)}" oninput="wlUpdateField(${idx},'term',this.value)">
+            <input type="text" class="wc-def-input" placeholder="中文" value="${escapeAttr(c.definition)}" oninput="wlUpdateField(${idx},'definition',this.value)">
+            <div class="wl-edit-actions">
+              <button type="button" class="wc-icon-btn wc-speak" title="發音" onclick="speakKorean('${jsAttr(c.term)}')">🔊</button>
+              <button type="button" class="wc-icon-btn" title="搬到其他題庫" onclick="wlMoveWord(${idx})">📁</button>
+              <button type="button" class="wc-icon-btn wc-del" title="刪除" onclick="wlDeleteWord(${idx})">🗑</button>
+            </div>
+          </div>`).join("")}`;
     } else {
       body.innerHTML = wlCards.map((c, idx) => {
         const expanded = !!wlCardExpandState[idx];
-        const editing = wlEditMode && !!wlCardEditState[idx];
         return `
         <div class="word-card word-card-v2${expanded ? " wc-expanded" : ""}" data-idx="${idx}" onclick="wlToggleExpand(${idx})">
           <div class="wc-main">
-            <div class="wc-term-row">
-              ${editing
-                ? `<input type="text" class="wc-term-input" placeholder="韓文" value="${escapeAttr(c.term)}" oninput="wlUpdateField(${idx},'term',this.value)" onclick="event.stopPropagation()">`
-                : `<span class="wc-term">${esc(c.term) || "（未命名）"}</span>`}
-            </div>
+            <div class="wc-term-row"><span class="wc-term">${esc(c.term) || "（未命名）"}</span></div>
             <div class="wc-sub-row">
-              ${editing
-                ? `<input type="text" class="wc-def-input" placeholder="中文" value="${escapeAttr(c.definition)}" oninput="wlUpdateField(${idx},'definition',this.value)" onclick="event.stopPropagation()">`
-                : `<span class="wc-def">${esc(c.definition) || "（尚無翻譯）"}</span>`}
+              <span class="wc-def">${esc(c.definition) || "（尚無翻譯）"}</span>
               <div class="wc-icons">
                 <button type="button" class="wc-icon-btn wc-speak" title="發音" onclick="event.stopPropagation();speakKorean('${jsAttr(c.term)}')">🔊</button>
-                ${wlEditMode ? `<button type="button" class="wc-icon-btn" title="搬到其他題庫" onclick="event.stopPropagation();wlMoveWord(${idx})">📁</button>` : ""}
                 <button type="button" class="wc-icon-btn wc-expand-toggle" title="${expanded ? "收合" : "展開"}" onclick="event.stopPropagation();wlToggleExpand(${idx})">${expanded ? "▲" : "▼"}</button>
               </div>
             </div>
@@ -5236,12 +5298,7 @@ function renderWordList() {
           ${expanded ? `
           <div class="wc-divider"></div>
           <div class="wc-detail">
-            ${wlEditMode ? `
-            <div class="wc-detail-actions">
-              <button type="button" class="wc-action-btn" onclick="event.stopPropagation();wlToggleEditRow(${idx})">${editing ? "✅ 完成" : "✏️ 編輯"}</button>
-              <button type="button" class="wc-action-btn" onclick="event.stopPropagation();wlMoveWord(${idx})">📂 移動</button>
-              <button type="button" class="wc-action-btn wc-action-del" onclick="event.stopPropagation();wlDeleteWord(${idx})">🗑️ 刪除</button>
-            </div>` : `<div class="wc-detail-value wc-detail-empty">點右上角 ⚙️ 開啟編輯後才能移動／刪除</div>`}
+            <div class="wc-detail-value wc-detail-empty">按右上角 ⚙️ 可編輯韓文與中文</div>
           </div>` : ""}
         </div>`;
       }).join("");
