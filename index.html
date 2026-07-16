@@ -1422,6 +1422,40 @@ textarea {
 .home-action-card.hac-blue{background:linear-gradient(145deg,#8fc2ff,#5a92d8);}
 .home-action-card.hac-peach{background:linear-gradient(145deg,#ffc39e,#f29b6d);}
 .badge-card{grid-column:span 1;}
+
+/* ===== 遺忘挑戰 / 弱點挑戰 / 今日挑戰 ===== */
+.challenge-card-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.challenge-card{
+  border-radius:22px; padding:16px 16px 14px; cursor:pointer; color:#fff;
+  box-shadow:0 12px 26px rgba(0,0,0,.10); transition:transform .15s ease;
+}
+.challenge-card:active{transform:scale(.96);}
+.challenge-card.cc-forget{background:linear-gradient(145deg,#8fa8ff,#5a6fd8);}
+.challenge-card.cc-weak{background:linear-gradient(145deg,#ff9d7a,#e2653a);}
+.challenge-card .cc-title{font-weight:1000;font-size:15px;}
+.challenge-card .cc-desc{font-size:12.5px;font-weight:700;opacity:.92;margin-top:8px;line-height:1.4;min-height:34px;}
+.challenge-card .cc-btn{font-size:12.5px;font-weight:900;margin-top:10px;}
+
+.daily-challenge-card{
+  border-radius:24px; padding:18px; margin-bottom:6px;
+  background:linear-gradient(145deg,#fffffb,#eef7e0);
+  border:1px solid rgba(131,184,66,.25);
+  box-shadow:0 14px 30px rgba(72,108,39,.10);
+}
+.dc-head{display:flex;align-items:center;justify-content:space-between;font-weight:1000;font-size:16px;color:#3f7a1f;}
+.dc-reroll{border:1px solid #cfe6ac;background:#fff;color:#4e8f24;font-weight:900;font-size:12px;padding:7px 12px;border-radius:999px;cursor:pointer;}
+.dc-tasks{display:flex;flex-direction:column;gap:8px;margin:14px 0 4px;}
+.dc-task{background:#fff;border:1px solid #e2ecd6;border-radius:14px;padding:10px 14px;font-weight:800;font-size:13.5px;color:#20351f;}
+.dc-task.dc-done{color:#8b9887;text-decoration:line-through;background:#f3f6ee;}
+.dc-start-btn{width:100%;border:0;border-radius:14px;padding:12px;margin-top:12px;background:linear-gradient(135deg,#9bc95d,#6fae37);color:#fff;font-weight:1000;font-size:14px;cursor:pointer;}
+.dc-start-btn:disabled{opacity:.55;cursor:default;}
+
+.challenge-flip-card{
+  background:#fff; border:1.5px solid #e2ecd6; border-radius:22px; padding:40px 20px;
+  text-align:center; cursor:pointer; box-shadow:0 12px 26px rgba(72,108,39,.08); min-height:160px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+}
+
 .design-title{font-size:20px;font-weight:1000;color:#2f5524;margin-bottom:12px;}
 .daily-korean{font-size:26px;font-weight:1000;color:#315321;margin:10px 0 6px;}
 .daily-zh{color:#6f7d66;font-weight:800;}
@@ -3242,7 +3276,6 @@ textarea {
     <div class="content">
       <div id="vocabSubnav" class="vocab-subnav">
         <button data-page="library" onclick="goPage('library')">▣ 題庫</button>
-        <button data-page="flash" onclick="goPage('flash')">▤ 單字卡</button>
         <button data-page="grammar" onclick="goPage('grammar')">🌸 文法</button>
         <button data-page="sentence" onclick="goPage('sentence')">📝 短句</button>
         <button data-page="reading" onclick="goPage('reading')">📚 閱讀</button>
@@ -3260,11 +3293,33 @@ textarea {
 
         <div style="font-weight:1000;color:#4e8f24;margin:6px 0 10px;font-size:16px;">🔥 今日繼續</div>
         <div class="home-action-grid">
-          <div class="home-action-card hac-green" onclick="goPage('flash')"><span class="hac-ico">🃏</span>單字卡</div>
           <div class="home-action-card hac-yellow" onclick="goPage('test')"><span class="hac-ico">📝</span>筆試</div>
           <div class="home-action-card hac-pink" onclick="goPage('listen')"><span class="hac-ico">🎧</span>聽力</div>
           <div class="home-action-card hac-blue" onclick="goPage('match')"><span class="hac-ico">🎮</span>配對</div>
           <div class="home-action-card hac-peach" onclick="goPage('lyrics')" style="grid-column:span 2;"><span class="hac-ico">📖</span>歌詞</div>
+        </div>
+
+        <div style="font-weight:1000;color:#4e8f24;margin:20px 0 10px;font-size:16px;">🌟 挑戰</div>
+        <div class="challenge-card-grid">
+          <div class="challenge-card cc-forget" onclick="startForgetChallenge()">
+            <div class="cc-title">🧠 遺忘挑戰</div>
+            <div class="cc-desc" id="forgetChallengeDesc">今天沒有需要複習的單字</div>
+            <div class="cc-btn">立即複習 ▶</div>
+          </div>
+          <div class="challenge-card cc-weak" onclick="startWeaknessChallenge()">
+            <div class="cc-title">🎯 弱點挑戰</div>
+            <div class="cc-desc" id="weakChallengeDesc">目前沒有明顯弱點單字</div>
+            <div class="cc-btn">開始挑戰 ▶</div>
+          </div>
+        </div>
+
+        <div class="daily-challenge-card" id="dailyChallengeCard">
+          <div class="dc-head">
+            <span>🎯 今日挑戰</span>
+            <button type="button" class="dc-reroll" onclick="rerollDailyChallenge()" title="換一組挑戰">🎡 換一組</button>
+          </div>
+          <div class="dc-tasks" id="dailyChallengeTasks"></div>
+          <button type="button" class="dc-start-btn" id="dailyChallengeStartBtn" onclick="startDailyChallenge()">開始今日挑戰</button>
         </div>
 
         <div style="font-weight:1000;color:#4e8f24;margin:20px 0 10px;font-size:16px;">🏆 今日任務</div>
@@ -3999,6 +4054,15 @@ textarea {
     </div>
 
     <button type="button" class="wl-add-fab" id="wlAddFab" onclick="wlQuickAddWord()" title="新增單字">＋</button>
+  </div>
+
+  <div id="challengeOverlay" class="word-list-overlay">
+    <div class="wl-header">
+      <button type="button" class="wl-back" onclick="challengeBack()">‹</button>
+      <div class="wl-title" id="challengeTitle">挑戰</div>
+      <span style="width:34px"></span>
+    </div>
+    <div id="challengeBody" style="flex:1;overflow-y:auto;padding:16px;"></div>
   </div>
 
   <div id="fabWrap" class="fab-wrap">
@@ -5108,6 +5172,14 @@ function goPage(id) {
 /* ===== 手機返回鍵/瀏覽器上一頁：回到上一步，而不是直接跳回首頁 ===== */
 window.addEventListener("popstate", (e) => {
   const state = e.state || {};
+  const challengeOpen = document.getElementById("challengeOverlay")?.classList.contains("show");
+  if (challengeOpen && !state.challenge) {
+    document.getElementById("challengeOverlay")?.classList.remove("show");
+    challengeOnComplete = null;
+    dailyChallengeTasksQueue = [];
+    renderChallengeCards();
+    return;
+  }
   const wlOpen = document.getElementById("wordListOverlay")?.classList.contains("show");
   if (wlOpen && !state.wl) {
     document.getElementById("wordListOverlay")?.classList.remove("show");
@@ -5733,6 +5805,7 @@ function renderDashboard() {
   if (recent) recent.innerHTML = recentHTML;
   if (homeRecent) homeRecent.innerHTML = recentHTML;
   renderHomeQuestDesign();
+  renderChallengeCards();
 }
 function syncDropdowns() {
   ["flashSelect","testSelect","matchSelect","listenSelect"].forEach(id => {
@@ -6432,6 +6505,264 @@ function ensureGraduationRecord(folderId) {
 function getCardKey(card, index) {
   return String((card && (card.id || card.term || card.definition)) || index);
 }
+
+/* ================= 🧠遺忘挑戰 / 🎯弱點挑戰 / 🎯今日挑戰 ================= */
+let srsData = JSON.parse(localStorage.getItem("b1a4SrsData") || "{}");
+function saveSrsData() { try { localStorage.setItem("b1a4SrsData", JSON.stringify(srsData)); } catch (e) {} }
+const SRS_INTERVALS = [1, 3, 7, 14, 30];
+function todayISO() { return new Date().toISOString().slice(0, 10); }
+function ensureSrsFolder(fi) { if (!srsData[fi]) srsData[fi] = {}; return srsData[fi]; }
+function touchSrsCard(folderIdx, key, correct) {
+  if (folderIdx === null || folderIdx === undefined) return;
+  const rec = ensureSrsFolder(folderIdx);
+  if (!rec[key]) rec[key] = { stage: 0 };
+  if (correct === true) rec[key].stage = Math.min((rec[key].stage || 0) + 1, SRS_INTERVALS.length - 1);
+  else if (correct === false) rec[key].stage = 0;
+  const days = SRS_INTERVALS[rec[key].stage] ?? 1;
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  rec[key].nextReview = d.toISOString().slice(0, 10);
+  rec[key].lastSeen = todayISO();
+  saveSrsData();
+}
+
+function collectAllCards() {
+  const out = [];
+  (folders || []).forEach((f, fi) => {
+    parseCards(f.content || "").forEach((c, ci) => {
+      if (!c.term || !c.term.trim()) return;
+      out.push({ folderIdx: fi, key: getCardKey(c, ci), term: c.term, definition: c.definition, folderName: f.name });
+    });
+  });
+  return out;
+}
+function getForgettingDueCards(limit) {
+  const today = todayISO();
+  const due = shuffle(collectAllCards().filter(c => {
+    const rec = (srsData[c.folderIdx] || {})[c.key];
+    return rec && rec.nextReview && rec.nextReview <= today;
+  }));
+  return (limit ? due.slice(0, limit) : due);
+}
+function getWeaknessCards(limit) {
+  const all = collectAllCards().map(c => {
+    const rec = (masteryData[c.folderIdx] || {})[c.key];
+    const correct = (rec && rec.correct) || 0;
+    const wrong = (rec && rec.wrong) || 0;
+    return { ...c, correct, wrong, accuracy: (correct + wrong) ? Math.round((correct / (correct + wrong)) * 100) : null };
+  }).filter(c => c.wrong > 0);
+  all.sort((a, b) => (a.accuracy ?? 100) - (b.accuracy ?? 100) || b.wrong - a.wrong);
+  return (limit ? all.slice(0, limit) : all);
+}
+function weaknessStars(c) {
+  const acc = c.accuracy ?? 100;
+  if (acc < 40) return 5;
+  if (acc < 55) return 4;
+  if (acc < 70) return 3;
+  if (acc < 85) return 2;
+  return 1;
+}
+
+function loadDailyChallenge() {
+  let dc = null;
+  try { dc = JSON.parse(localStorage.getItem("b1a4DailyChallenge") || "null"); } catch (e) {}
+  if (!dc || dc.date !== todayISO() || (!dc.tasks.length && collectAllCards().length > 0)) dc = generateDailyChallenge();
+  return dc;
+}
+function generateDailyChallenge() {
+  const dueCount = getForgettingDueCards().length;
+  const weakCount = getWeaknessCards().length;
+  const anyCount = collectAllCards().length;
+  const pool = [];
+  if (dueCount > 0) pool.push({ type: "forget", icon: "🧠", label: "遺忘挑戰", count: Math.min(10, dueCount) });
+  if (weakCount > 0) pool.push({ type: "weak", icon: "🎯", label: "弱點挑戰", count: Math.min(10, weakCount) });
+  if (anyCount > 0) pool.push({ type: "test", icon: "📝", label: "測驗", count: Math.min(20, anyCount) });
+  if (anyCount > 0) pool.push({ type: "listen", icon: "🎧", label: "聽力", count: Math.min(10, anyCount) });
+  const tasks = shuffle(pool.slice()).slice(0, 3);
+  const dc = { date: todayISO(), tasks, completed: false };
+  try { localStorage.setItem("b1a4DailyChallenge", JSON.stringify(dc)); } catch (e) {}
+  return dc;
+}
+function rerollDailyChallenge() {
+  generateDailyChallenge();
+  renderChallengeCards();
+}
+function markDailyChallengeDone() {
+  const dc = loadDailyChallenge();
+  dc.tasks.forEach(t => t.done = true);
+  dc.completed = true;
+  try { localStorage.setItem("b1a4DailyChallenge", JSON.stringify(dc)); } catch (e) {}
+  renderChallengeCards();
+}
+
+function renderChallengeCards() {
+  const dueCount = getForgettingDueCards().length;
+  const weakCount = getWeaknessCards().length;
+  const forgetDesc = document.getElementById("forgetChallengeDesc");
+  if (forgetDesc) forgetDesc.textContent = dueCount > 0 ? `今天有 ${dueCount} 個單字快忘記了！` : "今天沒有需要複習的單字";
+  const weakDesc = document.getElementById("weakChallengeDesc");
+  if (weakDesc) weakDesc.textContent = weakCount > 0 ? `共有 ${weakCount} 個容易忘記` : "目前沒有明顯弱點單字，繼續保持！";
+
+  const dc = loadDailyChallenge();
+  const tasksEl = document.getElementById("dailyChallengeTasks");
+  if (tasksEl) {
+    tasksEl.innerHTML = dc.tasks.length
+      ? dc.tasks.map(t => `<div class="dc-task${t.done ? " dc-done" : ""}">${t.icon} ${t.label} ×${t.count}${t.done ? " ✅" : ""}</div>`).join("")
+      : `<div class="empty" style="padding:10px 0;">先去背幾個單字，明天就有今日挑戰囉！</div>`;
+  }
+  const startBtn = document.getElementById("dailyChallengeStartBtn");
+  if (startBtn) {
+    startBtn.disabled = !dc.tasks.length;
+    startBtn.textContent = dc.completed ? "🎉 今天已完成，明天再來！" : "開始今日挑戰";
+  }
+}
+
+/* ---- 挑戰複習彈窗（一張一張翻卡 + 記得/不熟） ---- */
+let challengeQueue = [];
+let challengeIndex = 0;
+let challengeFlipped = false;
+let challengeMode = "forget";
+let challengeStats = { total: 0, done: 0 };
+let challengeOnComplete = null;
+let dailyChallengeTasksQueue = [];
+let dailyChallengeTotals = { done: 0, total: 0 };
+
+function openChallengeOverlay() {
+  document.getElementById("challengeOverlay")?.classList.add("show");
+  try { history.pushState({ page: document.querySelector(".page.active")?.id || "home", challenge: true }, ""); } catch (e) {}
+}
+function challengeBack() {
+  if (history.state && history.state.challenge) history.back();
+  else exitChallenge();
+}
+function exitChallenge() {
+  document.getElementById("challengeOverlay")?.classList.remove("show");
+  challengeOnComplete = null;
+  dailyChallengeTasksQueue = [];
+  renderChallengeCards();
+}
+
+function startForgetChallenge() {
+  const cards = getForgettingDueCards(30);
+  if (!cards.length) { alert("目前沒有需要複習的單字，太棒了！🎉"); return; }
+  runChallengeSession("forget", "🧠 遺忘挑戰", cards);
+}
+function startWeaknessChallenge() {
+  const cards = getWeaknessCards(30);
+  if (!cards.length) { alert("目前沒有明顯的弱點單字！繼續保持 🎉"); return; }
+  runChallengeSession("weak", "🎯 弱點挑戰", cards);
+}
+
+function runChallengeSession(mode, title, cards, onComplete) {
+  challengeMode = mode;
+  challengeQueue = cards;
+  challengeIndex = 0;
+  challengeFlipped = false;
+  challengeStats = { total: cards.length, done: 0 };
+  challengeOnComplete = onComplete || null;
+  const titleEl = document.getElementById("challengeTitle");
+  if (titleEl) titleEl.textContent = title;
+  openChallengeOverlay();
+  renderChallengeCard();
+}
+
+function renderChallengeCard() {
+  const body = document.getElementById("challengeBody");
+  if (!body) return;
+  if (challengeIndex >= challengeQueue.length) {
+    if (typeof challengeOnComplete === "function") {
+      const cb = challengeOnComplete;
+      challengeOnComplete = null;
+      cb();
+      return;
+    }
+    body.innerHTML = `
+      <div style="text-align:center;padding:40px 10px;">
+        <div style="font-size:40px;">🎉</div>
+        <div style="font-size:20px;font-weight:1000;margin-top:10px;">今天完成！</div>
+        <div style="font-size:15px;color:var(--muted);margin-top:8px;">已複習 ${challengeStats.done} / ${challengeStats.total}</div>
+        <button class="primary cute-btn" style="margin-top:20px;" onclick="exitChallenge()">回首頁</button>
+      </div>`;
+    return;
+  }
+  const c = challengeQueue[challengeIndex];
+  const showBack = challengeFlipped;
+  let modeHint = "";
+  if (challengeMode === "listen") modeHint = "🎧 先聽發音，猜猜看意思";
+  else if (challengeMode === "weak") modeHint = `已答對 ${c.correct || 0} 次／答錯 ${c.wrong || 0} 次`;
+  body.innerHTML = `
+    <div style="text-align:center;font-size:13px;color:var(--muted);font-weight:800;margin-bottom:10px;">${challengeIndex + 1} / ${challengeQueue.length}</div>
+    <div class="challenge-flip-card" onclick="flipChallengeCard()">
+      <div style="font-size:26px;font-weight:1000;">${showBack ? esc(c.definition) : esc(c.term)}</div>
+      ${modeHint ? `<div style="margin-top:10px;font-size:12px;color:var(--muted);">${esc(modeHint)}</div>` : ""}
+      <div style="margin-top:14px;"><button type="button" class="ghost" onclick="event.stopPropagation();speakKorean('${jsAttr(c.term)}')">🔊 發音</button></div>
+      ${!showBack ? `<div style="margin-top:16px;font-size:12px;color:var(--muted);">點卡片查看答案</div>` : ""}
+    </div>
+    ${showBack ? `
+    <div class="btns" style="margin-top:20px;">
+      <button type="button" class="ghost cute-btn" style="flex:1;background:#fdeceb;color:#c0473f;" onclick="answerChallengeCard(false)">❌ 不熟</button>
+      <button type="button" class="primary cute-btn" style="flex:1;" onclick="answerChallengeCard(true)">✅ 記得</button>
+    </div>` : ""}
+  `;
+  if (challengeMode === "listen" && !showBack) {
+    setTimeout(() => speakKorean(c.term), 200);
+  }
+}
+function flipChallengeCard() {
+  challengeFlipped = !challengeFlipped;
+  renderChallengeCard();
+}
+function answerChallengeCard(correct) {
+  const c = challengeQueue[challengeIndex];
+  touchSrsCard(c.folderIdx, c.key, correct);
+  const prevCurrent = current;
+  current = c.folderIdx;
+  recordAnswerResult(c, 0, correct, "challenge");
+  current = prevCurrent;
+  saveStorage();
+  challengeStats.done++;
+  challengeIndex++;
+  challengeFlipped = false;
+  renderChallengeCard();
+  renderChallengeCards();
+}
+
+function startDailyChallenge() {
+  const dc = loadDailyChallenge();
+  if (!dc.tasks.length) { alert("先去題庫背幾個單字，明天就有今日挑戰囉！"); return; }
+  dailyChallengeTasksQueue = dc.tasks.map(t => ({ ...t }));
+  dailyChallengeTotals = { done: 0, total: dailyChallengeTasksQueue.reduce((s, t) => s + t.count, 0) };
+  runNextDailyTask();
+}
+function runNextDailyTask() {
+  if (!dailyChallengeTasksQueue.length) {
+    markDailyChallengeDone();
+    const titleEl = document.getElementById("challengeTitle");
+    if (titleEl) titleEl.textContent = "🎯 今日挑戰";
+    openChallengeOverlay();
+    document.getElementById("challengeBody").innerHTML = `
+      <div style="text-align:center;padding:40px 10px;">
+        <div style="font-size:40px;">🎉</div>
+        <div style="font-size:20px;font-weight:1000;margin-top:10px;">今天完成！</div>
+        <div style="font-size:15px;color:var(--muted);margin-top:8px;">已複習 ${dailyChallengeTotals.done} / ${dailyChallengeTotals.total}</div>
+        <button class="primary cute-btn" style="margin-top:20px;" onclick="exitChallenge()">回首頁</button>
+      </div>`;
+    return;
+  }
+  const task = dailyChallengeTasksQueue.shift();
+  let cards = [];
+  if (task.type === "forget") cards = getForgettingDueCards(task.count);
+  else if (task.type === "weak") cards = getWeaknessCards(task.count);
+  else cards = shuffle(collectAllCards().slice()).slice(0, task.count);
+
+  if (!cards.length) { runNextDailyTask(); return; }
+
+  runChallengeSession(task.type, `${task.icon} ${task.label}`, cards, () => {
+    dailyChallengeTotals.done += cards.length;
+    runNextDailyTask();
+  });
+}
+
 function getGraduationCards(folderId) {
   if (folderId !== null && folderId !== undefined && folders && folders[folderId]) {
     return parseCards(folders[folderId].content);
