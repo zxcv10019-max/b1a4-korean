@@ -139,6 +139,7 @@ body {
 
 .content {
   padding:28px;
+  padding-bottom:calc(100px + env(safe-area-inset-bottom, 0px));
 }
 .page { display:none; }
 .page.active { display:block; }
@@ -551,7 +552,7 @@ textarea {
   .dashboard,.study-shell,.editor-layout { grid-template-columns:1fr; }
 }
 @media(max-width:640px) {
-  .content { padding:18px; }
+  .content { padding:18px; padding-bottom:calc(100px + env(safe-area-inset-bottom, 0px)); }
   .hero {
     height:280px;
     background-size:auto 74%;
@@ -1764,8 +1765,11 @@ textarea {
 }
 .quick-icon-tile:hover { transform:translateY(-2px); box-shadow:0 12px 24px rgba(72,108,39,.12); }
 .quick-icon-tile .qi-ico { font-size:24px; display:block; margin-bottom:6px; }
+.quick-icons-row.qir-4 { grid-template-columns:repeat(4,1fr); }
+.quick-icons-row.qir-2 { grid-template-columns:repeat(2,1fr); }
 @media(max-width:680px) {
   .quick-icons-row { grid-template-columns:repeat(3,1fr); }
+  .quick-icons-row.qir-4, .quick-icons-row.qir-2 { grid-template-columns:repeat(3,1fr); }
 }
 
 /* ===== Hero photo cropper ===== */
@@ -3079,7 +3083,7 @@ textarea {
 
       <section id="readingHub" class="page">
         <div class="topbar"><h2>📖 閱讀</h2></div>
-        <div class="quick-icons-row" style="grid-template-columns:repeat(4,1fr);">
+        <div class="quick-icons-row qir-4">
           <div class="quick-icon-tile" onclick="goPage('reading')"><span class="qi-ico">📚</span>小說</div>
           <div class="quick-icon-tile" onclick="goPage('lyrics')"><span class="qi-ico">🎵</span>歌詞</div>
           <div class="quick-icon-tile" onclick="goPage('sentence')"><span class="qi-ico">📝</span>短句</div>
@@ -3089,7 +3093,7 @@ textarea {
 
       <section id="practiceHub" class="page">
         <div class="topbar"><h2>🎴 練習</h2></div>
-        <div class="quick-icons-row" style="grid-template-columns:repeat(2,1fr);">
+        <div class="quick-icons-row qir-2">
           <div class="quick-icon-tile" onclick="goPage('flash')"><span class="qi-ico">🎴</span>單字卡</div>
           <div class="quick-icon-tile" onclick="goPage('test')"><span class="qi-ico">📝</span>測驗</div>
           <div class="quick-icon-tile" onclick="goPage('match')"><span class="qi-ico">🎮</span>配對</div>
@@ -3099,7 +3103,7 @@ textarea {
 
       <section id="libraryHub" class="page">
         <div class="topbar"><h2>📚 題庫</h2></div>
-        <div class="quick-icons-row" style="grid-template-columns:repeat(2,1fr);">
+        <div class="quick-icons-row qir-2">
           <div class="quick-icon-tile" onclick="goPage('library')"><span class="qi-ico">📁</span>我的題庫</div>
           <div class="quick-icon-tile" onclick="goPage('grammar')"><span class="qi-ico">🌸</span>文法</div>
           <div class="quick-icon-tile" onclick="goPage('reading')"><span class="qi-ico">📚</span>小說</div>
@@ -7520,6 +7524,7 @@ function textToPairs(str, keyA, keyB) {
 let lyricsViewMode = "edit";
 let lyricsRevealState = {};
 let lyricsWordChipExpand = {};
+let lyricsWordSectionOpen = {};
 
 function toggleLyricsMode() {
   lyricsViewMode = lyricsViewMode === "edit" ? "study" : "edit";
@@ -7670,6 +7675,7 @@ function renderLyricsStudyView(song) {
       </div>`;
     }
     const detailOpen = !!lyricsRevealState[ln.id];
+    const wordSectionOpen = lyricsWordSectionOpen[ln.id] !== false;
     const sentFav = isSentenceFav(song.id, ln.id);
     const wordChips = (ln.words || []).map(w => {
       const chipKey = ln.id + "_" + w.k;
@@ -7687,7 +7693,6 @@ function renderLyricsStudyView(song) {
         <span style="font-weight:900;color:var(--muted);font-size:13px;padding-top:4px;">${i + 1}</span>
         <div style="flex:1;min-width:0;">
           <div style="font-weight:1000;font-size:19px;color:#20351f;line-height:1.5;">${esc(ln.kr)}</div>
-          ${ln.romanization ? `<div style="font-size:13px;color:var(--muted);font-style:italic;margin-top:4px;">${esc(ln.romanization)}</div>` : ""}
           <div style="font-size:14px;color:var(--muted);font-weight:700;margin-top:4px;">🇹🇼 ${esc(ln.zh || "（尚未填寫翻譯）")}</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;">
@@ -7703,7 +7708,11 @@ function renderLyricsStudyView(song) {
           <button class="ghost" type="button" onclick="toggleSentenceFav('${song.id}','${ln.id}', ${JSON.stringify(ln.kr).replace(/"/g, "&quot;")}, ${JSON.stringify(ln.zh || "").replace(/"/g, "&quot;")})">${sentFav ? "❤️ 已收藏句子" : "🤍 收藏句子"}</button>
         </div>
 
-        ${wordChips ? `<div class="sen-section-label">🧩 單字（點字看解析）</div><div style="display:flex;flex-wrap:wrap;gap:8px;">${wordChips}</div>` : ""}
+        ${wordChips ? `
+        <div class="sen-section-label" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleLyricsWordSection('${ln.id}')">
+          <span>🧩 單字（${(ln.words||[]).length}）</span><span>${wordSectionOpen ? "▴" : "▾"}</span>
+        </div>
+        ${wordSectionOpen ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">${wordChips}</div>` : ""}` : ""}
 
         <div class="sen-section-label" style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;">
           <span>📚 AI解析（句子文法／語氣）</span>
@@ -7726,6 +7735,10 @@ function toggleLineReveal(lineId) {
 function toggleWordChipExpand(lineId, word) {
   const key = lineId + "_" + word;
   lyricsWordChipExpand[key] = !lyricsWordChipExpand[key];
+  renderLyricsReader();
+}
+function toggleLyricsWordSection(lineId) {
+  lyricsWordSectionOpen[lineId] = !(lyricsWordSectionOpen[lineId] !== false);
   renderLyricsReader();
 }
 function toggleLineUnderstood(lineId) {
@@ -9304,7 +9317,6 @@ function mergeDetectedIntoLine(line, detected) {
   detected.grammar.forEach(g => {
     if (!line.grammar.some(x => x.p === g.p)) line.grammar.push(g);
   });
-  if (detected.romanization) line.romanization = detected.romanization;
 }
 
 function aiAnalyzeLyricsLine(lineId, btnEl) {
@@ -9320,24 +9332,21 @@ ${line.zh ? `已有中文翻譯：${line.zh}` : ""}
 
 請輸出以下格式：
 {
-  "romanization": "",
   "words": [ { "k": "", "z": "" } ],
   "grammar": [ { "p": "", "n": "" } ]
 }
 
 規則：
-1. romanization：這句歌詞的韓文羅馬拼音（例如 gamanhi ana gwi giukyeo），單字間用空格分隔。
-2. words：挑出這句裡值得學習的單字，k=韓文，z=簡短中文意思。
-3. grammar：挑出這句用到的文法點，p=文法點，n=簡短說明。
-4. 不要每個字都列，只挑對學習者有價值的。
-5. 沒有值得列的就給空陣列，不要硬湊。`;
+1. words：挑出這句裡值得學習的單字，k=韓文，z=簡短中文意思。
+2. grammar：挑出這句用到的文法點，p=文法點，n=簡短說明。
+3. 不要每個字都列，只挑對學習者有價值的。
+4. 沒有值得列的就給空陣列，不要硬湊。`;
   runAiAssist(btnEl, text, (val) => {
     try {
       const data = parseAiJson(val);
       const words = Array.isArray(data.words) ? data.words.map(w => ({ k: String(w.k||"").trim(), z: String(w.z||"").trim() })).filter(w=>w.k) : [];
       const grammar = Array.isArray(data.grammar) ? data.grammar.map(g => ({ p: String(g.p||"").trim(), n: String(g.n||"").trim() })).filter(g=>g.p) : [];
-      const romanization = String(data.romanization || "").trim();
-      mergeDetectedIntoLine(line, { words, grammar, romanization });
+      mergeDetectedIntoLine(line, { words, grammar });
       saveLyricsSongs();
       renderLyricsReader();
     } catch (error) {
@@ -9362,7 +9371,6 @@ ${JSON.stringify(list, null, 2)}
 [
   {
     "index": 1,
-    "romanization": "",
     "words": [ { "k": "", "z": "" } ],
     "grammar": [ { "p": "", "n": "" } ]
   }
@@ -9370,10 +9378,9 @@ ${JSON.stringify(list, null, 2)}
 
 規則：
 1. 必須依照原本 index 順序輸出，每句一筆，就算是空陣列也要輸出該筆。
-2. romanization：這句歌詞的韓文羅馬拼音（例如 gamanhi ana gwi giukyeo），單字間用空格分隔。
-3. words：挑出這句裡值得學習的單字，k=韓文，z=簡短中文意思，不用每個字都列。
-4. grammar：挑出這句用到的文法點，p=文法點，n=簡短說明。
-5. 沒有值得列的就給空陣列，不要硬湊。`;
+2. words：挑出這句裡值得學習的單字，k=韓文，z=簡短中文意思，不用每個字都列。
+3. grammar：挑出這句用到的文法點，p=文法點，n=簡短說明。
+4. 沒有值得列的就給空陣列，不要硬湊。`;
   runAiAssist(btnEl, text, (val) => {
     try {
       const result = parseAiJson(val);
@@ -9385,9 +9392,8 @@ ${JSON.stringify(list, null, 2)}
         if (!line) return;
         const words = Array.isArray(item.words) ? item.words.map(w => ({ k: String(w.k||"").trim(), z: String(w.z||"").trim() })).filter(w=>w.k) : [];
         const grammar = Array.isArray(item.grammar) ? item.grammar.map(g => ({ p: String(g.p||"").trim(), n: String(g.n||"").trim() })).filter(g=>g.p) : [];
-        const romanization = String(item.romanization || "").trim();
         if (words.length || grammar.length) count++;
-        mergeDetectedIntoLine(line, { words, grammar, romanization });
+        mergeDetectedIntoLine(line, { words, grammar });
       });
       saveLyricsSongs();
       renderLyricsReader();
