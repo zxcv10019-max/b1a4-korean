@@ -5175,19 +5175,12 @@ window.addEventListener("popstate", (e) => {
   const state = e.state || {};
   const challengeOpen = document.getElementById("challengeOverlay")?.classList.contains("show");
   if (challengeOpen && !state.challenge) {
-    document.getElementById("challengeOverlay")?.classList.remove("show");
-    challengeOnComplete = null;
-    dailyChallengeTasksQueue = [];
-    renderChallengeCards();
+    exitChallenge();
     return;
   }
   const wlOpen = document.getElementById("wordListOverlay")?.classList.contains("show");
   if (wlOpen && !state.wl) {
-    document.getElementById("wordListOverlay")?.classList.remove("show");
-    wlCurrentFolder = null;
-    wlCards = [];
-    wlEditMode = false;
-    renderFolders();
+    closeWordList();
     return;
   }
   const activeId = document.querySelector(".page.active")?.id;
@@ -5295,6 +5288,15 @@ function cardsToContent(cards) {
   return cards.map(c => (c.term || "").trim() + "\t" + (c.definition || "").trim()).join("\n");
 }
 
+let overlayLockCount = 0;
+function lockBodyScroll() {
+  overlayLockCount++;
+  document.body.style.overflow = "hidden";
+}
+function unlockBodyScroll() {
+  overlayLockCount = Math.max(0, overlayLockCount - 1);
+  if (overlayLockCount === 0) document.body.style.overflow = "";
+}
 function openWordList(i) {
   if (!folders[i]) return;
   wlCurrentFolder = i;
@@ -5304,6 +5306,7 @@ function openWordList(i) {
   loadWlCardsFromFolder();
   renderWordList();
   document.getElementById("wordListOverlay")?.classList.add("show");
+  lockBodyScroll();
   try { history.pushState({ page: document.querySelector(".page.active")?.id || "library", wl: i }, ""); } catch (e) {}
 }
 function closeWordList() {
@@ -5311,6 +5314,7 @@ function closeWordList() {
   wlCurrentFolder = null;
   wlCards = [];
   wlEditMode = false;
+  unlockBodyScroll();
   renderFolders();
 }
 function wlBack() {
@@ -5508,6 +5512,7 @@ function editFolderFromCard(i) {
   loadFolder(i);
   renderWordList();
   document.getElementById("wordListOverlay")?.classList.add("show");
+  lockBodyScroll();
   try { history.pushState({ page: document.querySelector(".page.active")?.id || "library", wl: i }, ""); } catch (e) {}
 }
 
@@ -6673,8 +6678,12 @@ let dailyChallengeTasksQueue = [];
 let dailyChallengeTotals = { done: 0, total: 0 };
 
 function openChallengeOverlay() {
+  const wasShowing = document.getElementById("challengeOverlay")?.classList.contains("show");
   document.getElementById("challengeOverlay")?.classList.add("show");
-  try { history.pushState({ page: document.querySelector(".page.active")?.id || "home", challenge: true }, ""); } catch (e) {}
+  if (!wasShowing) {
+    lockBodyScroll();
+    try { history.pushState({ page: document.querySelector(".page.active")?.id || "home", challenge: true }, ""); } catch (e) {}
+  }
 }
 function challengeBack() {
   if (history.state && history.state.challenge) history.back();
@@ -6684,6 +6693,7 @@ function exitChallenge() {
   document.getElementById("challengeOverlay")?.classList.remove("show");
   challengeOnComplete = null;
   dailyChallengeTasksQueue = [];
+  unlockBodyScroll();
   renderChallengeCards();
 }
 
