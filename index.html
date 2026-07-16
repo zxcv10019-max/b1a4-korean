@@ -1659,6 +1659,17 @@ textarea {
 .lyrics-line-card.active { border-color:#83b842; background:#f4faed; }
 
 .lyrics-line-locked { opacity:.5; text-align:center; cursor:default; }
+
+/* ===== 歌詞編輯模式：卡片化欄位 ===== */
+.lyrics-field-group { margin-bottom:12px; }
+.lyrics-field-label { font-size:11px; font-weight:1000; color:#83a562; margin-bottom:4px; letter-spacing:.02em; }
+.lyrics-field-group input {
+  width:100%; box-sizing:border-box; border:1px solid var(--line); border-radius:12px;
+  padding:10px 12px; font-size:14px; background:#fafdf6;
+}
+.lyrics-field-group.lyrics-field-main input { font-weight:900; font-size:17px; background:#fff; border-width:1.5px; }
+.lyrics-field-hint { font-size:11px; color:var(--muted); margin-top:3px; }
+
 .lyrics-study-card { cursor:default; }
 .lyrics-study-card.understood { border-color:#9bc95d; background:#f7fdf1; }
 .lyrics-study-chip-wrap { display:flex; flex-direction:column; }
@@ -7598,7 +7609,7 @@ function renderLyricsEditView(song) {
     const sentFav = isSentenceFav(song.id, ln.id);
     return `
     <div class="lyrics-line-card" style="cursor:default;">
-      <div class="btns" style="justify-content:space-between;margin-bottom:8px;">
+      <div class="btns" style="justify-content:space-between;margin-bottom:12px;">
         <span style="font-weight:900;color:var(--muted);">第 ${i + 1} 句</span>
         <div class="btns">
           <button class="ghost" type="button" onclick="autoDetectLine('${ln.id}')">🪄 自動偵測</button>
@@ -7607,19 +7618,34 @@ function renderLyricsEditView(song) {
           <button class="ghost" type="button" onclick="deleteLyricsLine('${ln.id}')">🗑 刪除</button>
         </div>
       </div>
-      <input type="text" value="${escapeAttr(ln.kr)}" placeholder="韓文歌詞"
-        style="width:100%;border:1px solid var(--line);border-radius:12px;padding:10px;font-weight:900;font-size:16px;margin-bottom:8px;"
-        oninput="updateLyricsLine('${ln.id}','kr',this.value)">
-      <input type="text" value="${escapeAttr(ln.zh)}" placeholder="中文翻譯"
-        style="width:100%;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px;color:var(--muted);"
-        oninput="updateLyricsLine('${ln.id}','zh',this.value)">
-      <input type="text" value="${escapeAttr(pairsToText(ln.words, 'k', 'z'))}" placeholder="單字，格式：韓文=中文, 韓文=中文"
-        style="width:100%;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px;font-size:13px;"
-        oninput="updateLyricsLinePairs('${ln.id}','words',this.value,'k','z')">
-      <input type="text" value="${escapeAttr(pairsToText(ln.grammar, 'p', 'n'))}" placeholder="文法，格式：文法點=說明, 文法點=說明"
-        style="width:100%;border:1px solid var(--line);border-radius:12px;padding:10px;font-size:13px;margin-bottom:10px;"
-        oninput="updateLyricsLinePairs('${ln.id}','grammar',this.value,'p','n')">
-      ${wordTags || grammarTags ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">${wordTags}${grammarTags}</div>` : ""}
+
+      <div class="lyrics-field-group lyrics-field-main">
+        <div class="lyrics-field-label">🇰🇷 韓文歌詞</div>
+        <input type="text" value="${escapeAttr(ln.kr)}" placeholder="韓文歌詞"
+          oninput="updateLyricsLine('${ln.id}','kr',this.value)">
+      </div>
+
+      <div class="lyrics-field-group">
+        <div class="lyrics-field-label">🇹🇼 中文翻譯</div>
+        <input type="text" value="${escapeAttr(ln.zh)}" placeholder="中文翻譯"
+          oninput="updateLyricsLine('${ln.id}','zh',this.value)">
+      </div>
+
+      <div class="lyrics-field-group">
+        <div class="lyrics-field-label">🧩 單字</div>
+        <input type="text" value="${escapeAttr(pairsToText(ln.words, 'k', 'z'))}" placeholder="韓文=中文, 韓文=中文"
+          oninput="updateLyricsLinePairs('${ln.id}','words',this.value,'k','z')">
+        <div class="lyrics-field-hint">格式：韓文=中文，多個用逗號分開</div>
+      </div>
+
+      <div class="lyrics-field-group">
+        <div class="lyrics-field-label">📚 文法</div>
+        <input type="text" value="${escapeAttr(pairsToText(ln.grammar, 'p', 'n'))}" placeholder="文法點=說明, 文法點=說明"
+          oninput="updateLyricsLinePairs('${ln.id}','grammar',this.value,'p','n')">
+        <div class="lyrics-field-hint">格式：文法點=說明，多個用逗號分開</div>
+      </div>
+
+      ${wordTags || grammarTags ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px;">${wordTags}${grammarTags}</div>` : ""}
       <div class="btns">
         <button class="ghost" type="button" onclick="addWordsFav('${song.id}','${ln.id}', ${JSON.stringify(ln.words || []).replace(/"/g, "&quot;")})">⭐ 加入單字</button>
         <button class="ghost" type="button" onclick="addGrammarFav('${song.id}','${ln.id}', ${JSON.stringify(ln.grammar || []).replace(/"/g, "&quot;")})">📄 加入文法</button>
