@@ -2263,6 +2263,90 @@ textarea {
 .group-kebab-menu button:hover { background:#f0f8e8; }
 .group-kebab-menu button.danger { color:#c0473f; }
 
+/* ===== 題庫大分類卡片 + 單字清單頁（分類詞 x 核心詞風格） ===== */
+.cat-card {
+  position:relative; background:#fff; border:1px solid #eef0ea; border-radius:18px;
+  padding:14px 14px 16px; cursor:pointer; transition:.15s; box-shadow:0 2px 8px rgba(20,30,10,.05);
+  display:flex; flex-direction:column; min-height:auto;
+}
+.cat-card:hover { transform:translateY(-3px); box-shadow:0 14px 26px rgba(20,30,10,.10); }
+.cat-card.active { border-color:#83b842; }
+.cat-card-top { display:flex; align-items:center; gap:6px; }
+.cat-card-name { font-weight:1000; font-size:14px; color:#20351f; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cat-status-pill {
+  align-self:flex-start; margin-top:8px; font-size:10px; font-weight:900; padding:3px 10px;
+  border-radius:999px; background:#f1f3ee; color:#8a9482;
+}
+.cat-status-pill.done { background:#e4f6e0; color:#3f9142; }
+.cat-status-pill.progress { background:#fff0da; color:#c9821f; }
+.cat-emoji { font-size:38px; text-align:center; margin:14px 0 12px; line-height:1; }
+.cat-progress-track { height:6px; background:#f1f1ec; border-radius:999px; overflow:hidden; }
+.cat-progress-fill { height:100%; background:#f5a556; border-radius:999px; }
+.cat-progress-fill.done { background:#83b842; }
+.cat-count { margin-top:6px; font-size:11px; color:var(--muted); font-weight:800; }
+
+/* 清單模式（大分類） */
+.cat-card.cat-card-list { flex-direction:row; align-items:center; gap:10px; padding:10px 14px; }
+.cat-card.cat-card-list .cat-emoji { order:-1; font-size:22px; margin:0; }
+.cat-card.cat-card-list .cat-card-top { flex:1; }
+.cat-card.cat-card-list .cat-status-pill { margin:0 6px; white-space:nowrap; }
+.cat-card.cat-card-list .cat-progress-track { display:none; }
+.cat-card.cat-card-list .cat-count { margin:0; flex:0 0 auto; }
+
+/* 單字清單覆蓋頁（大分類 → 單字） */
+.word-list-overlay {
+  position:fixed; inset:0; background:#fff; z-index:500;
+  display:flex; flex-direction:column;
+  transform:translateX(100%); transition:transform .25s ease;
+}
+.word-list-overlay.show { transform:translateX(0); }
+.wl-header {
+  display:flex; align-items:center; gap:10px; padding:14px 16px;
+  border-bottom:1px solid var(--line); position:sticky; top:0; background:#fff; z-index:2;
+}
+.wl-back { border:0; background:transparent; font-size:24px; color:#20351f; cursor:pointer; padding:2px 8px; line-height:1; }
+.wl-title { flex:1; text-align:center; font-weight:1000; font-size:16px; margin-right:34px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.wl-settings-btn { border:0; background:transparent; font-size:17px; cursor:pointer; flex:0 0 auto; }
+.wl-start-row { padding:12px 16px 0; }
+.wl-start-btn {
+  width:100%; border:0; border-radius:14px; padding:12px; background:linear-gradient(135deg,#9bc95d,#6fae37);
+  color:#fff; font-weight:1000; font-size:14px; cursor:pointer;
+}
+.wl-body { flex:1; overflow-y:auto; padding:14px 16px 96px; -webkit-overflow-scrolling:touch; }
+.wl-row {
+  display:flex; align-items:center; gap:12px; background:#f8faf5; border-radius:16px;
+  padding:12px 14px; margin-bottom:10px; cursor:pointer; transition:.15s;
+}
+.wl-row:hover { background:#f0f6e8; }
+.wl-emoji {
+  width:42px; height:42px; border-radius:12px; background:#eaf5dd; display:flex; align-items:center;
+  justify-content:center; font-size:17px; font-weight:1000; color:#4e8f24; flex:0 0 auto;
+}
+.wl-text { flex:1; min-width:0; }
+.wl-term { font-weight:1000; font-size:15px; color:#20351f; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.wl-def { font-size:12px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.wl-speak {
+  border:0; background:#fff; width:34px; height:34px; border-radius:999px; font-size:15px;
+  color:#e8a13a; flex:0 0 auto; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.06);
+}
+.wl-row-editing { flex-direction:column; align-items:stretch; background:#fff; border:1.5px solid #9bc95d; cursor:default; }
+.wl-edit-input {
+  border:1.5px solid var(--line); border-radius:10px; padding:10px 12px; font-size:14px;
+  margin-bottom:8px; font-weight:800; width:100%; box-sizing:border-box; font-family:inherit;
+}
+.wl-edit-actions { display:flex; gap:8px; }
+.wl-save-btn, .wl-del-btn, .wl-cancel-btn {
+  flex:1; border:0; border-radius:10px; padding:9px; font-weight:900; font-size:12px; cursor:pointer;
+}
+.wl-save-btn { background:#83b842; color:#fff; }
+.wl-del-btn { background:#fdeceb; color:#c0473f; }
+.wl-cancel-btn { background:#f0f2ec; color:var(--muted); flex:0 0 44px; }
+.wl-add-fab {
+  position:absolute; right:18px; bottom:18px; border:0; border-radius:999px; width:52px; height:52px;
+  background:linear-gradient(135deg,#9bc95d,#6fae37); color:#fff; font-size:24px; cursor:pointer;
+  box-shadow:0 10px 22px rgba(72,108,39,.3);
+}
+
 /* ===== 題庫編輯區：森林可愛化 ===== */
 .forest-editor .forest-card-editor {
   position:relative;
@@ -3043,14 +3127,6 @@ textarea {
             </div>
             <button class="ghost" style="margin-top:10px;font-size:0.85em;" onclick="clearAllPracticeData()">🗑 清除統計</button>
           </div>
-
-          <div class="card panel">
-            <h2>快速開始</h2>
-            <div class="quick-item" onclick="goPage('flash')">單字卡 <span>›</span></div>
-            <div class="quick-item" onclick="goPage('test')">筆試 <span>›</span></div>
-            <div class="quick-item" onclick="goPage('match')">配對 <span>›</span></div>
-            <div class="quick-item" onclick="openFolderManager()">題庫管理 <span>›</span></div>
-          </div>
         </div>
 
         <div class="card folder-area lib-home">
@@ -3726,6 +3802,19 @@ textarea {
         style="width:100%;border:1px solid var(--line);border-radius:14px;padding:12px;font-size:15px;box-sizing:border-box;">
       <div id="siteSearchResults" style="margin-top:10px;max-height:55vh;overflow:auto;"></div>
     </div>
+  </div>
+
+  <div id="wordListOverlay" class="word-list-overlay">
+    <div class="wl-header">
+      <button type="button" class="wl-back" onclick="closeWordList()">‹</button>
+      <div class="wl-title" id="wlTitle">題庫</div>
+      <button type="button" class="wl-settings-btn" onclick="wlOpenSettings()" title="題庫設定">⚙️</button>
+    </div>
+    <div class="wl-start-row">
+      <button type="button" class="wl-start-btn" id="wlStartBtn" onclick="wlStartLearning()">▶ 開始學習</button>
+    </div>
+    <div class="wl-body" id="wlBody"></div>
+    <button type="button" class="wl-add-fab" onclick="wlAddWord()" title="新增單字">＋</button>
   </div>
 
   <div id="fabWrap" class="fab-wrap">
@@ -4884,50 +4973,175 @@ function getFolderDueCount(i, gStats) {
   return Math.max(0, gStats.total - gStats.viewedCount);
 }
 
+function getFolderStatusInfo(gStats) {
+  if (gStats.total > 0 && gStats.viewedCount >= gStats.total) return { label: "已完成", cls: "done" };
+  if (gStats.viewedCount > 0) return { label: "進行中", cls: "progress" };
+  return { label: "未開始", cls: "" };
+}
+
 function makeForestFolderCard(f, i) {
   const d = document.createElement("div");
   const listMode = libraryViewMode === "list";
-  d.className = "forest-folder-card " + (listMode ? "list-row " : "") + (current === i ? "active" : "");
+  d.className = "forest-folder-card cat-card " + (listMode ? "cat-card-list " : "") + (current === i ? "active" : "");
   d.dataset.name = f.name.toLowerCase();
   const folderCards = parseCards(f.content);
   d.dataset.words = folderCards.map(c => c.term + " " + c.definition).join(" ").toLowerCase();
-  d.style.setProperty("--tab", f.color || "#c6e09c");
   const cardCount = folderCards.length;
   const gStats = getGraduationStats(i);
-  const stage = getFolderStage(gStats.flashPercent, gStats.graduated);
-  const mascot = FOLDER_MASCOTS[i % FOLDER_MASCOTS.length];
-  const pStats = (folderPracticeStats && folderPracticeStats[i]) || {};
-  const lastStudy = formatRelativeStudyDate(pStats.lastStudy);
-  const stars = getStarRating(gStats.testPercent);
-  const due = getFolderDueCount(i, gStats);
+  const status = getFolderStatusInfo(gStats);
+  const icon = (f.icon && f.icon.trim()) ? f.icon.trim() : FOLDER_MASCOTS[i % FOLDER_MASCOTS.length];
   const menuId = "ffcMenu_" + i;
   d.innerHTML = `
-    <div class="ffc-head">
-      <span class="ffc-folder-ico">${mascot}</span>
-      <span class="ffc-name-inline">${esc(f.name)}</span>
-      <span class="ffc-mini-progress"><span class="ffc-mini-track"><span class="ffc-mini-fill" style="width:${gStats.flashPercent}%"></span></span><span class="ffc-mini-pct">${gStats.flashPercent}%</span></span>
-      <div class="ffc-kebab-wrap">
-        <button type="button" class="ffc-kebab-btn" title="更多" onclick="event.stopPropagation();toggleFfcKebab('${menuId}')">⋮</button>
+    <div class="ffc-head cat-card-top">
+      <span class="cat-card-name">${esc(f.name)}</span>
+      <div class="ffc-kebab-wrap" onclick="event.stopPropagation()">
+        <button type="button" class="ffc-kebab-btn" title="更多" onclick="toggleFfcKebab('${menuId}')">⋮</button>
         <div class="ffc-kebab-menu" id="${menuId}">
-          <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();editFolderFromCard(${i})">✏️ 編輯</button>
-          <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();moveFolder(${i},-1)">↑ 上移</button>
-          <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();moveFolder(${i},1)">↓ 下移</button>
-          <button type="button" class="danger" onclick="event.stopPropagation();closeAllFfcKebabs();deleteFolderFromCard(${i})">🗑 刪除</button>
+          <button type="button" onclick="closeAllFfcKebabs();wlChangeIcon(${i})">🎨 更換圖示</button>
+          <button type="button" onclick="closeAllFfcKebabs();editFolderFromCard(${i})">⚙️ 題庫設定</button>
+          <button type="button" onclick="closeAllFfcKebabs();moveFolder(${i},-1)">↑ 上移</button>
+          <button type="button" onclick="closeAllFfcKebabs();moveFolder(${i},1)">↓ 下移</button>
+          <button type="button" class="danger" onclick="closeAllFfcKebabs();deleteFolderFromCard(${i})">🗑 刪除</button>
         </div>
       </div>
     </div>
-    <div class="ffc-hero">
-      <div class="ffc-progress-track"><div class="ffc-progress-fill" style="width:${gStats.flashPercent}%"></div></div>
-      <div class="ffc-percent-big">${gStats.flashPercent}<small>%</small></div>
-      <div class="ffc-stage">${stage.icon} ${stage.label}</div>
-    </div>
-    ${stars ? `<div class="ffc-stars">${stars}</div>` : ""}
-    <div class="ffc-meta"><span>📖 ${cardCount} 字</span><span>🔥 ${pStats.total || 0} 次</span></div>
-    ${due > 0 ? `<div class="ffc-due">⏰ 今天待複習 ${due}</div>` : `<div class="ffc-due zero">✅ 今天已複習完成</div>`}
-    <div class="ffc-date">🕒 上次學習：${lastStudy}</div>
-    <button type="button" class="ffc-start-btn" onclick="event.stopPropagation();quickStartFlash(${i})">▶ ${listMode ? "繼續" : "開始學習"}</button>`;
-  d.onclick = () => quickStartFlash(i);
+    <div class="cat-status-pill ${status.cls}">${status.label}</div>
+    <div class="cat-emoji">${esc(icon)}</div>
+    <div class="cat-progress-track"><div class="cat-progress-fill ${status.cls === "done" ? "done" : ""}" style="width:${gStats.flashPercent}%"></div></div>
+    <div class="cat-count">${gStats.viewedCount}/${gStats.total || cardCount}</div>`;
+  d.onclick = () => openWordList(i);
   return d;
+}
+
+function wlChangeIcon(i) {
+  const f = folders[i];
+  if (!f) return;
+  const val = prompt("輸入一個 emoji 圖示（留空則使用預設圖示）：", f.icon || "");
+  if (val === null) return;
+  f.icon = val.trim();
+  saveStorage();
+  renderFolders();
+}
+
+/* ===== 大分類 → 單字清單頁（合併「編輯題庫」與「單字卡」瀏覽） ===== */
+let wlCurrentFolder = null;
+let wlEditingIndex = null; // number | "new" | null
+
+function cardsToContent(cards) {
+  return cards.map(c => (c.term || "").trim() + "\t" + (c.definition || "").trim()).join("\n");
+}
+
+function openWordList(i) {
+  if (!folders[i]) return;
+  wlCurrentFolder = i;
+  wlEditingIndex = null;
+  current = i;
+  renderWordList();
+  document.getElementById("wordListOverlay")?.classList.add("show");
+}
+function closeWordList() {
+  document.getElementById("wordListOverlay")?.classList.remove("show");
+  wlCurrentFolder = null;
+  wlEditingIndex = null;
+  renderFolders();
+}
+
+function wlEditRowHtml(c, idxAttr) {
+  return `<div class="wl-row wl-row-editing">
+    <input class="wl-edit-input" id="wlEditTerm" value="${esc(c.term)}" placeholder="韓文">
+    <input class="wl-edit-input" id="wlEditDef" value="${esc(c.definition)}" placeholder="中文翻譯">
+    <div class="wl-edit-actions">
+      <button type="button" class="wl-save-btn" onclick="wlSaveRow('${idxAttr}')">✔ 儲存</button>
+      ${idxAttr !== "new" ? `<button type="button" class="wl-del-btn" onclick="wlDeleteRow('${idxAttr}')">🗑 刪除</button>` : ""}
+      <button type="button" class="wl-cancel-btn" onclick="wlCancelEdit()">✕</button>
+    </div>
+  </div>`;
+}
+
+function renderWordList() {
+  if (wlCurrentFolder === null || !folders[wlCurrentFolder]) { closeWordList(); return; }
+  const f = folders[wlCurrentFolder];
+  const titleEl = document.getElementById("wlTitle");
+  if (titleEl) titleEl.textContent = f.name;
+  const cards = parseCards(f.content);
+  const body = document.getElementById("wlBody");
+  if (body) {
+    let html = "";
+    if (!cards.length && wlEditingIndex !== "new") {
+      html = `<div class="empty" style="padding:30px 0;">這個題庫還沒有單字，點右下角「＋」開始新增。</div>`;
+    } else {
+      html = cards.map((c, idx) => {
+        if (wlEditingIndex === idx) return wlEditRowHtml(c, String(idx));
+        const initial = (c.term || "").trim().charAt(0) || "🔤";
+        return `<div class="wl-row" onclick="wlEditRow(${idx})">
+          <div class="wl-emoji">${esc(initial)}</div>
+          <div class="wl-text">
+            <div class="wl-term">${esc(c.term)}</div>
+            <div class="wl-def">${esc(c.definition)}</div>
+          </div>
+          <button type="button" class="wl-speak" onclick="event.stopPropagation();speakKorean('${esc(c.term).replace(/'/g, "\\'")}')">🔊</button>
+        </div>`;
+      }).join("");
+      if (wlEditingIndex === "new") html += wlEditRowHtml({ term: "", definition: "" }, "new");
+    }
+    body.innerHTML = html;
+  }
+  const gStats = getGraduationStats(wlCurrentFolder);
+  const startBtn = document.getElementById("wlStartBtn");
+  if (startBtn) startBtn.textContent = gStats.viewedCount > 0 ? "▶ 繼續學習" : "▶ 開始學習";
+  if (wlEditingIndex === "new") {
+    setTimeout(() => document.getElementById("wlEditTerm")?.focus(), 30);
+  }
+}
+
+function wlEditRow(idx) { wlEditingIndex = idx; renderWordList(); }
+function wlCancelEdit() { wlEditingIndex = null; renderWordList(); }
+
+function wlSaveRow(idxAttr) {
+  const f = folders[wlCurrentFolder];
+  if (!f) return;
+  const term = (document.getElementById("wlEditTerm")?.value || "").trim();
+  const definition = (document.getElementById("wlEditDef")?.value || "").trim();
+  if (!term || !definition) { alert("韓文與翻譯都要填寫喔"); return; }
+  const cards = parseCards(f.content);
+  if (idxAttr === "new") cards.push({ term, definition });
+  else cards[Number(idxAttr)] = { term, definition };
+  f.content = cardsToContent(cards);
+  f.updated = today();
+  wlEditingIndex = null;
+  saveStorage();
+  renderWordList();
+}
+
+function wlDeleteRow(idxAttr) {
+  if (!confirm("確定要刪除這個單字嗎？")) return;
+  const f = folders[wlCurrentFolder];
+  if (!f) return;
+  const cards = parseCards(f.content);
+  cards.splice(Number(idxAttr), 1);
+  f.content = cardsToContent(cards);
+  f.updated = today();
+  wlEditingIndex = null;
+  saveStorage();
+  renderWordList();
+}
+
+function wlAddWord() {
+  if (wlCurrentFolder === null) return;
+  wlEditingIndex = "new";
+  renderWordList();
+}
+
+function wlStartLearning() {
+  if (wlCurrentFolder === null) return;
+  const i = wlCurrentFolder;
+  closeWordList();
+  quickStartFlash(i);
+}
+
+function wlOpenSettings() {
+  if (wlCurrentFolder === null) return;
+  editFolderFromCard(wlCurrentFolder);
 }
 
 function deleteFolderFromCard(i) {
