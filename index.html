@@ -4008,6 +4008,7 @@ textarea {
             <span>🌿 單字花園（<span id="gardenCount">0</span>）</span>
             <span class="btns" style="margin:0;">
               <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="fixMergedKrZhCards()">🔧 修正黏在一起的中文</button>
+              <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="aiTranslateFolderCards(this)">🌐 AI翻譯</button>
               <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="aiCheckFolderTypos(this)">✨ AI檢查錯字</button>
               <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="toggleBatchPaste()" id="batchPasteToggleBtn">📋 批次貼上</button>
             </span>
@@ -5937,6 +5938,50 @@ function ensureTypoCheckModal() {
 function closeTypoCheckModal() {
   const m = document.getElementById("typoCheckMask");
   if (m) m.classList.remove("show");
+}
+function aiTranslateFolderCards(btnEl) {
+  const items = editorCards
+    .map((c, i) => ({ index: i, term: c.term.trim(), definition: c.definition.trim() }))
+    .filter(x => x.term && !x.definition);
+  if (!items.length) { alert("目前沒有需要翻譯的單字（中文欄位都已經有內容了）"); return; }
+
+  const text = `請幫我把下面這些韓文單字翻譯成繁體中文。只需要精簡的翻譯本身，不要加註解、不要標音、不要例句。請只回傳有效的 JSON 陣列，不要輸出 Markdown、程式碼框、標題或其他文字。
+
+單字清單：
+${JSON.stringify(items.map(x => ({ index: x.index, kr: x.term })), null, 2)}
+
+請用這個格式回傳：
+[
+  { "index": 0, "zh": "翻譯結果" }
+]
+
+規則：
+1. 每一個 index 都要盡量給出翻譯，除非完全無法辨識這個韓文詞。
+2. zh 欄位只放中文翻譯本身，不要加韓文、拼音或任何符號。
+3. 使用繁體中文。`;
+
+  runAiAssist(btnEl, text, (val) => {
+    try {
+      const result = parseAiJson(val);
+      if (!Array.isArray(result)) throw new Error("回覆不是陣列");
+      let count = 0;
+      result.forEach(r => {
+        const idx = Number(r.index);
+        const orig = items.find(x => x.index === idx);
+        const zh = String(r.zh || "").trim();
+        if (orig && editorCards[orig.index] && zh && !editorCards[orig.index].definition.trim()) {
+          editorCards[orig.index].definition = zh;
+          count++;
+        }
+      });
+      renderCardEditor();
+      serializeEditorCards();
+      alert(count > 0 ? `已翻譯 ${count} 個單字，記得檢查一下再確認！` : "AI 沒有回傳可用的翻譯結果，請再試一次。");
+    } catch (error) {
+      console.error("AI 翻譯 JSON 錯誤：", error, val);
+      alert("AI 回覆格式無法解析，請再按一次「AI翻譯」。");
+    }
+  });
 }
 function aiCheckFolderTypos(btnEl) {
   const items = editorCards
