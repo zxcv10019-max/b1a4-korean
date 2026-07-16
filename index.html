@@ -3898,7 +3898,7 @@ textarea {
 
   <div id="wordListOverlay" class="word-list-overlay">
     <div class="wl-header">
-      <button type="button" class="wl-back" onclick="closeWordList()">‹</button>
+      <button type="button" class="wl-back" onclick="wlBack()">‹</button>
       <div class="wl-title" id="wlTitle">題庫</div>
       <button type="button" class="wl-settings-btn" id="wlSettingsBtn" onclick="wlToggleEditMode()" title="點擊開啟編輯">⚙️</button>
     </div>
@@ -5077,7 +5077,10 @@ function goBottomTab(tab) {
 }
 let current_vocab_page = "flash";
 
+let isRestoringNav = false;
 function goPage(id) {
+  const prevActive = document.querySelector(".page.active");
+  const prevId = prevActive ? prevActive.id : null;
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.getElementById(id).classList.add("active");
   if (VOCAB_PAGES.includes(id)) current_vocab_page = id;
@@ -5096,7 +5099,32 @@ function goPage(id) {
   decorateMasteryBadges();
   renderFolderStatsPanel();
   setTimeout(decorateSpeakButtons, 50);
+
+  if (!isRestoringNav && prevId !== id) {
+    try { history.pushState({ page: id }, ""); } catch (e) {}
+  }
 }
+
+/* ===== 手機返回鍵/瀏覽器上一頁：回到上一步，而不是直接跳回首頁 ===== */
+window.addEventListener("popstate", (e) => {
+  const state = e.state || {};
+  const wlOpen = document.getElementById("wordListOverlay")?.classList.contains("show");
+  if (wlOpen && !state.wl) {
+    document.getElementById("wordListOverlay")?.classList.remove("show");
+    wlCurrentFolder = null;
+    wlCards = [];
+    wlEditMode = false;
+    renderFolders();
+    return;
+  }
+  const activeId = document.querySelector(".page.active")?.id;
+  if (state.page && state.page !== activeId) {
+    isRestoringNav = true;
+    goPage(state.page);
+    isRestoringNav = false;
+  }
+});
+
 
 function getFolderStage(flashPercent, graduated) {
   if (graduated) return { icon: "🌸", label: "已畢業" };
@@ -5203,6 +5231,7 @@ function openWordList(i) {
   loadWlCardsFromFolder();
   renderWordList();
   document.getElementById("wordListOverlay")?.classList.add("show");
+  try { history.pushState({ page: document.querySelector(".page.active")?.id || "library", wl: i }, ""); } catch (e) {}
 }
 function closeWordList() {
   document.getElementById("wordListOverlay")?.classList.remove("show");
@@ -5210,6 +5239,13 @@ function closeWordList() {
   wlCards = [];
   wlEditMode = false;
   renderFolders();
+}
+function wlBack() {
+  if (history.state && history.state.wl !== undefined && history.state.wl !== null) {
+    history.back();
+  } else {
+    closeWordList();
+  }
 }
 
 function loadWlCardsFromFolder() {
@@ -5415,6 +5451,7 @@ function editFolderFromCard(i) {
   loadFolder(i);
   renderWordList();
   document.getElementById("wordListOverlay")?.classList.add("show");
+  try { history.pushState({ page: document.querySelector(".page.active")?.id || "library", wl: i }, ""); } catch (e) {}
 }
 
 function filterFolderCards(query) {
@@ -11464,6 +11501,7 @@ setupFlashSwipe();
 initFirebaseSync();
 renderFolders();
 renderDashboard();
+try { history.replaceState({ page: "home" }, ""); } catch (e) {}
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
