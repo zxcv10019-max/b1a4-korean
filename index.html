@@ -1674,6 +1674,22 @@ textarea {
 .lyrics-study-card { cursor:default; }
 .lyrics-study-card.understood { border-color:#9bc95d; background:#f7fdf1; }
 .lyrics-study-chip-wrap { display:flex; flex-direction:column; }
+
+/* ===== 歌詞單字小卡片 ===== */
+.lyrics-word-card {
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:10px 16px;
+  text-align:center;
+  background:#fff;
+  cursor:pointer;
+  min-width:76px;
+  transition:.15s;
+}
+.lyrics-word-card:hover { border-color:#9bc95d; background:#f8fdf3; }
+.lyrics-word-card .lwc-term { font-weight:900; font-size:15px; color:#20351f; }
+.lyrics-word-card .lwc-def { font-size:12px; color:var(--muted); margin-top:3px; font-weight:700; }
+
 .sen-section-label { font-size:12px; font-weight:1000; color:#4e8f24; margin-bottom:6px; }
 
 .lyrics-detail {
@@ -7496,6 +7512,9 @@ function openLyricsReader(songId) {
   lyricsVocabPanelOpen = false;
   const vgBtn = document.getElementById("lyricsVocabPanelBtn");
   if (vgBtn) vgBtn.textContent = "📋 單字/文法列表";
+  lyricsViewMode = "study";
+  const modeBtn = document.getElementById("lyricsModeBtn");
+  if (modeBtn) modeBtn.textContent = "✏️ 編輯模式";
   document.getElementById("lyricsListView").style.display = "none";
   document.getElementById("lyricsReaderView").style.display = "block";
   renderLyricsReader();
@@ -7682,7 +7701,10 @@ function renderLyricsStudyView(song) {
       const chipExpanded = !!lyricsWordChipExpand[chipKey];
       const note = ln.wordNotes && ln.wordNotes[w.k];
       return `<div class="lyrics-study-chip-wrap">
-        <span class="lyrics-detail-tag-static" style="cursor:pointer;" onclick="toggleWordChipExpand('${ln.id}','${jsAttr(w.k)}')">${esc(w.k)}（${esc(w.z || "")}）</span>
+        <div class="lyrics-word-card" onclick="toggleWordChipExpand('${ln.id}','${jsAttr(w.k)}')">
+          <div class="lwc-term">${esc(w.k)}</div>
+          <div class="lwc-def">${esc(w.z || "")}</div>
+        </div>
         ${chipExpanded ? `<div style="margin-top:6px;">${note ? renderNoteCards(note) : `<button type="button" class="ghost" style="font-size:11px;" onclick="aiAnalyzeLyricsWordChip('${ln.id}','${jsAttr(w.k)}', this)">✨ AI解析這個字</button>`}</div>` : ""}
       </div>`;
     }).join("");
