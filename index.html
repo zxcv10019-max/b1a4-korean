@@ -4418,6 +4418,11 @@ setTimeout(()=>{try{renderFlashSeenBox();renderFolderStatsPanel();renderStudyUpg
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script>
+/* 手機觸控修正：iOS Safari 對沒有原生互動性的 div/span 按鈕，
+   常需要先點一下觸發「懸停」狀態，第二下才真的觸發 onclick。
+   加上這個空的 touchstart 監聽器可以讓第一下觸控就直接生效。 */
+document.addEventListener("touchstart", function () {}, { passive: true });
+
 let flashSeenData = JSON.parse(localStorage.getItem("b1a4FlashSeenData") || "{}");
 // ===== Firebase 雲端同步設定 =====
 // 使用前請到 Firebase 建立 Web App，並把下方值換成自己的設定。
