@@ -2473,9 +2473,9 @@ textarea {
 .word-card.word-card-v2.wc-expanded { padding-bottom:12px; }
 .wc-main { display:flex; flex-direction:column; gap:2px; }
 .wc-term-row { line-height:1.15; }
-.wc-term { font-weight:1000; font-size:23px; color:#20351f; }
+.wc-term { font-weight:1000; font-size:16px; color:#20351f; }
 .wc-term-input {
-  width:100%; font-size:20px !important; font-weight:1000; border:1px solid transparent;
+  width:100%; font-size:15px !important; font-weight:1000; border:1px solid transparent;
   border-radius:10px; padding:5px 8px !important; background:#fbfdf7; min-width:0;
 }
 .wc-sub-row { display:flex; align-items:center; justify-content:space-between; gap:8px; }
@@ -3843,7 +3843,7 @@ textarea {
     <div class="wl-header">
       <button type="button" class="wl-back" onclick="closeWordList()">‹</button>
       <div class="wl-title" id="wlTitle">題庫</div>
-      <button type="button" class="wl-settings-btn" onclick="wlOpenSettings()" title="題庫設定">⚙️</button>
+      <button type="button" class="wl-settings-btn" id="wlSettingsBtn" onclick="wlToggleEditMode()" title="點擊開啟編輯">⚙️</button>
     </div>
     <div class="wl-start-row">
       <button type="button" class="wl-start-btn" id="wlStartBtn" onclick="wlStartLearning()">▶ 開始學習</button>
@@ -5058,9 +5058,13 @@ function wlChangeIcon(i) {
   renderFolders();
 }
 
-/* ===== 大分類 → 單字清單頁（合併「編輯題庫」與「單字卡」瀏覽） ===== */
+/* ===== 大分類 → 單字清單頁（合併「編輯題庫」與「單字卡」瀏覽，樣式與單字花園統一） ===== */
 let wlCurrentFolder = null;
-let wlEditingIndex = null; // number | "new" | null
+let wlCards = [];
+let wlEditMode = false;
+let wlCardExpandState = {};
+let wlCardEditState = {};
+let wlSaveTimer = null;
 
 function cardsToContent(cards) {
   return cards.map(c => (c.term || "").trim() + "\t" + (c.definition || "").trim()).join("\n");
@@ -5069,28 +5073,111 @@ function cardsToContent(cards) {
 function openWordList(i) {
   if (!folders[i]) return;
   wlCurrentFolder = i;
-  wlEditingIndex = null;
+  wlEditMode = false;
+  wlCardExpandState = {};
+  wlCardEditState = {};
   current = i;
+  loadWlCardsFromFolder();
   renderWordList();
   document.getElementById("wordListOverlay")?.classList.add("show");
 }
 function closeWordList() {
   document.getElementById("wordListOverlay")?.classList.remove("show");
   wlCurrentFolder = null;
-  wlEditingIndex = null;
+  wlCards = [];
   renderFolders();
 }
 
-function wlEditRowHtml(c, idxAttr) {
-  return `<div class="wl-row wl-row-editing">
-    <input class="wl-edit-input" id="wlEditTerm" value="${esc(c.term)}" placeholder="韓文">
-    <input class="wl-edit-input" id="wlEditDef" value="${esc(c.definition)}" placeholder="中文翻譯">
-    <div class="wl-edit-actions">
-      <button type="button" class="wl-save-btn" onclick="wlSaveRow('${idxAttr}')">✔ 儲存</button>
-      ${idxAttr !== "new" ? `<button type="button" class="wl-del-btn" onclick="wlDeleteRow('${idxAttr}')">🗑 刪除</button>` : ""}
-      <button type="button" class="wl-cancel-btn" onclick="wlCancelEdit()">✕</button>
-    </div>
-  </div>`;
+function loadWlCardsFromFolder() {
+  const f = folders[wlCurrentFolder];
+  if (!f) { wlCards = []; return; }
+  const meta = f.cardMeta || {};
+  wlCards = parseCards(f.content).map(c => {
+    const m = meta[c.term] || {};
+    return { term: c.term, definition: c.definition, root: m.root || "", aiNote: m.aiNote || "", note: m.note || "" };
+  });
+}
+
+function wlPersist() {
+  const f = folders[wlCurrentFolder];
+  if (!f) return;
+  f.content = cardsToContent(wlCards);
+  const meta = {};
+  wlCards.forEach(c => {
+    if (c.term && (c.root || c.aiNote || c.note)) meta[c.term] = { root: c.root || "", aiNote: c.aiNote || "", note: c.note || "" };
+  });
+  f.cardMeta = meta;
+  f.updated = today();
+  clearTimeout(wlSaveTimer);
+  wlSaveTimer = setTimeout(saveStorage, 500);
+}
+
+function wlToggleEditMode() {
+  if (wlCurrentFolder === null) return;
+  wlEditMode = !wlEditMode;
+  if (!wlEditMode) wlCardEditState = {};
+  renderWordList();
+}
+
+function wlToggleExpand(idx) {
+  wlCardExpandState[idx] = !wlCardExpandState[idx];
+  if (!wlCardExpandState[idx]) wlCardEditState[idx] = false;
+  renderWordList();
+}
+
+function wlToggleEditRow(idx) {
+  if (!wlEditMode) return;
+  wlCardEditState[idx] = !wlCardEditState[idx];
+  renderWordList();
+}
+
+function wlUpdateField(idx, field, value) {
+  if (!wlCards[idx]) return;
+  wlCards[idx][field] = value;
+  wlPersist();
+}
+
+function wlDeleteWord(idx) {
+  if (!confirm("確定要刪除這個單字嗎？")) return;
+  wlCards.splice(idx, 1);
+  delete wlCardExpandState[idx];
+  delete wlCardEditState[idx];
+  wlPersist();
+  renderWordList();
+}
+
+function wlMoveWord(idx) {
+  const c = wlCards[idx];
+  if (!c || !c.term.trim()) { alert("這個單字還沒有韓文，無法搬移。"); return; }
+  openFolderPicker((targetIdx) => {
+    if (targetIdx === wlCurrentFolder) return;
+    const target = folders[targetIdx];
+    if (!target) return;
+    target.content = (target.content ? target.content + "\n" : "") + `${c.term}\t${c.definition}`;
+    if (c.root || c.aiNote || c.note) {
+      target.cardMeta = target.cardMeta || {};
+      target.cardMeta[c.term] = { root: c.root || "", aiNote: c.aiNote || "", note: c.note || "" };
+    }
+    target.updated = today();
+    wlCards.splice(idx, 1);
+    delete wlCardExpandState[idx];
+    delete wlCardEditState[idx];
+    wlPersist();
+    saveStorage();
+    renderWordList();
+    alert(`已搬到「${target.name}」`);
+  });
+}
+
+function wlAddWord() {
+  if (wlCurrentFolder === null) return;
+  const idx = wlCards.length;
+  wlCards.push({ term: "", definition: "", root: "", aiNote: "", note: "" });
+  wlEditMode = true;
+  wlCardExpandState[idx] = true;
+  wlCardEditState[idx] = true;
+  renderWordList();
+  setTimeout(() => document.querySelector(`#wlBody .word-card[data-idx="${idx}"] .wc-term-input`)?.focus(), 30);
 }
 
 function renderWordList() {
@@ -5098,73 +5185,73 @@ function renderWordList() {
   const f = folders[wlCurrentFolder];
   const titleEl = document.getElementById("wlTitle");
   if (titleEl) titleEl.textContent = f.name;
-  const cards = parseCards(f.content);
+  const settingsBtn = document.getElementById("wlSettingsBtn");
+  if (settingsBtn) {
+    settingsBtn.textContent = wlEditMode ? "✅" : "⚙️";
+    settingsBtn.title = wlEditMode ? "完成編輯" : "點擊開啟編輯";
+  }
   const body = document.getElementById("wlBody");
   if (body) {
-    let html = "";
-    if (!cards.length && wlEditingIndex !== "new") {
-      html = `<div class="empty" style="padding:30px 0;">這個題庫還沒有單字，點右下角「＋」開始新增。</div>`;
+    if (!wlCards.length) {
+      body.innerHTML = `<div class="empty" style="padding:30px 0;">這個題庫還沒有單字，點右下角「＋」開始新增。</div>`;
     } else {
-      html = cards.map((c, idx) => {
-        if (wlEditingIndex === idx) return wlEditRowHtml(c, String(idx));
-        const initial = (c.term || "").trim().charAt(0) || "🔤";
-        return `<div class="wl-row" onclick="wlEditRow(${idx})">
-          <div class="wl-emoji">${esc(initial)}</div>
-          <div class="wl-text">
-            <div class="wl-term">${esc(c.term)}</div>
-            <div class="wl-def">${esc(c.definition)}</div>
+      body.innerHTML = wlCards.map((c, idx) => {
+        const expanded = !!wlCardExpandState[idx];
+        const editing = wlEditMode && !!wlCardEditState[idx];
+        return `
+        <div class="word-card word-card-v2${expanded ? " wc-expanded" : ""}" data-idx="${idx}" onclick="wlToggleExpand(${idx})">
+          <div class="wc-main">
+            <div class="wc-term-row">
+              ${editing
+                ? `<input type="text" class="wc-term-input" placeholder="韓文" value="${escapeAttr(c.term)}" oninput="wlUpdateField(${idx},'term',this.value)" onclick="event.stopPropagation()">`
+                : `<span class="wc-term">${esc(c.term) || "（未命名）"}</span>`}
+            </div>
+            <div class="wc-sub-row">
+              ${editing
+                ? `<input type="text" class="wc-def-input" placeholder="中文" value="${escapeAttr(c.definition)}" oninput="wlUpdateField(${idx},'definition',this.value)" onclick="event.stopPropagation()">`
+                : `<span class="wc-def">${esc(c.definition) || "（尚無翻譯）"}</span>`}
+              <div class="wc-icons">
+                <button type="button" class="wc-icon-btn wc-speak" title="發音" onclick="event.stopPropagation();speakKorean('${jsAttr(c.term)}')">🔊</button>
+                ${wlEditMode ? `<button type="button" class="wc-icon-btn" title="搬到其他題庫" onclick="event.stopPropagation();wlMoveWord(${idx})">📁</button>` : ""}
+                <button type="button" class="wc-icon-btn wc-expand-toggle" title="${expanded ? "收合" : "展開"}" onclick="event.stopPropagation();wlToggleExpand(${idx})">${expanded ? "▲" : "▼"}</button>
+              </div>
+            </div>
           </div>
-          <button type="button" class="wl-speak" onclick="event.stopPropagation();speakKorean('${esc(c.term).replace(/'/g, "\\'")}')">🔊</button>
+          ${expanded ? `
+          <div class="wc-divider"></div>
+          <div class="wc-detail">
+            <div class="wc-detail-field">
+              <div class="wc-detail-label">AI解析</div>
+              ${editing
+                ? `<textarea rows="2" placeholder="貼上 AI 解析結果…" oninput="wlUpdateField(${idx},'aiNote',this.value)" onclick="event.stopPropagation()">${esc(c.aiNote)}</textarea>`
+                : `<div class="wc-detail-value${c.aiNote ? "" : " wc-detail-empty"}">${c.aiNote ? esc(c.aiNote).replace(/\n/g,"<br>") : "尚無 AI 解析"}</div>`}
+            </div>
+            <div class="wc-detail-field">
+              <div class="wc-detail-label">原型</div>
+              ${editing
+                ? `<input type="text" placeholder="原形（選填）" value="${escapeAttr(c.root)}" oninput="wlUpdateField(${idx},'root',this.value)" onclick="event.stopPropagation()">`
+                : `<div class="wc-detail-value${c.root ? "" : " wc-detail-empty"}">${c.root ? esc(c.root) : "—"}</div>`}
+            </div>
+            <div class="wc-detail-field">
+              <div class="wc-detail-label">備註</div>
+              ${editing
+                ? `<textarea rows="2" placeholder="備註（選填）" oninput="wlUpdateField(${idx},'note',this.value)" onclick="event.stopPropagation()">${esc(c.note)}</textarea>`
+                : `<div class="wc-detail-value${c.note ? "" : " wc-detail-empty"}">${c.note ? esc(c.note).replace(/\n/g,"<br>") : "—"}</div>`}
+            </div>
+            ${wlEditMode ? `
+            <div class="wc-detail-actions">
+              <button type="button" class="wc-action-btn" onclick="event.stopPropagation();wlToggleEditRow(${idx})">${editing ? "✅ 完成" : "✏️ 編輯"}</button>
+              <button type="button" class="wc-action-btn" onclick="event.stopPropagation();wlMoveWord(${idx})">📂 移動</button>
+              <button type="button" class="wc-action-btn wc-action-del" onclick="event.stopPropagation();wlDeleteWord(${idx})">🗑️ 刪除</button>
+            </div>` : ""}
+          </div>` : ""}
         </div>`;
       }).join("");
-      if (wlEditingIndex === "new") html += wlEditRowHtml({ term: "", definition: "" }, "new");
     }
-    body.innerHTML = html;
   }
   const gStats = getGraduationStats(wlCurrentFolder);
   const startBtn = document.getElementById("wlStartBtn");
   if (startBtn) startBtn.textContent = gStats.viewedCount > 0 ? "▶ 繼續學習" : "▶ 開始學習";
-  if (wlEditingIndex === "new") {
-    setTimeout(() => document.getElementById("wlEditTerm")?.focus(), 30);
-  }
-}
-
-function wlEditRow(idx) { wlEditingIndex = idx; renderWordList(); }
-function wlCancelEdit() { wlEditingIndex = null; renderWordList(); }
-
-function wlSaveRow(idxAttr) {
-  const f = folders[wlCurrentFolder];
-  if (!f) return;
-  const term = (document.getElementById("wlEditTerm")?.value || "").trim();
-  const definition = (document.getElementById("wlEditDef")?.value || "").trim();
-  if (!term || !definition) { alert("韓文與翻譯都要填寫喔"); return; }
-  const cards = parseCards(f.content);
-  if (idxAttr === "new") cards.push({ term, definition });
-  else cards[Number(idxAttr)] = { term, definition };
-  f.content = cardsToContent(cards);
-  f.updated = today();
-  wlEditingIndex = null;
-  saveStorage();
-  renderWordList();
-}
-
-function wlDeleteRow(idxAttr) {
-  if (!confirm("確定要刪除這個單字嗎？")) return;
-  const f = folders[wlCurrentFolder];
-  if (!f) return;
-  const cards = parseCards(f.content);
-  cards.splice(Number(idxAttr), 1);
-  f.content = cardsToContent(cards);
-  f.updated = today();
-  wlEditingIndex = null;
-  saveStorage();
-  renderWordList();
-}
-
-function wlAddWord() {
-  if (wlCurrentFolder === null) return;
-  wlEditingIndex = "new";
-  renderWordList();
 }
 
 function wlStartLearning() {
@@ -5172,11 +5259,6 @@ function wlStartLearning() {
   const i = wlCurrentFolder;
   closeWordList();
   quickStartFlash(i);
-}
-
-function wlOpenSettings() {
-  if (wlCurrentFolder === null) return;
-  editFolderFromCard(wlCurrentFolder);
 }
 
 function deleteFolderFromCard(i) {
