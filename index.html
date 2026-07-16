@@ -6205,7 +6205,9 @@ function handleWordCardEnter(e) {
   if (idx === allCards.length - 1) {
     addEditorCard();
   } else {
-    const nextInput = allCards[idx + 1].querySelector("input");
+    const nextCard = allCards[idx + 1];
+    const nextInput = nextCard ? nextCard.querySelector("input") : null;
+    if (nextCard) nextCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
     if (nextInput) nextInput.focus();
   }
 }
@@ -6217,7 +6219,9 @@ function addEditorCard() {
   serializeEditorCards();
   renderCardEditor(c.id);
   setTimeout(() => {
-    const el = document.querySelector(`.word-card[data-id="${c.id}"] input`);
+    const card = document.querySelector(`.word-card[data-id="${c.id}"]`);
+    const el = card ? card.querySelector("input") : null;
+    if (card) card.scrollIntoView({ behavior: "smooth", block: "nearest" });
     if (el) el.focus();
   }, 60);
 }
