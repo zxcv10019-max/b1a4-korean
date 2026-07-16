@@ -2154,6 +2154,115 @@ textarea {
 .group-progress-fill { height:100%; background:linear-gradient(90deg,#9bc95d,#6fae37); border-radius:999px; }
 .group-progress span { font-size:11px; font-weight:900; color:#4e8f24; }
 
+/* ===== 題庫首頁：Duolingo × Forest × Notion 卡片改版 ===== */
+.lib-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.lib-title { margin:0; font-size:20px; }
+
+.lib-continue-wrap { margin:14px 0 18px; }
+.lib-continue-wrap:empty { display:none; }
+.lib-continue-label {
+  font-size:13px; font-weight:1000; color:#5c9b36; margin-bottom:8px;
+  display:flex; align-items:center; gap:6px;
+}
+.lib-continue-card {
+  display:flex; align-items:center; gap:14px;
+  background:linear-gradient(135deg,#eef8df,#f7fdf1);
+  border:1.5px solid #d9edc0; border-radius:18px;
+  padding:14px 16px; cursor:pointer; transition:.15s;
+}
+.lib-continue-card:hover { transform:translateY(-2px); box-shadow:0 10px 22px rgba(72,108,39,.16); }
+.lib-continue-mascot { font-size:34px; flex:0 0 auto; }
+.lib-continue-info { flex:1; min-width:0; }
+.lib-continue-name { font-weight:1000; font-size:15px; color:#20351f; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.lib-continue-sub { font-size:12px; color:var(--muted); font-weight:800; margin-top:2px; }
+.lib-continue-btn {
+  flex:0 0 auto; border:0; padding:10px 18px; border-radius:999px;
+  background:linear-gradient(135deg,#9bc95d,#6fae37); color:#fff;
+  font-weight:1000; font-size:13px; cursor:pointer; white-space:nowrap;
+}
+.lib-continue-btn:hover { filter:brightness(1.05); }
+
+.lib-toolbar { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+.lib-view-toggle { display:flex; border:1.5px solid var(--line); border-radius:12px; overflow:hidden; }
+.lvt-btn { border:0; background:#fff; color:var(--muted); font-size:15px; padding:7px 12px; cursor:pointer; line-height:1; }
+.lvt-btn.active { background:#83b842; color:#fff; }
+.lib-sort-select {
+  border:1.5px solid var(--line); border-radius:12px; padding:8px 12px;
+  font-size:12px; font-weight:900; color:#3f5634; background:#fff; cursor:pointer;
+}
+
+/* 卡片右上角 ⋮ 選單，取代常駐的多顆按鈕 */
+.ffc-kebab-wrap { position:relative; flex:0 0 auto; }
+.ffc-kebab-btn {
+  border:0; background:transparent; color:var(--muted); font-size:16px;
+  width:22px; height:22px; line-height:1; border-radius:6px; cursor:pointer;
+}
+.ffc-kebab-btn:hover { background:#eef8df; color:#4e8f24; }
+.ffc-kebab-menu {
+  display:none; position:absolute; right:0; top:26px; z-index:20;
+  background:#fff; border:1px solid var(--line); border-radius:12px;
+  box-shadow:0 12px 26px rgba(72,108,39,.2); min-width:112px; overflow:hidden;
+}
+.ffc-kebab-menu.show { display:block; }
+.ffc-kebab-menu button {
+  display:block; width:100%; text-align:left; border:0; background:#fff;
+  padding:9px 14px; font-size:12px; font-weight:800; color:#3f5634; cursor:pointer;
+}
+.ffc-kebab-menu button:hover { background:#f0f8e8; }
+.ffc-kebab-menu button.danger { color:#c0473f; }
+
+.ffc-due {
+  margin-top:8px; display:flex; align-items:center; justify-content:center; gap:5px;
+  font-size:11px; font-weight:900; color:#a86a1d; background:#fff4de;
+  border-radius:999px; padding:4px 8px;
+}
+.ffc-due.zero { color:#5c9b36; background:#f0f8e8; }
+
+/* 清單模式 */
+.folder-card-grid.list-mode { display:flex; flex-direction:column; gap:8px; }
+.forest-folder-card.list-row {
+  flex-direction:row; align-items:center; gap:10px; padding:10px 12px; min-height:auto;
+}
+.forest-folder-card.list-row .ffc-hero,
+.forest-folder-card.list-row .ffc-meta,
+.forest-folder-card.list-row .ffc-date,
+.forest-folder-card.list-row .ffc-stars,
+.forest-folder-card.list-row .ffc-due { display:none; }
+.forest-folder-card.list-row .ffc-head { flex:1; }
+.forest-folder-card.list-row .ffc-mini-progress {
+  display:flex; align-items:center; gap:6px; flex:0 0 auto; width:96px;
+}
+.forest-folder-card.list-row .ffc-mini-track {
+  flex:1; height:6px; background:#e2edd6; border-radius:999px; overflow:hidden;
+}
+.forest-folder-card.list-row .ffc-mini-fill { height:100%; background:linear-gradient(90deg,#9bc95d,#6fae37); }
+.forest-folder-card.list-row .ffc-mini-pct { font-size:11px; font-weight:1000; color:#4e8f24; width:32px; text-align:right; }
+.forest-folder-card.list-row .ffc-start-btn {
+  flex:0 0 auto; border-top:0; margin-top:0; padding:6px 12px; border-radius:999px;
+  background:#eef8df; color:#4e8f24;
+}
+.ffc-mini-progress { display:none; }
+
+/* 分組標題精簡化：只留一顆 ⋮ */
+.group-header .group-kebab-wrap { position:relative; flex:0 0 auto; }
+.group-header .group-kebab-btn {
+  border:1px solid var(--line); background:#fff; color:#4e8f24; font-size:15px;
+  width:26px; height:26px; border-radius:8px; cursor:pointer; line-height:1;
+}
+.group-header .group-kebab-btn:hover { background:#f0f8e8; }
+.group-kebab-menu {
+  display:none; position:absolute; right:0; top:32px; z-index:20;
+  background:#fff; border:1px solid var(--line); border-radius:12px;
+  box-shadow:0 12px 26px rgba(72,108,39,.2); min-width:112px; overflow:hidden;
+}
+.group-kebab-menu.show { display:block; }
+.group-kebab-menu button {
+  display:block; width:100%; text-align:left; border:0; background:#fff;
+  padding:9px 14px; font-size:12px; font-weight:800; color:#3f5634; cursor:pointer;
+}
+.group-kebab-menu button:hover { background:#f0f8e8; }
+.group-kebab-menu button.danger { color:#c0473f; }
+
 /* ===== 題庫編輯區：森林可愛化 ===== */
 .forest-editor .forest-card-editor {
   position:relative;
@@ -2944,15 +3053,27 @@ textarea {
           </div>
         </div>
 
-        <div class="card folder-area">
-          <div class="topbar">
-            <h2>我的題庫</h2>
-            <div style="display:flex;gap:10px;flex-wrap:wrap">
-              <button class="soft" onclick="newGroup()">📁 新增分組</button>
-              <button class="soft" onclick="newFolder()">＋ 建立題庫</button>
-            </div>
+        <div class="card folder-area lib-home">
+          <div class="lib-top">
+            <h2 class="lib-title">📚 我的題庫</h2>
           </div>
-          <input id="folderSearchInput" class="folder-search-input" type="text" placeholder="🔍 搜尋單字..." oninput="filterFolderCards(this.value)">
+          <input id="folderSearchInput" class="folder-search-input" type="text" placeholder="🔍 搜尋題庫或單字..." oninput="filterFolderCards(this.value)">
+
+          <div id="libContinueSection" class="lib-continue-wrap"></div>
+
+          <div class="lib-toolbar">
+            <div class="lib-view-toggle" id="libViewToggle">
+              <button type="button" class="lvt-btn" data-view="card" onclick="setLibraryView('card')" title="卡片模式">▦</button>
+              <button type="button" class="lvt-btn" data-view="list" onclick="setLibraryView('list')" title="清單模式">☰</button>
+            </div>
+            <select id="librarySortSelect" class="lib-sort-select" onchange="setLibrarySort(this.value)">
+              <option value="recent">🕒 最近學習</option>
+              <option value="created">🆕 建立日期</option>
+              <option value="az">🔤 A-Z</option>
+              <option value="progress">📈 完成率</option>
+            </select>
+          </div>
+
           <div id="folderSearchEmpty" class="empty" style="display:none;">找不到符合的題庫</div>
           <div id="folderGrid" class="folder-grid"></div>
         </div>
@@ -3610,6 +3731,7 @@ textarea {
   <div id="fabWrap" class="fab-wrap">
     <div id="fabMenu" class="fab-menu">
       <button type="button" class="fab-menu-item" onclick="fabNewFolder()"><span>📁</span>新增題庫</button>
+      <button type="button" class="fab-menu-item" onclick="fabNewGroup()"><span>🗂️</span>新增分組</button>
       <button type="button" class="fab-menu-item" onclick="fabNewWord()"><span>🍀</span>新增單字</button>
       <button type="button" class="fab-menu-item" onclick="fabAiAnalyze()"><span>✨</span>AI解析</button>
       <button type="button" class="fab-menu-item" onclick="triggerExcelImport()"><span>📊</span>匯入Excel</button>
@@ -4465,6 +4587,8 @@ function runSiteSearch(query) {
 
 let current = folders.length ? 0 : null;
 let collapsedGroups = JSON.parse(localStorage.getItem("b1a4_collapsed_groups") || "[]");
+let libraryViewMode = localStorage.getItem("b1a4_lib_view_mode") || "card";
+let librarySortMode = localStorage.getItem("b1a4_lib_sort_mode") || "recent";
 let currentColor = "#c6e09c";
 let flashCards = [], flashIndex = 0, testCards = [], matchCards = [];
 let graduationData = JSON.parse(localStorage.getItem("b1a4GraduationData") || "{}");
@@ -4511,6 +4635,12 @@ function fabNewFolder() {
   goPage("library");
   document.getElementById("editorWrap").style.display = "block";
   document.getElementById("editor").scrollIntoView({behavior:"smooth"});
+}
+function fabNewGroup() {
+  closeFab();
+  goPage("library");
+  newGroup();
+  document.getElementById("folderGrid")?.scrollIntoView({behavior:"smooth"});
 }
 function fabNewWord() {
   closeFab();
@@ -4748,9 +4878,16 @@ function formatRelativeStudyDate(iso) {
   return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getDate()).padStart(2,"0")}`;
 }
 
+function getFolderDueCount(i, gStats) {
+  gStats = gStats || getGraduationStats(i);
+  if (gStats.graduated) return 0;
+  return Math.max(0, gStats.total - gStats.viewedCount);
+}
+
 function makeForestFolderCard(f, i) {
   const d = document.createElement("div");
-  d.className = "forest-folder-card " + (current === i ? "active" : "");
+  const listMode = libraryViewMode === "list";
+  d.className = "forest-folder-card " + (listMode ? "list-row " : "") + (current === i ? "active" : "");
   d.dataset.name = f.name.toLowerCase();
   const folderCards = parseCards(f.content);
   d.dataset.words = folderCards.map(c => c.term + " " + c.definition).join(" ").toLowerCase();
@@ -4762,14 +4899,22 @@ function makeForestFolderCard(f, i) {
   const pStats = (folderPracticeStats && folderPracticeStats[i]) || {};
   const lastStudy = formatRelativeStudyDate(pStats.lastStudy);
   const stars = getStarRating(gStats.testPercent);
+  const due = getFolderDueCount(i, gStats);
+  const menuId = "ffcMenu_" + i;
   d.innerHTML = `
     <div class="ffc-head">
-      <span class="ffc-folder-ico">${stage.icon}</span>
+      <span class="ffc-folder-ico">${mascot}</span>
       <span class="ffc-name-inline">${esc(f.name)}</span>
-      <button type="button" class="ffc-move-btn" title="編輯題庫" onclick="event.stopPropagation();editFolderFromCard(${i})">✏️</button>
-      <button type="button" class="ffc-move-btn" title="上移" onclick="event.stopPropagation();moveFolder(${i},-1)">↑</button>
-      <button type="button" class="ffc-move-btn" title="下移" onclick="event.stopPropagation();moveFolder(${i},1)">↓</button>
-      <span class="ffc-mascot">${mascot}</span>
+      <span class="ffc-mini-progress"><span class="ffc-mini-track"><span class="ffc-mini-fill" style="width:${gStats.flashPercent}%"></span></span><span class="ffc-mini-pct">${gStats.flashPercent}%</span></span>
+      <div class="ffc-kebab-wrap">
+        <button type="button" class="ffc-kebab-btn" title="更多" onclick="event.stopPropagation();toggleFfcKebab('${menuId}')">⋮</button>
+        <div class="ffc-kebab-menu" id="${menuId}">
+          <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();editFolderFromCard(${i})">✏️ 編輯</button>
+          <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();moveFolder(${i},-1)">↑ 上移</button>
+          <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();moveFolder(${i},1)">↓ 下移</button>
+          <button type="button" class="danger" onclick="event.stopPropagation();closeAllFfcKebabs();deleteFolderFromCard(${i})">🗑 刪除</button>
+        </div>
+      </div>
     </div>
     <div class="ffc-hero">
       <div class="ffc-progress-track"><div class="ffc-progress-fill" style="width:${gStats.flashPercent}%"></div></div>
@@ -4778,10 +4923,94 @@ function makeForestFolderCard(f, i) {
     </div>
     ${stars ? `<div class="ffc-stars">${stars}</div>` : ""}
     <div class="ffc-meta"><span>📖 ${cardCount} 字</span><span>🔥 ${pStats.total || 0} 次</span></div>
+    ${due > 0 ? `<div class="ffc-due">⏰ 今天待複習 ${due}</div>` : `<div class="ffc-due zero">✅ 今天已複習完成</div>`}
     <div class="ffc-date">🕒 上次學習：${lastStudy}</div>
-    <button type="button" class="ffc-start-btn" onclick="event.stopPropagation();quickStartFlash(${i})">▶ 開始學習</button>`;
+    <button type="button" class="ffc-start-btn" onclick="event.stopPropagation();quickStartFlash(${i})">▶ ${listMode ? "繼續" : "開始學習"}</button>`;
   d.onclick = () => quickStartFlash(i);
   return d;
+}
+
+function deleteFolderFromCard(i) {
+  const f = folders[i];
+  if (!f) return;
+  if (!confirm(`確定要刪除「${f.name}」嗎？此動作無法復原。`)) return;
+  folders.splice(i, 1);
+  if (current === i) current = folders.length ? 0 : null;
+  else if (current !== null && current > i) current -= 1;
+  saveStorage();
+  renderFolders();
+}
+
+function toggleFfcKebab(id) {
+  const menu = document.getElementById(id);
+  if (!menu) return;
+  const isOpen = menu.classList.contains("show");
+  closeAllFfcKebabs();
+  if (!isOpen) menu.classList.add("show");
+}
+function closeAllFfcKebabs() {
+  document.querySelectorAll(".ffc-kebab-menu.show, .group-kebab-menu.show").forEach(m => m.classList.remove("show"));
+}
+document.addEventListener("click", closeAllFfcKebabs);
+
+function setLibraryView(mode) {
+  libraryViewMode = mode;
+  localStorage.setItem("b1a4_lib_view_mode", mode);
+  document.querySelectorAll("#libViewToggle .lvt-btn").forEach(b => b.classList.toggle("active", b.dataset.view === mode));
+  document.querySelectorAll("#folderGrid .folder-card-grid").forEach(g => g.classList.toggle("list-mode", mode === "list"));
+  renderFolders();
+}
+
+function setLibrarySort(mode) {
+  librarySortMode = mode;
+  localStorage.setItem("b1a4_lib_sort_mode", mode);
+  renderFolders();
+}
+
+function sortFolderEntries(entries) {
+  const list = entries.slice();
+  if (librarySortMode === "az") {
+    list.sort((a, b) => a.f.name.localeCompare(b.f.name, "zh-Hant"));
+  } else if (librarySortMode === "progress") {
+    list.sort((a, b) => (getGraduationStats(b.i).flashPercent || 0) - (getGraduationStats(a.i).flashPercent || 0));
+  } else if (librarySortMode === "recent") {
+    list.sort((a, b) => {
+      const da = (folderPracticeStats && folderPracticeStats[a.i] && folderPracticeStats[a.i].lastStudy) || "";
+      const db = (folderPracticeStats && folderPracticeStats[b.i] && folderPracticeStats[b.i].lastStudy) || "";
+      if (!da && !db) return a.i - b.i;
+      if (!da) return 1;
+      if (!db) return -1;
+      return new Date(db) - new Date(da);
+    });
+  }
+  // "created" 沿用原始建立順序（陣列原本順序），不需額外排序
+  return list;
+}
+
+function renderLibraryContinue() {
+  const wrap = document.getElementById("libContinueSection");
+  if (!wrap) return;
+  if (!folders.length) { wrap.innerHTML = ""; return; }
+  const withStudy = folders
+    .map((f, i) => ({ f, i, lastStudy: (folderPracticeStats && folderPracticeStats[i] && folderPracticeStats[i].lastStudy) || "" }))
+    .filter(o => o.lastStudy)
+    .sort((a, b) => new Date(b.lastStudy) - new Date(a.lastStudy));
+  if (!withStudy.length) { wrap.innerHTML = ""; return; }
+  const top = withStudy[0];
+  const gStats = getGraduationStats(top.i);
+  const mascot = FOLDER_MASCOTS[top.i % FOLDER_MASCOTS.length];
+  const lastStudy = formatRelativeStudyDate(top.lastStudy);
+  const due = getFolderDueCount(top.i, gStats);
+  wrap.innerHTML = `
+    <div class="lib-continue-label">🌱 今天繼續</div>
+    <div class="lib-continue-card" onclick="quickStartFlash(${top.i})">
+      <div class="lib-continue-mascot">${mascot}</div>
+      <div class="lib-continue-info">
+        <div class="lib-continue-name">${esc(top.f.name)}</div>
+        <div class="lib-continue-sub">${lastStudy}學到 ${gStats.viewedCount}/${gStats.total}${due > 0 ? `　⏰ 待複習 ${due}` : ""}</div>
+      </div>
+      <button type="button" class="lib-continue-btn" onclick="event.stopPropagation();quickStartFlash(${top.i})">▶ 繼續</button>
+    </div>`;
 }
 
 function editFolderFromCard(i) {
@@ -4851,26 +5080,31 @@ function renderFolders() {
     renderDashboard(); syncDropdowns(); return;
   }
 
+  const listMode = libraryViewMode === "list";
+
   // Render each named group
   groups.forEach(grp => {
-    const grpFolders = folders.map((f,i) => ({f,i})).filter(({f}) => f.groupId === grp.id);
+    const grpFolders = sortFolderEntries(folders.map((f,i) => ({f,i})).filter(({f}) => f.groupId === grp.id));
     const isCollapsed = collapsedGroups.includes(grp.id);
 
     const section = document.createElement("div");
     section.className = "group-section";
 
+    const menuId = "grpMenu_" + grp.id;
     const header = document.createElement("div");
     header.className = "group-header" + (isCollapsed ? " collapsed" : "");
     header.innerHTML = `
       <span class="group-toggle">▾</span>
-      <span class="group-name">📁 ${esc(grp.name)}</span>
-      <span class="group-count">🌱 ${grpFolders.length} 個題庫</span>
+      <span class="group-name">📁 ${esc(grp.name)}（${grpFolders.length}）</span>
       ${groupProgressBar(grpFolders)}
-      <div class="group-actions">
-        <button onclick="event.stopPropagation();moveGroup('${grp.id}',-1)" title="上移">↑</button>
-        <button onclick="event.stopPropagation();moveGroup('${grp.id}',1)" title="下移">↓</button>
-        <button onclick="event.stopPropagation();renameGroup('${grp.id}')">✏️ 改名</button>
-        <button onclick="event.stopPropagation();deleteGroup('${grp.id}')">🗑</button>
+      <div class="group-kebab-wrap">
+        <button type="button" class="group-kebab-btn" title="更多" onclick="event.stopPropagation();toggleFfcKebab('${menuId}')">⋮</button>
+        <div class="group-kebab-menu" id="${menuId}">
+          <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();moveGroup('${grp.id}',-1)">↑ 上移</button>
+          <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();moveGroup('${grp.id}',1)">↓ 下移</button>
+          <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();renameGroup('${grp.id}')">✏️ 改名</button>
+          <button type="button" class="danger" onclick="event.stopPropagation();closeAllFfcKebabs();deleteGroup('${grp.id}')">🗑 刪除</button>
+        </div>
       </div>`;
     header.onclick = () => toggleGroup(grp.id, header);
 
@@ -4880,7 +5114,7 @@ function renderFolders() {
 
     if (grpFolders.length) {
       const grid = document.createElement("div");
-      grid.className = "folder-card-grid";
+      grid.className = "folder-card-grid" + (listMode ? " list-mode" : "");
       grpFolders.forEach(({f,i}) => grid.appendChild(makeForestFolderCard(f,i)));
       body.appendChild(grid);
     } else {
@@ -4893,7 +5127,7 @@ function renderFolders() {
   });
 
   // Render ungrouped folders
-  const ungrouped = folders.map((f,i) => ({f,i})).filter(({f}) => !f.groupId || !groups.find(grp => grp.id === f.groupId));
+  const ungrouped = sortFolderEntries(folders.map((f,i) => ({f,i})).filter(({f}) => !f.groupId || !groups.find(grp => grp.id === f.groupId)));
   if (ungrouped.length || !groups.length) {
     const section = document.createElement("div");
     section.className = "group-section group-ungrouped";
@@ -4902,25 +5136,30 @@ function renderFolders() {
       const isCollapsed = collapsedGroups.includes(grpId);
       const header = document.createElement("div");
       header.className = "group-header" + (isCollapsed ? " collapsed" : "");
-      header.innerHTML = `<span class="group-toggle">▾</span><span class="group-name">📂 未分組</span><span class="group-count">${ungrouped.length} 個題庫</span>${groupProgressBar(ungrouped)}`;
+      header.innerHTML = `<span class="group-toggle">▾</span><span class="group-name">📂 未分組（${ungrouped.length}）</span>${groupProgressBar(ungrouped)}`;
       header.onclick = () => toggleGroup(grpId, header);
       const body = document.createElement("div");
       body.className = "group-body" + (isCollapsed ? " collapsed" : "");
       body.id = "grpbody_ungrouped";
       const grid = document.createElement("div");
-      grid.className = "folder-card-grid";
+      grid.className = "folder-card-grid" + (listMode ? " list-mode" : "");
       ungrouped.forEach(({f,i}) => grid.appendChild(makeForestFolderCard(f,i)));
       body.appendChild(grid);
       section.appendChild(header);
       section.appendChild(body);
     } else {
       const grid = document.createElement("div");
-      grid.className = "folder-card-grid";
+      grid.className = "folder-card-grid" + (listMode ? " list-mode" : "");
       ungrouped.forEach(({f,i}) => grid.appendChild(makeForestFolderCard(f,i)));
       section.appendChild(grid);
     }
     g.appendChild(section);
   }
+
+  document.querySelectorAll("#libViewToggle .lvt-btn").forEach(b => b.classList.toggle("active", b.dataset.view === libraryViewMode));
+  const sortSel = document.getElementById("librarySortSelect");
+  if (sortSel) sortSel.value = librarySortMode;
+  renderLibraryContinue();
 
   syncGroupSelector();
   renderDashboard();
