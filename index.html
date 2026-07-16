@@ -2362,6 +2362,8 @@ textarea {
   transform:translateX(100%); transition:transform .25s ease;
 }
 .word-list-overlay.show { transform:translateX(0); }
+#wlStudyView { flex:1; min-height:0; display:flex; flex-direction:column; }
+#editorWrap { flex:1; min-height:0; overflow-y:auto; padding:14px 16px 40px; -webkit-overflow-scrolling:touch; }
 .wl-header {
   display:flex; align-items:center; gap:10px; padding:14px 16px;
   border-bottom:1px solid var(--line); position:sticky; top:0; background:#fff; z-index:2;
@@ -3337,106 +3339,7 @@ textarea {
           <div id="folderSearchEmpty" class="empty" style="display:none;">找不到符合的題庫</div>
           <div id="folderGrid" class="folder-grid"></div>
         </div>
-
-        <div id="editorWrap" style="display:none"><div id="editor" class="topbar" style="margin-top:28px">
-          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-            <h2 id="editorTitle">🌿 單字花園</h2>
-            <select id="editorFolderSwitcher" class="ghost" style="font-weight:900;border:1px solid var(--line);border-radius:16px;padding:10px 14px;cursor:pointer;" onchange="switchEditorFolder(this.value)"></select>
-            <button class="ghost" onclick="closeEditor()">✕ 關閉</button>
-            <button class="ghost" onclick="newFolder()">＋ 新增題庫</button>
-          </div>
-          <span id="countBadge" class="soft" style="padding:8px 14px;border-radius:999px;font-weight:900;">🍀 0 張小葉子</span>
-        </div>
-
-        <div id="graduationPanel" class="graduation-panel"></div>
-
-        <div class="editor-layout forest-editor">
-          <div class="card editor forest-card-editor compact-editor">
-            <div class="leaf-float leaf-1">🍃</div>
-            <div class="leaf-float leaf-2">🍃</div>
-            <div class="leaf-float leaf-3">🍂</div>
-
-            <div class="mascot-tip" id="editorMascotTip"><span>🦊</span> 今天也一起加油背單字吧！</div>
-
-            <div class="field-row-2">
-              <div>
-                <label>🍀 題庫名稱</label>
-                <input id="folderName" class="cute-input" placeholder="例如：初級單字" oninput="updateEditorCountLabels()">
-              </div>
-              <div>
-                <label>所屬分組</label>
-                <div class="group-selector">
-                  <select id="folderGroup">
-                    <option value="">── 未分組 ──</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div class="field-row-2">
-              <div>
-                <label>預設方向</label>
-                <select id="direction">
-                  <option value="termToDefinition">韓文 ➜ 中文</option>
-                  <option value="definitionToTerm">中文 ➜ 韓文</option>
-                </select>
-              </div>
-              <div>
-                <label>🔍 搜尋單字</label>
-                <input id="editorWordSearch" class="cute-input" placeholder="搜尋這個題庫的單字..." oninput="renderCardEditor()">
-              </div>
-            </div>
-
-            <label style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-              <span>🌿 單字花園（<span id="gardenCount">0</span>）</span>
-              <span class="btns" style="margin:0;">
-                <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="fixMergedKrZhCards()">🔧 修正黏在一起的中文</button>
-                <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="aiCheckFolderTypos(this)">✨ AI檢查錯字</button>
-                <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="toggleBatchPaste()" id="batchPasteToggleBtn">📋 批次貼上</button>
-              </span>
-            </label>
-
-            <div id="cardEditorWrap">
-              <div id="cardEditorList"></div>
-              <button type="button" class="add-word-btn" onclick="addEditorCard()">➕ 新增單字</button>
-            </div>
-
-            <div id="batchPasteWrap" style="display:none;">
-              <textarea id="raw" placeholder="안녕하세요	你好&#10;감사합니다	謝謝"></textarea>
-              <button type="button" class="primary cute-btn" style="margin-top:10px;width:100%;" onclick="applyBatchPaste()">✅ 套用並返回小卡</button>
-            </div>
-
-            <div class="btns" style="margin-top:18px;">
-              <button class="primary cute-btn" onclick="saveFolder()">🌱 儲存</button>
-              <button class="ghost cute-btn" onclick="deleteFolder()">🗑 放進回收桶</button>
-            </div>
-          </div>
-
-          <div class="card editor">
-            <label>🎨 題庫顏色</label>
-            <div class="color-dots color-dots-named">
-              <div class="color-choice active" data-color="#c6e09c" onclick="setColor('#c6e09c')"><span class="dot" style="background:#c6e09c"></span><small>🍀 萌芽綠</small></div>
-              <div class="color-choice" data-color="#ffadc5" onclick="setColor('#ffadc5')"><span class="dot" style="background:#ffadc5"></span><small>🌸 櫻花粉</small></div>
-              <div class="color-choice" data-color="#a8c6ff" onclick="setColor('#a8c6ff')"><span class="dot" style="background:#a8c6ff"></span><small>🌊 湖水藍</small></div>
-              <div class="color-choice" data-color="#ffe39b" onclick="setColor('#ffe39b')"><span class="dot" style="background:#ffe39b"></span><small>🌻 奶油黃</small></div>
-              <div class="color-choice" data-color="#ffcba4" onclick="setColor('#ffcba4')"><span class="dot" style="background:#ffcba4"></span><small>🍑 蜜桃粉</small></div>
-            </div>
-            <div class="folder card" id="previewFolder" style="--tab:#c6e09c;margin-top:14px">
-              <div class="folder-inner">
-                <div class="folder-title">📂 我的資料夾</div>
-                <div class="folder-meta" id="previewFolderName">第一課</div>
-                <div class="folder-meta" id="previewFolderCount">🍀 0 張小葉子</div>
-              </div>
-            </div>
-            <div class="preview-detail-list">
-              <div class="pd-row"><span>📈 正確率</span><b id="previewAccuracy">尚無紀錄</b></div>
-              <div class="pd-row"><span>🕒 最後更新</span><b id="previewUpdated">—</b></div>
-            </div>
-          </div>
-        </div></div>
       </section>
-
-      <button id="floatingSaveBtn" class="floating-save-btn" onclick="saveFolder()" title="儲存題庫">🌱</button>
 
       <section id="sentence" class="page">
         <div class="topbar">
@@ -3999,11 +3902,103 @@ textarea {
       <div class="wl-title" id="wlTitle">題庫</div>
       <button type="button" class="wl-settings-btn" id="wlSettingsBtn" onclick="wlToggleEditMode()" title="點擊開啟編輯">⚙️</button>
     </div>
-    <div class="wl-start-row">
-      <button type="button" class="wl-start-btn" id="wlStartBtn" onclick="wlStartLearning()">▶ 開始學習</button>
+
+    <div id="wlStudyView">
+      <div class="wl-start-row">
+        <button type="button" class="wl-start-btn" id="wlStartBtn" onclick="wlStartLearning()">▶ 開始學習</button>
+      </div>
+      <div id="graduationPanel" class="graduation-panel"></div>
+      <div class="wl-body" id="wlBody"></div>
     </div>
-    <div class="wl-body" id="wlBody"></div>
-    <button type="button" class="wl-add-fab" onclick="wlAddWord()" title="新增單字">＋</button>
+
+    <div id="editorWrap" style="display:none">
+      <div class="editor-layout forest-editor">
+        <div class="card editor forest-card-editor compact-editor">
+          <div class="leaf-float leaf-1">🍃</div>
+          <div class="leaf-float leaf-2">🍃</div>
+          <div class="leaf-float leaf-3">🍂</div>
+
+          <div class="mascot-tip" id="editorMascotTip"><span>🦊</span> 今天也一起加油背單字吧！</div>
+
+          <div class="field-row-2">
+            <div>
+              <label>🍀 題庫名稱</label>
+              <input id="folderName" class="cute-input" placeholder="例如：初級單字" oninput="updateEditorCountLabels()">
+            </div>
+            <div>
+              <label>所屬分組</label>
+              <div class="group-selector">
+                <select id="folderGroup">
+                  <option value="">── 未分組 ──</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="field-row-2">
+            <div>
+              <label>預設方向</label>
+              <select id="direction">
+                <option value="termToDefinition">韓文 ➜ 中文</option>
+                <option value="definitionToTerm">中文 ➜ 韓文</option>
+              </select>
+            </div>
+            <div>
+              <label>🔍 搜尋單字</label>
+              <input id="editorWordSearch" class="cute-input" placeholder="搜尋這個題庫的單字..." oninput="renderCardEditor()">
+            </div>
+          </div>
+
+          <label style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <span>🌿 單字花園（<span id="gardenCount">0</span>）</span>
+            <span class="btns" style="margin:0;">
+              <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="fixMergedKrZhCards()">🔧 修正黏在一起的中文</button>
+              <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="aiCheckFolderTypos(this)">✨ AI檢查錯字</button>
+              <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="toggleBatchPaste()" id="batchPasteToggleBtn">📋 批次貼上</button>
+            </span>
+          </label>
+
+          <div id="cardEditorWrap">
+            <div id="cardEditorList"></div>
+            <button type="button" class="add-word-btn" onclick="addEditorCard()">➕ 新增單字</button>
+          </div>
+
+          <div id="batchPasteWrap" style="display:none;">
+            <textarea id="raw" placeholder="안녕하세요	你好&#10;감사합니다	謝謝"></textarea>
+            <button type="button" class="primary cute-btn" style="margin-top:10px;width:100%;" onclick="applyBatchPaste()">✅ 套用並返回小卡</button>
+          </div>
+
+          <div class="btns" style="margin-top:18px;">
+            <button class="primary cute-btn" onclick="saveFolder()">🌱 儲存</button>
+            <button class="ghost cute-btn" onclick="deleteFolder()">🗑 放進回收桶</button>
+          </div>
+        </div>
+
+        <div class="card editor">
+          <label>🎨 題庫顏色</label>
+          <div class="color-dots color-dots-named">
+            <div class="color-choice active" data-color="#c6e09c" onclick="setColor('#c6e09c')"><span class="dot" style="background:#c6e09c"></span><small>🍀 萌芽綠</small></div>
+            <div class="color-choice" data-color="#ffadc5" onclick="setColor('#ffadc5')"><span class="dot" style="background:#ffadc5"></span><small>🌸 櫻花粉</small></div>
+            <div class="color-choice" data-color="#a8c6ff" onclick="setColor('#a8c6ff')"><span class="dot" style="background:#a8c6ff"></span><small>🌊 湖水藍</small></div>
+            <div class="color-choice" data-color="#ffe39b" onclick="setColor('#ffe39b')"><span class="dot" style="background:#ffe39b"></span><small>🌻 奶油黃</small></div>
+            <div class="color-choice" data-color="#ffcba4" onclick="setColor('#ffcba4')"><span class="dot" style="background:#ffcba4"></span><small>🍑 蜜桃粉</small></div>
+          </div>
+          <div class="folder card" id="previewFolder" style="--tab:#c6e09c;margin-top:14px">
+            <div class="folder-inner">
+              <div class="folder-title">📂 我的資料夾</div>
+              <div class="folder-meta" id="previewFolderName">第一課</div>
+              <div class="folder-meta" id="previewFolderCount">🍀 0 張小葉子</div>
+            </div>
+          </div>
+          <div class="preview-detail-list">
+            <div class="pd-row"><span>📈 正確率</span><b id="previewAccuracy">尚無紀錄</b></div>
+            <div class="pd-row"><span>🕒 最後更新</span><b id="previewUpdated">—</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button type="button" class="wl-add-fab" id="wlAddFab" onclick="wlQuickAddWord()" title="新增單字">＋</button>
   </div>
 
   <div id="fabWrap" class="fab-wrap">
@@ -4909,10 +4904,8 @@ function closeFab() {
 }
 function fabNewFolder() {
   closeFab();
-  newFolder();
   goPage("library");
-  document.getElementById("editorWrap").style.display = "block";
-  document.getElementById("editor").scrollIntoView({behavior:"smooth"});
+  newFolder();
 }
 function fabNewGroup() {
   closeFab();
@@ -4922,14 +4915,11 @@ function fabNewGroup() {
 }
 function fabNewWord() {
   closeFab();
-  if (current === null || !folders[current]) {
-    if (!folders.length) { fabNewFolder(); return; }
-    loadFolder(0);
-  }
+  if (!folders.length) { fabNewFolder(); return; }
+  const idx = (current !== null && folders[current]) ? current : 0;
   goPage("library");
-  document.getElementById("editorWrap").style.display = "block";
+  editFolderFromCard(idx);
   addEditorCard();
-  document.getElementById("editor").scrollIntoView({behavior:"smooth"});
 }
 function fabAiAnalyze() {
   closeFab();
@@ -5100,32 +5090,12 @@ function goPage(id) {
   if (id === "sentence" && typeof renderSentenceList === "function") renderSentenceList();
   if (id === "dialogue" && typeof renderDialogueList === "function") renderDialogueList();
   if (id === "reading" && typeof renderReadingHome === "function") renderReadingHome();
-  const floatBtn = document.getElementById("floatingSaveBtn");
-  if (floatBtn) {
-    const editorOpen = id === "library" && document.getElementById("editorWrap").style.display !== "none";
-    floatBtn.classList.toggle("show", editorOpen);
-  }
   renderGraduationPanel();
   updateFolderGraduationBadges();
   renderStudyUpgradePanel();
   decorateMasteryBadges();
   renderFolderStatsPanel();
   setTimeout(decorateSpeakButtons, 50);
-}
-
-function closeEditor() {
-  document.getElementById("editorWrap").style.display = "none";
-  document.getElementById("floatingSaveBtn")?.classList.remove("show");
-}
-
-function openFolderManager() {
-  if (current !== null && folders[current]) {
-    loadFolder(current);
-  } else {
-    newFolder();
-  }
-  document.getElementById("editorWrap").style.display = "block";
-  document.getElementById("editor").scrollIntoView({behavior:"smooth"});
 }
 
 function getFolderStage(flashPercent, graduated) {
@@ -5229,7 +5199,6 @@ function openWordList(i) {
   wlCurrentFolder = i;
   wlEditMode = false;
   wlCardExpandState = {};
-  wlCardEditState = {};
   current = i;
   loadWlCardsFromFolder();
   renderWordList();
@@ -5239,6 +5208,7 @@ function closeWordList() {
   document.getElementById("wordListOverlay")?.classList.remove("show");
   wlCurrentFolder = null;
   wlCards = [];
+  wlEditMode = false;
   renderFolders();
 }
 
@@ -5269,69 +5239,27 @@ function wlPersist() {
 function wlToggleEditMode() {
   if (wlCurrentFolder === null) return;
   wlEditMode = !wlEditMode;
-  if (!wlEditMode) wlCardEditState = {};
+  if (wlEditMode) {
+    loadFolder(wlCurrentFolder);
+  } else {
+    loadWlCardsFromFolder();
+  }
   renderWordList();
 }
 
 function wlToggleExpand(idx) {
   wlCardExpandState[idx] = !wlCardExpandState[idx];
-  if (!wlCardExpandState[idx]) wlCardEditState[idx] = false;
   renderWordList();
 }
 
-function wlToggleEditRow(idx) {
-  if (!wlEditMode) return;
-  wlCardEditState[idx] = !wlCardEditState[idx];
-  renderWordList();
-}
-
-function wlUpdateField(idx, field, value) {
-  if (!wlCards[idx]) return;
-  wlCards[idx][field] = value;
-  wlPersist();
-}
-
-function wlDeleteWord(idx) {
-  if (!confirm("確定要刪除這個單字嗎？")) return;
-  wlCards.splice(idx, 1);
-  delete wlCardExpandState[idx];
-  delete wlCardEditState[idx];
-  wlPersist();
-  renderWordList();
-}
-
-function wlMoveWord(idx) {
-  const c = wlCards[idx];
-  if (!c || !c.term.trim()) { alert("這個單字還沒有韓文，無法搬移。"); return; }
-  openFolderPicker((targetIdx) => {
-    if (targetIdx === wlCurrentFolder) return;
-    const target = folders[targetIdx];
-    if (!target) return;
-    target.content = (target.content ? target.content + "\n" : "") + `${c.term}\t${c.definition}`;
-    if (c.root || c.aiNote || c.note) {
-      target.cardMeta = target.cardMeta || {};
-      target.cardMeta[c.term] = { root: c.root || "", aiNote: c.aiNote || "", note: c.note || "" };
-    }
-    target.updated = today();
-    wlCards.splice(idx, 1);
-    delete wlCardExpandState[idx];
-    delete wlCardEditState[idx];
-    wlPersist();
-    saveStorage();
-    renderWordList();
-    alert(`已搬到「${target.name}」`);
-  });
-}
-
-function wlAddWord() {
+function wlQuickAddWord() {
   if (wlCurrentFolder === null) return;
-  const idx = wlCards.length;
-  wlCards.push({ term: "", definition: "", root: "", aiNote: "", note: "" });
-  wlEditMode = true;
-  wlCardExpandState[idx] = true;
-  wlCardEditState[idx] = true;
-  renderWordList();
-  setTimeout(() => document.querySelector(`#wlBody .word-card[data-idx="${idx}"] .wc-term-input`)?.focus(), 30);
+  if (!wlEditMode) {
+    wlEditMode = true;
+    loadFolder(wlCurrentFolder);
+    renderWordList();
+  }
+  addEditorCard();
 }
 
 function renderWordList() {
@@ -5344,27 +5272,20 @@ function renderWordList() {
     settingsBtn.textContent = wlEditMode ? "✅" : "⚙️";
     settingsBtn.title = wlEditMode ? "完成編輯" : "點擊開啟編輯";
   }
+
+  const studyView = document.getElementById("wlStudyView");
+  const editWrap = document.getElementById("editorWrap");
+  const addFab = document.getElementById("wlAddFab");
+  if (studyView) studyView.style.display = wlEditMode ? "none" : "block";
+  if (editWrap) editWrap.style.display = wlEditMode ? "block" : "none";
+  if (addFab) addFab.style.display = wlEditMode ? "none" : "block";
+
+  if (wlEditMode) return; // 編輯內容交給 editorWrap（單字花園小卡）處理
+
   const body = document.getElementById("wlBody");
   if (body) {
     if (!wlCards.length) {
-      body.innerHTML = `<div class="empty" style="padding:30px 0;">這個題庫還沒有單字，點右下角「＋」開始新增。</div>`;
-    } else if (wlEditMode) {
-      body.innerHTML = `
-        <div class="wl-edit-head">
-          <span>韓文</span>
-          <span>中文</span>
-          <span></span>
-        </div>
-        ${wlCards.map((c, idx) => `
-          <div class="word-card wl-edit-row" data-idx="${idx}">
-            <input type="text" class="wc-term-input" placeholder="韓文" value="${escapeAttr(c.term)}" oninput="wlUpdateField(${idx},'term',this.value)">
-            <input type="text" class="wc-def-input" placeholder="中文" value="${escapeAttr(c.definition)}" oninput="wlUpdateField(${idx},'definition',this.value)">
-            <div class="wl-edit-actions">
-              <button type="button" class="wc-icon-btn wc-speak" title="發音" onclick="speakKorean('${jsAttr(c.term)}')">🔊</button>
-              <button type="button" class="wc-icon-btn" title="搬到其他題庫" onclick="wlMoveWord(${idx})">📁</button>
-              <button type="button" class="wc-icon-btn wc-del" title="刪除" onclick="wlDeleteWord(${idx})">🗑</button>
-            </div>
-          </div>`).join("")}`;
+      body.innerHTML = `<div class="empty" style="padding:30px 0;">這個題庫還沒有單字，點右上角「⚙️」開始新增。</div>`;
     } else {
       body.innerHTML = wlCards.map((c, idx) => {
         const expanded = !!wlCardExpandState[idx];
@@ -5392,6 +5313,7 @@ function renderWordList() {
   const gStats = getGraduationStats(wlCurrentFolder);
   const startBtn = document.getElementById("wlStartBtn");
   if (startBtn) startBtn.textContent = gStats.viewedCount > 0 ? "▶ 繼續學習" : "▶ 開始學習";
+  renderGraduationPanel();
 }
 
 function wlStartLearning() {
@@ -5485,8 +5407,14 @@ function renderLibraryContinue() {
 }
 
 function editFolderFromCard(i) {
+  if (!folders[i]) return;
+  wlCurrentFolder = i;
+  wlCardExpandState = {};
+  wlEditMode = true;
+  current = i;
   loadFolder(i);
-  document.getElementById("editor").scrollIntoView({behavior:"smooth"});
+  renderWordList();
+  document.getElementById("wordListOverlay")?.classList.add("show");
 }
 
 function filterFolderCards(query) {
@@ -5812,8 +5740,7 @@ function newFolder() {
   folders.push({ name:"新增題庫", direction:"termToDefinition", color:"#c6e09c", content:"", updated:today(), practice:0 });
   current = folders.length - 1;
   saveStorage();
-  loadFolder(current);
-  document.getElementById("editor").scrollIntoView({behavior:"smooth"});
+  editFolderFromCard(current);
 }
 
 /* ===== 題庫內容：小卡編輯引擎 ===== */
@@ -5887,6 +5814,10 @@ function serializeEditorCards() {
       }
     });
     folders[current].cardMeta = meta;
+    folders[current].content = text;
+    folders[current].updated = today();
+    clearTimeout(serializeEditorCards._t);
+    serializeEditorCards._t = setTimeout(saveStorage, 500);
   }
   updateEditorCountLabels();
   return text;
@@ -6206,32 +6137,9 @@ function loadFolder(i) {
   syncEditorCardsFromContent(f.content);
   renderCardEditor();
   document.getElementById("editorWrap").style.display = "block";
-  document.getElementById("floatingSaveBtn")?.classList.add("show");
   renderFolders();
-  renderEditorFolderSwitcher();
   resetViews();
   renderGraduationPanel();
-}
-function renderEditorFolderSwitcher() {
-  const sel = document.getElementById("editorFolderSwitcher");
-  if (!sel) return;
-  sel.innerHTML = folders.map((f, i) => `<option value="${i}">${esc(f.name || "未命名題庫")}</option>`).join("");
-  if (current !== null && current !== undefined) sel.value = current;
-}
-function switchEditorFolder(idxStr) {
-  const idx = parseInt(idxStr, 10);
-  if (isNaN(idx) || idx === current || !folders[idx]) return;
-  if (current !== null && current !== undefined && folders[current]) {
-    serializeEditorCards();
-    folders[current].name = document.getElementById("folderName").value || folders[current].name;
-    folders[current].direction = document.getElementById("direction").value;
-    folders[current].content = document.getElementById("raw").value;
-    folders[current].color = currentColor;
-    folders[current].groupId = document.getElementById("folderGroup").value || "";
-    folders[current].updated = today();
-    saveStorage();
-  }
-  loadFolder(idx);
 }
 function setColor(c) {
   currentColor = c;
@@ -6258,15 +6166,7 @@ function deleteFolder() {
   folders.splice(current,1);
   current = folders.length ? 0 : null;
   saveStorage();
-  if (current !== null) loadFolder(current);
-  else {
-    document.getElementById("folderName").value = "";
-    document.getElementById("raw").value = "";
-    editorCards = [];
-    renderCardEditor();
-    renderFolders();
-    resetViews();
-  }
+  closeWordList();
 }
 function getCards() {
   return (current === null || current === undefined || !folders[current]) ? [] : parseCards(folders[current].content);
@@ -11563,8 +11463,7 @@ setupFlashSwipe();
 
 initFirebaseSync();
 renderFolders();
-if (current !== null) loadFolder(current);
-else renderDashboard();
+renderDashboard();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
