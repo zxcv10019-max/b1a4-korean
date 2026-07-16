@@ -2272,7 +2272,11 @@ textarea {
 .ffc-due.zero { color:#5c9b36; background:#f0f8e8; }
 
 /* 清單模式 */
-.folder-card-grid.list-mode { display:flex; flex-direction:column; gap:8px; }
+.folder-card-grid.list-mode {
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));
+  gap:8px;
+}
 .forest-folder-card.list-row {
   flex-direction:row; align-items:center; gap:10px; padding:10px 12px; min-height:auto;
 }
@@ -2339,12 +2343,17 @@ textarea {
 .cat-count { margin-top:6px; font-size:11px; color:var(--muted); font-weight:800; }
 
 /* 清單模式（大分類） */
-.cat-card.cat-card-list { flex-direction:row; align-items:center; gap:10px; padding:10px 14px; }
-.cat-card.cat-card-list .cat-emoji { order:-1; font-size:22px; margin:0; }
-.cat-card.cat-card-list .cat-card-top { flex:1; }
-.cat-card.cat-card-list .cat-status-pill { margin:0 6px; white-space:nowrap; }
-.cat-card.cat-card-list .cat-progress-track { display:none; }
-.cat-card.cat-card-list .cat-count { margin:0; flex:0 0 auto; }
+.cat-card.cat-card-list {
+  flex-direction:column;
+  align-items:stretch;
+  gap:0;
+  padding:12px 14px 14px;
+}
+.cat-card.cat-card-list .cat-emoji { display:none; }
+.cat-card.cat-card-list .cat-card-top { flex:unset; }
+.cat-card.cat-card-list .cat-status-pill { margin:8px 0 0; align-self:flex-start; }
+.cat-card.cat-card-list .cat-progress-track { display:block; margin-top:8px; }
+.cat-card.cat-card-list .cat-count { margin-top:6px; }
 
 /* 單字清單覆蓋頁（大分類 → 單字） */
 .word-list-overlay {
@@ -3330,7 +3339,12 @@ textarea {
         </div>
 
         <div id="editorWrap" style="display:none"><div id="editor" class="topbar" style="margin-top:28px">
-          <div style="display:flex;align-items:center;gap:12px"><h2 id="editorTitle">🌿 單字花園</h2><button class="ghost" onclick="closeEditor()">✕ 關閉</button><button class="ghost" onclick="newFolder()">＋ 新增題庫</button></div>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <h2 id="editorTitle">🌿 單字花園</h2>
+            <select id="editorFolderSwitcher" class="ghost" style="font-weight:900;border:1px solid var(--line);border-radius:16px;padding:10px 14px;cursor:pointer;" onchange="switchEditorFolder(this.value)"></select>
+            <button class="ghost" onclick="closeEditor()">✕ 關閉</button>
+            <button class="ghost" onclick="newFolder()">＋ 新增題庫</button>
+          </div>
           <span id="countBadge" class="soft" style="padding:8px 14px;border-radius:999px;font-weight:900;">🍀 0 張小葉子</span>
         </div>
 
@@ -6194,8 +6208,30 @@ function loadFolder(i) {
   document.getElementById("editorWrap").style.display = "block";
   document.getElementById("floatingSaveBtn")?.classList.add("show");
   renderFolders();
+  renderEditorFolderSwitcher();
   resetViews();
   renderGraduationPanel();
+}
+function renderEditorFolderSwitcher() {
+  const sel = document.getElementById("editorFolderSwitcher");
+  if (!sel) return;
+  sel.innerHTML = folders.map((f, i) => `<option value="${i}">${esc(f.name || "未命名題庫")}</option>`).join("");
+  if (current !== null && current !== undefined) sel.value = current;
+}
+function switchEditorFolder(idxStr) {
+  const idx = parseInt(idxStr, 10);
+  if (isNaN(idx) || idx === current || !folders[idx]) return;
+  if (current !== null && current !== undefined && folders[current]) {
+    serializeEditorCards();
+    folders[current].name = document.getElementById("folderName").value || folders[current].name;
+    folders[current].direction = document.getElementById("direction").value;
+    folders[current].content = document.getElementById("raw").value;
+    folders[current].color = currentColor;
+    folders[current].groupId = document.getElementById("folderGroup").value || "";
+    folders[current].updated = today();
+    saveStorage();
+  }
+  loadFolder(idx);
 }
 function setColor(c) {
   currentColor = c;
