@@ -5283,11 +5283,6 @@ function wlToggleEditMode() {
   renderWordList();
 }
 
-function wlToggleExpand(idx) {
-  wlCardExpandState[idx] = !wlCardExpandState[idx];
-  renderWordList();
-}
-
 function wlQuickAddWord() {
   if (wlCurrentFolder === null) return;
   if (!wlEditMode) {
@@ -5323,27 +5318,16 @@ function renderWordList() {
     if (!wlCards.length) {
       body.innerHTML = `<div class="empty" style="padding:30px 0;">這個題庫還沒有單字，點右上角「⚙️」開始新增。</div>`;
     } else {
-      body.innerHTML = wlCards.map((c, idx) => {
-        const expanded = !!wlCardExpandState[idx];
-        return `
-        <div class="word-card word-card-v2${expanded ? " wc-expanded" : ""}" data-idx="${idx}" onclick="wlToggleExpand(${idx})">
+      body.innerHTML = wlCards.map((c, idx) => `
+        <div class="word-card word-card-v2" data-idx="${idx}" onclick="speakKorean('${jsAttr(c.term)}')">
           <div class="wc-main">
             <div class="wc-term-row"><span class="wc-term">${esc(c.term) || "（未命名）"}</span></div>
             <div class="wc-sub-row">
               <span class="wc-def">${esc(c.definition) || "（尚無翻譯）"}</span>
-              <div class="wc-icons">
-                <button type="button" class="wc-icon-btn wc-speak" title="發音" onclick="event.stopPropagation();speakKorean('${jsAttr(c.term)}')">🔊</button>
-                <button type="button" class="wc-icon-btn wc-expand-toggle" title="${expanded ? "收合" : "展開"}" onclick="event.stopPropagation();wlToggleExpand(${idx})">${expanded ? "▲" : "▼"}</button>
-              </div>
+              <button type="button" class="wc-icon-btn wc-speak" title="發音" onclick="event.stopPropagation();speakKorean('${jsAttr(c.term)}')">🔊</button>
             </div>
           </div>
-          ${expanded ? `
-          <div class="wc-divider"></div>
-          <div class="wc-detail">
-            <div class="wc-detail-value wc-detail-empty">按右上角 ⚙️ 可編輯韓文與中文</div>
-          </div>` : ""}
-        </div>`;
-      }).join("");
+        </div>`).join("");
     }
   }
   const gStats = getGraduationStats(wlCurrentFolder);
