@@ -656,6 +656,55 @@ textarea {
   transition: all 0.25s;
 }
 .group-body.collapsed { display: none; }
+
+.category-section {
+  margin-bottom: 30px;
+}
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 20px;
+  background: linear-gradient(135deg,#eef8df,#e2f2c9);
+  border-radius: 20px;
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 14px;
+  border: 2px solid #cfe6ac;
+  box-shadow: 0 8px 20px rgba(78,143,36,.10);
+}
+.category-header:hover { background: linear-gradient(135deg,#e6f4d2,#d8edbc); }
+.category-header .category-toggle {
+  font-size: 19px;
+  transition: transform 0.25s;
+  display: inline-block;
+  width: 22px;
+  flex: 0 0 auto;
+}
+.category-header.collapsed .category-toggle { transform: rotate(-90deg); }
+.category-header .category-name {
+  font-weight: 1000;
+  font-size: 18px;
+  color: #315321;
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.category-body {
+  padding-left: 14px;
+  border-left: 3px solid #dfeecb;
+  margin-left: 8px;
+  transition: all 0.25s;
+}
+.category-body.collapsed { display: none; }
+@media (max-width: 600px) {
+  .category-header { padding: 12px 14px; gap: 8px; }
+  .category-header .category-name { font-size: 16px; }
+  .category-body { padding-left: 10px; margin-left: 4px; }
+}
 .group-ungrouped .group-header {
   background: #f4f6f0;
   border-style: dashed;
@@ -4115,6 +4164,7 @@ body.overlay-open .fab-wrap { display:none !important; }
               <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="fixMergedKrZhCards()">🔧 修正黏在一起的中文</button>
               <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="aiTranslateFolderCards(this)">🌐 AI翻譯</button>
               <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="aiCheckFolderTypos(this)">✨ AI檢查錯字</button>
+              <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="checkDuplicateWords()">🔁 檢查重複</button>
               <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="toggleBatchPaste()" id="batchPasteToggleBtn">📋 批次貼上</button>
             </span>
           </label>
@@ -4183,6 +4233,7 @@ body.overlay-open .fab-wrap { display:none !important; }
   <div id="fabWrap" class="fab-wrap">
     <div id="fabMenu" class="fab-menu">
       <button type="button" class="fab-menu-item" onclick="fabNewFolder()"><span>📁</span>新增題庫</button>
+      <button type="button" class="fab-menu-item" onclick="fabNewCategory()"><span>🗃️</span>新增分類</button>
       <button type="button" class="fab-menu-item" onclick="fabNewGroup()"><span>🗂️</span>新增分組</button>
       <button type="button" class="fab-menu-item" onclick="fabNewWord()"><span>🍀</span>新增單字</button>
       <button type="button" class="fab-menu-item" onclick="fabAiAnalyze()"><span>✨</span>AI解析</button>
@@ -4709,7 +4760,9 @@ function writeLocalOnly() {
   localStorage.setItem("b1a4_green_study_empty_v3", JSON.stringify(folders));
   localStorage.setItem("b1a4_green_study_stats_v3", JSON.stringify(stats));
   localStorage.setItem("b1a4_groups_v1", JSON.stringify(groups));
+  localStorage.setItem("b1a4_categories_v1", JSON.stringify(categories));
   localStorage.setItem("b1a4_collapsed_groups", JSON.stringify(collapsedGroups));
+  localStorage.setItem("b1a4_collapsed_categories", JSON.stringify(collapsedCategories));
 }
 function scheduleCloudSave() {
   localStorage.setItem("b1a4LastLocalChangeAt", new Date().toISOString());
@@ -4731,6 +4784,8 @@ async function uploadCloudNow() {
 
 let folders = JSON.parse(localStorage.getItem("b1a4_green_study_empty_v3") || "[]");
 let groups = JSON.parse(localStorage.getItem("b1a4_groups_v1") || "[]");
+let categories = JSON.parse(localStorage.getItem("b1a4_categories_v1") || "[]");
+let collapsedCategories = JSON.parse(localStorage.getItem("b1a4_collapsed_categories") || "[]");
 let stats = JSON.parse(localStorage.getItem("b1a4_green_study_stats_v3") || "{\"practice\":0}");
 
 /* ===== 學習活動紀錄 (for streak + GitHub 風格日曆) ===== */
@@ -5090,6 +5145,12 @@ function fabNewFolder() {
   closeFab();
   goPage("library");
   newFolder();
+}
+function fabNewCategory() {
+  closeFab();
+  goPage("library");
+  newCategory();
+  document.getElementById("folderGrid")?.scrollIntoView({behavior:"smooth"});
 }
 function fabNewGroup() {
   closeFab();
@@ -5710,6 +5771,51 @@ function moveGroup(groupId, direction) {
   renderFolders();
 }
 
+function buildGroupSection(grp) {
+  const listMode = libraryViewMode === "list";
+  const grpFolders = sortFolderEntries(folders.map((f,i) => ({f,i})).filter(({f}) => f.groupId === grp.id));
+  const isCollapsed = collapsedGroups.includes(grp.id);
+
+  const section = document.createElement("div");
+  section.className = "group-section";
+
+  const menuId = "grpMenu_" + grp.id;
+  const header = document.createElement("div");
+  header.className = "group-header" + (isCollapsed ? " collapsed" : "");
+  header.innerHTML = `
+    <span class="group-toggle">▾</span>
+    <span class="group-name">📁 ${esc(grp.name)}（${grpFolders.length}）</span>
+    ${groupProgressBar(grpFolders)}
+    <div class="group-kebab-wrap">
+      <button type="button" class="group-kebab-btn" title="更多" onclick="event.stopPropagation();toggleFfcKebab('${menuId}')">⋮</button>
+      <div class="group-kebab-menu" id="${menuId}">
+        <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();moveGroup('${grp.id}',-1)">↑ 上移</button>
+        <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();moveGroup('${grp.id}',1)">↓ 下移</button>
+        <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();openCategoryPicker('${grp.id}')">🗃️ 移到分類</button>
+        <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();renameGroup('${grp.id}')">✏️ 改名</button>
+        <button type="button" class="danger" onclick="event.stopPropagation();closeAllFfcKebabs();deleteGroup('${grp.id}')">🗑 刪除</button>
+      </div>
+    </div>`;
+  header.onclick = () => toggleGroup(grp.id, header);
+
+  const body = document.createElement("div");
+  body.className = "group-body" + (isCollapsed ? " collapsed" : "");
+  body.id = "grpbody_" + grp.id;
+
+  if (grpFolders.length) {
+    const grid = document.createElement("div");
+    grid.className = "folder-card-grid" + (listMode ? " list-mode" : "");
+    grpFolders.forEach(({f,i}) => grid.appendChild(makeForestFolderCard(f,i)));
+    body.appendChild(grid);
+  } else {
+    body.innerHTML = `<div class="empty" style="padding:18px 10px;font-size:14px">此分組尚無題庫</div>`;
+  }
+
+  section.appendChild(header);
+  section.appendChild(body);
+  return section;
+}
+
 function renderFolders() {
   const g = document.getElementById("folderGrid");
   g.innerHTML = "";
@@ -5720,49 +5826,49 @@ function renderFolders() {
 
   const listMode = libraryViewMode === "list";
 
-  // Render each named group
-  groups.forEach(grp => {
-    const grpFolders = sortFolderEntries(folders.map((f,i) => ({f,i})).filter(({f}) => f.groupId === grp.id));
-    const isCollapsed = collapsedGroups.includes(grp.id);
+  // Render categories（最上層的最大分類），裡面巢狀放它所屬的分組
+  categories.forEach(cat => {
+    const catGroups = groups.filter(gr => gr.categoryId === cat.id);
+    const isCollapsed = collapsedCategories.includes(cat.id);
 
-    const section = document.createElement("div");
-    section.className = "group-section";
+    const catSection = document.createElement("div");
+    catSection.className = "category-section";
 
-    const menuId = "grpMenu_" + grp.id;
-    const header = document.createElement("div");
-    header.className = "group-header" + (isCollapsed ? " collapsed" : "");
-    header.innerHTML = `
-      <span class="group-toggle">▾</span>
-      <span class="group-name">📁 ${esc(grp.name)}（${grpFolders.length}）</span>
-      ${groupProgressBar(grpFolders)}
+    const catMenuId = "catMenu_" + cat.id;
+    const catHeader = document.createElement("div");
+    catHeader.className = "category-header" + (isCollapsed ? " collapsed" : "");
+    catHeader.innerHTML = `
+      <span class="category-toggle">▾</span>
+      <span class="category-name">🗃️ ${esc(cat.name)}（${catGroups.length} 個分組）</span>
       <div class="group-kebab-wrap">
-        <button type="button" class="group-kebab-btn" title="更多" onclick="event.stopPropagation();toggleFfcKebab('${menuId}')">⋮</button>
-        <div class="group-kebab-menu" id="${menuId}">
-          <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();moveGroup('${grp.id}',-1)">↑ 上移</button>
-          <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();moveGroup('${grp.id}',1)">↓ 下移</button>
-          <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();renameGroup('${grp.id}')">✏️ 改名</button>
-          <button type="button" class="danger" onclick="event.stopPropagation();closeAllFfcKebabs();deleteGroup('${grp.id}')">🗑 刪除</button>
+        <button type="button" class="group-kebab-btn" title="更多" onclick="event.stopPropagation();toggleFfcKebab('${catMenuId}')">⋮</button>
+        <div class="group-kebab-menu" id="${catMenuId}">
+          <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();moveCategory('${cat.id}',-1)">↑ 上移</button>
+          <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();moveCategory('${cat.id}',1)">↓ 下移</button>
+          <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();renameCategory('${cat.id}')">✏️ 改名</button>
+          <button type="button" class="danger" onclick="event.stopPropagation();closeAllFfcKebabs();deleteCategory('${cat.id}')">🗑 刪除</button>
         </div>
       </div>`;
-    header.onclick = () => toggleGroup(grp.id, header);
+    catHeader.onclick = () => toggleCategory(cat.id, catHeader);
 
-    const body = document.createElement("div");
-    body.className = "group-body" + (isCollapsed ? " collapsed" : "");
-    body.id = "grpbody_" + grp.id;
+    const catBody = document.createElement("div");
+    catBody.className = "category-body" + (isCollapsed ? " collapsed" : "");
+    catBody.id = "catbody_" + cat.id;
 
-    if (grpFolders.length) {
-      const grid = document.createElement("div");
-      grid.className = "folder-card-grid" + (listMode ? " list-mode" : "");
-      grpFolders.forEach(({f,i}) => grid.appendChild(makeForestFolderCard(f,i)));
-      body.appendChild(grid);
+    if (catGroups.length) {
+      catGroups.forEach(grp => catBody.appendChild(buildGroupSection(grp)));
     } else {
-      body.innerHTML = `<div class="empty" style="padding:18px 10px;font-size:14px">此分組尚無題庫</div>`;
+      catBody.innerHTML = `<div class="empty" style="padding:18px 10px;font-size:14px">這個分類還沒有分組，可以在分組的「⋮」選單選「移到分類」加進來</div>`;
     }
 
-    section.appendChild(header);
-    section.appendChild(body);
-    g.appendChild(section);
+    catSection.appendChild(catHeader);
+    catSection.appendChild(catBody);
+    g.appendChild(catSection);
   });
+
+  // Render groups that aren't inside any category
+  const uncategorizedGroups = groups.filter(gr => !gr.categoryId || !categories.find(c => c.id === gr.categoryId));
+  uncategorizedGroups.forEach(grp => g.appendChild(buildGroupSection(grp)));
 
   // Render ungrouped folders
   const ungrouped = sortFolderEntries(folders.map((f,i) => ({f,i})).filter(({f}) => !f.groupId || !groups.find(grp => grp.id === f.groupId)));
@@ -6064,6 +6170,73 @@ function serializeEditorCards() {
 }
 
 /* ===== ✨ AI 檢查韓文錯字 ===== */
+let duplicateCheckItems = [];
+function ensureDuplicateCheckModal() {
+  if (document.getElementById("dupCheckMask")) return;
+  const modal = document.createElement("div");
+  modal.id = "dupCheckMask";
+  modal.className = "hero-modal-mask";
+  modal.innerHTML = `
+    <div class="hero-modal" style="width:min(600px,100%);max-height:85vh;overflow:auto;">
+      <div class="hero-modal-head">
+        <div class="hero-modal-title">🔁 重複單字檢查結果</div>
+        <button class="hero-modal-close" type="button" onclick="closeDuplicateCheckModal()">關閉</button>
+      </div>
+      <div id="dupCheckResultsWrap"></div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+function closeDuplicateCheckModal() {
+  const m = document.getElementById("dupCheckMask");
+  if (m) m.classList.remove("show");
+}
+function checkDuplicateWords() {
+  const groupsByTerm = {};
+  editorCards.forEach(c => {
+    const key = (c.term || "").trim();
+    if (!key) return;
+    if (!groupsByTerm[key]) groupsByTerm[key] = [];
+    groupsByTerm[key].push(c.id);
+  });
+  duplicateCheckItems = Object.keys(groupsByTerm)
+    .filter(term => groupsByTerm[term].length > 1)
+    .map(term => ({ term, cardIds: groupsByTerm[term] }));
+  renderDuplicateCheckResults();
+}
+function renderDuplicateCheckResults() {
+  ensureDuplicateCheckModal();
+  const wrap = document.getElementById("dupCheckResultsWrap");
+  if (!duplicateCheckItems.length) {
+    wrap.innerHTML = `<div class="empty" style="padding:20px 0;">🎉 沒有發現重複的單字！</div>`;
+  } else {
+    wrap.innerHTML = duplicateCheckItems.map((item, gi) => `
+      <div class="sen-grammar-card" style="margin-bottom:10px;">
+        <div style="font-weight:900;">${esc(item.term)}（重複 ${item.cardIds.length} 次）</div>
+        ${item.cardIds.map((cardId, ci) => {
+          const card = editorCards.find(c => c.id === cardId);
+          if (!card) return "";
+          return `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;padding:8px 10px;background:#f7fbf1;border-radius:10px;">
+            <span style="font-size:13px;color:#3a4a34;">${esc(card.definition) || "（尚無翻譯）"}</span>
+            <button type="button" class="ghost" style="font-size:12px;padding:5px 10px;" onclick="deleteDuplicateCard(${gi},${ci})">🗑 刪除這一筆</button>
+          </div>`;
+        }).join("")}
+      </div>`).join("");
+  }
+  document.getElementById("dupCheckMask").classList.add("show");
+}
+function deleteDuplicateCard(groupIdx, cardIdxInGroup) {
+  const item = duplicateCheckItems[groupIdx];
+  if (!item) return;
+  const cardId = item.cardIds[cardIdxInGroup];
+  editorCards = editorCards.filter(c => c.id !== cardId);
+  item.cardIds.splice(cardIdxInGroup, 1);
+  if (item.cardIds.length <= 1) duplicateCheckItems.splice(groupIdx, 1);
+  renderCardEditor();
+  serializeEditorCards();
+  renderDuplicateCheckResults();
+}
+
 let typoCheckItems = [];
 function ensureTypoCheckModal() {
   if (document.getElementById("typoCheckMask")) return;
@@ -8428,6 +8601,102 @@ function selectMatch(el) {
 }
 
 // ===== 分組管理函式 =====
+function newCategory() {
+  const name = prompt("請輸入新分類名稱：\n（例如：大家的韓國語、Korean Picture Dictionary）");
+  if (!name || !name.trim()) return;
+  const id = "cat_" + Date.now();
+  categories.push({ id, name: name.trim() });
+  saveStorage();
+  renderFolders();
+}
+function renameCategory(id) {
+  const cat = categories.find(c => c.id === id);
+  if (!cat) return;
+  const name = prompt("重新命名分類：", cat.name);
+  if (!name || !name.trim()) return;
+  cat.name = name.trim();
+  saveStorage();
+  renderFolders();
+}
+function deleteCategory(id) {
+  if (!confirm("刪除此分類？（裡面的分組不會被刪除，只會變回未分類）")) return;
+  categories = categories.filter(c => c.id !== id);
+  groups.forEach(g => { if (g.categoryId === id) g.categoryId = ""; });
+  saveStorage();
+  renderFolders();
+}
+function moveCategory(catId, direction) {
+  const pos = categories.findIndex(c => c.id === catId);
+  if (pos === -1) return;
+  const swapPos = pos + direction;
+  if (swapPos < 0 || swapPos >= categories.length) return;
+  [categories[pos], categories[swapPos]] = [categories[swapPos], categories[pos]];
+  saveStorage();
+  renderFolders();
+}
+function toggleCategory(id, headerEl) {
+  headerEl.classList.toggle("collapsed");
+  const body = document.getElementById("catbody_" + id);
+  if (body) body.classList.toggle("collapsed");
+  if (collapsedCategories.includes(id)) {
+    collapsedCategories = collapsedCategories.filter(x => x !== id);
+  } else {
+    collapsedCategories.push(id);
+  }
+  saveStorage();
+}
+
+let categoryPickerGroupId = null;
+function ensureCategoryPickerModal() {
+  if (document.getElementById("categoryPickerMask")) return;
+  const mask = document.createElement("div");
+  mask.id = "categoryPickerMask";
+  mask.className = "hero-modal-mask";
+  mask.innerHTML = `
+    <div class="hero-modal" style="max-width:420px;">
+      <div class="hero-modal-head">
+        <div class="hero-modal-title" style="font-size:19px;">🗃️ 移到分類</div>
+        <button type="button" class="hero-modal-close" onclick="closeCategoryPicker()">✕</button>
+      </div>
+      <div id="categoryPickerList" style="display:flex;flex-direction:column;gap:8px;"></div>
+      <div class="hero-add-row" style="margin-top:14px;">
+        <input type="text" id="categoryPickerNewName" placeholder="新增分類名稱...">
+        <button type="button" class="hero-primary-btn" onclick="categoryPickerCreateNew()">➕ 新增並選用</button>
+      </div>
+    </div>`;
+  document.body.appendChild(mask);
+}
+function openCategoryPicker(groupId) {
+  ensureCategoryPickerModal();
+  categoryPickerGroupId = groupId;
+  const list = document.getElementById("categoryPickerList");
+  const grp = groups.find(g => g.id === groupId);
+  list.innerHTML = `<button type="button" class="ghost" style="width:100%;text-align:left;" onclick="categoryPickerSelect('')">📂 未分類</button>` +
+    categories.map(c => `<button type="button" class="ghost" style="width:100%;text-align:left;${grp && grp.categoryId === c.id ? "border-color:#83b842;color:#4e8f24;" : ""}" onclick="categoryPickerSelect('${c.id}')">🗃️ ${esc(c.name)}</button>`).join("");
+  document.getElementById("categoryPickerNewName").value = "";
+  document.getElementById("categoryPickerMask").classList.add("show");
+}
+function closeCategoryPicker() {
+  const mask = document.getElementById("categoryPickerMask");
+  if (mask) mask.classList.remove("show");
+  categoryPickerGroupId = null;
+}
+function categoryPickerSelect(catId) {
+  const grp = groups.find(g => g.id === categoryPickerGroupId);
+  if (grp) grp.categoryId = catId;
+  saveStorage();
+  renderFolders();
+  closeCategoryPicker();
+}
+function categoryPickerCreateNew() {
+  const nameInput = document.getElementById("categoryPickerNewName");
+  const name = (nameInput.value || "").trim();
+  if (!name) return;
+  const id = "cat_" + Date.now();
+  categories.push({ id, name });
+  categoryPickerSelect(id);
+}
+
 function newGroup() {
   const name = prompt("請輸入新分組名稱：");
   if (!name || !name.trim()) return;
