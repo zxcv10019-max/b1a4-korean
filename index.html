@@ -1457,6 +1457,63 @@ textarea {
   display:flex; flex-direction:column; align-items:center; justify-content:center;
 }
 
+/* ===== 🌱 情境韓文 ===== */
+.situ-category-grid{
+  display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:14px;
+}
+@media (min-width:680px){ .situ-category-grid{ grid-template-columns:repeat(4,1fr); } }
+.situ-cat-card{
+  background:#fff; border:1.5px solid #e2ecd6; border-radius:20px; padding:18px 10px;
+  text-align:center; cursor:pointer; box-shadow:0 10px 22px rgba(72,108,39,.07); transition:transform .15s ease;
+}
+.situ-cat-card:active{ transform:scale(.95); }
+.situ-cat-icon{ font-size:30px; }
+.situ-cat-name{ font-weight:1000; font-size:14px; color:#2f5524; margin-top:8px; }
+.situ-cat-count{ font-size:11.5px; color:#8b9887; font-weight:800; margin-top:4px; }
+
+.situ-lesson-row{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:16px 4px; cursor:pointer;
+}
+.situ-lesson-name{ font-weight:1000; font-size:15px; color:#20351f; flex:1; }
+.situ-lesson-stars{ font-size:13px; color:#f2b13c; letter-spacing:1px; flex:0 0 auto; }
+.situ-lesson-count{ font-size:12px; font-weight:800; color:#8b9887; flex:0 0 auto; min-width:56px; text-align:right; }
+.situ-lesson-divider{ height:1px; background:#eef2e6; margin:0 4px; }
+
+.situ-sentence-card{
+  background:#fff; border:1.5px solid #e2ecd6; border-radius:22px; padding:32px 20px;
+  text-align:center; box-shadow:0 12px 26px rgba(72,108,39,.08);
+}
+.situ-kr{ font-size:22px; font-weight:1000; color:#20351f; line-height:1.5; }
+.situ-zh{ font-size:15px; font-weight:800; color:#4e8f24; margin-top:14px; }
+.situ-actions{ display:flex; gap:10px; justify-content:center; margin-top:18px; }
+.situ-ai-note{
+  margin-top:14px; background:#f7fbf1; border:1px solid #e2ecd6; border-radius:14px;
+  padding:12px 14px; text-align:left; font-size:13.5px; line-height:1.6; color:#3a4a34; white-space:pre-wrap;
+}
+.situ-section-title{ font-weight:1000; font-size:15px; color:#3f7a1f; margin:18px 0 10px; }
+.situ-vocab-row, .situ-grammar-row{
+  background:#fff; border:1px solid #e2ecd6; border-radius:14px; padding:10px 14px; margin-bottom:8px;
+}
+.situ-vocab-kr, .situ-grammar-kr{ font-weight:1000; font-size:15px; color:#20351f; }
+.situ-vocab-zh, .situ-grammar-zh{ font-size:13px; color:#6f7d66; margin-top:2px; }
+.situ-dialogue-line{ display:flex; gap:8px; margin-bottom:8px; align-items:flex-start; }
+.situ-dialogue-speaker{ font-weight:1000; color:#4e8f24; flex:0 0 auto; }
+.situ-dialogue-text{ flex:1; }
+.situ-dialogue-kr{ font-weight:800; color:#20351f; }
+.situ-dialogue-zh{ font-size:12.5px; color:#8b9887; }
+.situ-quiz-question{ font-size:16px; font-weight:1000; color:#20351f; margin-bottom:14px; }
+.situ-quiz-option{
+  background:#fff; border:1.5px solid #e2ecd6; border-radius:14px; padding:12px 14px; margin-bottom:8px;
+  cursor:pointer; font-weight:800; font-size:14px;
+}
+.situ-quiz-option.correct{ border-color:#6fae37; background:#f0f8e8; color:#3f7a1f; }
+.situ-quiz-option.wrong{ border-color:#e2653a; background:#fdeceb; color:#c0473f; }
+.situ-empty{ text-align:center; padding:60px 20px; }
+.situ-empty .situ-empty-icon{ font-size:44px; }
+.situ-empty .situ-empty-title{ font-size:18px; font-weight:1000; margin-top:14px; color:#3f7a1f; }
+.situ-empty .situ-empty-sub{ font-size:13px; color:#8b9887; margin-top:8px; }
+
 .design-title{font-size:20px;font-weight:1000;color:#2f5524;margin-bottom:12px;}
 .daily-korean{font-size:26px;font-weight:1000;color:#315321;margin:10px 0 6px;}
 .daily-zh{color:#6f7d66;font-weight:800;}
@@ -3282,6 +3339,7 @@ body.overlay-open .fab-wrap { display:none !important; }
     <div class="content">
       <div id="vocabSubnav" class="vocab-subnav">
         <button data-page="library" onclick="goPage('library')">▣ 題庫</button>
+        <button data-page="situational" onclick="goPage('situational')">🌱 情境</button>
         <button data-page="grammar" onclick="goPage('grammar')">🌸 文法</button>
         <button data-page="sentence" onclick="goPage('sentence')">📝 短句</button>
         <button data-page="reading" onclick="goPage('reading')">📚 閱讀</button>
@@ -3400,6 +3458,13 @@ body.overlay-open .fab-wrap { display:none !important; }
           <div id="folderSearchEmpty" class="empty" style="display:none;">找不到符合的題庫</div>
           <div id="folderGrid" class="folder-grid"></div>
         </div>
+      </section>
+
+      <section id="situational" class="page">
+        <div class="topbar">
+          <h2>🌱 情境韓文</h2>
+        </div>
+        <div class="situ-category-grid" id="situCategoryGrid"></div>
       </section>
 
       <section id="sentence" class="page">
@@ -4070,6 +4135,15 @@ body.overlay-open .fab-wrap { display:none !important; }
       <span style="width:34px"></span>
     </div>
     <div id="challengeBody" style="flex:1;overflow-y:auto;padding:16px;"></div>
+  </div>
+
+  <div id="situationalOverlay" class="word-list-overlay">
+    <div class="wl-header">
+      <button type="button" class="wl-back" onclick="situBack()">‹</button>
+      <div class="wl-title" id="situTitle">情境韓文</div>
+      <span style="width:34px"></span>
+    </div>
+    <div id="situBody" style="flex:1;overflow-y:auto;padding:16px;"></div>
   </div>
 
   <div id="fabWrap" class="fab-wrap">
@@ -5169,6 +5243,7 @@ function goPage(id) {
   if (id === "sentence" && typeof renderSentenceList === "function") renderSentenceList();
   if (id === "dialogue" && typeof renderDialogueList === "function") renderDialogueList();
   if (id === "reading" && typeof renderReadingHome === "function") renderReadingHome();
+  if (id === "situational" && typeof renderSituationalHome === "function") renderSituationalHome();
   renderGraduationPanel();
   updateFolderGraduationBadges();
   renderStudyUpgradePanel();
@@ -5188,6 +5263,22 @@ window.addEventListener("popstate", (e) => {
   if (challengeOpen && !state.challenge) {
     exitChallenge();
     return;
+  }
+  const situOpen = document.getElementById("situationalOverlay")?.classList.contains("show");
+  if (situOpen) {
+    if (situView === "practice" && !state.situLesson) {
+      situView = "lessons";
+      situCurrentLesson = null;
+      const cat = findSituCategory(situCurrentCategory);
+      const titleEl = document.getElementById("situTitle");
+      if (titleEl && cat) titleEl.textContent = `${cat.icon} ${cat.name}`;
+      renderSituationalBody();
+      return;
+    }
+    if (!state.situ) {
+      closeSituationalOverlay();
+      return;
+    }
   }
   const wlOpen = document.getElementById("wordListOverlay")?.classList.contains("show");
   if (wlOpen && !state.wl) {
@@ -6855,6 +6946,336 @@ function runNextDailyTask() {
     dailyChallengeTotals.done += cards.length;
     runNextDailyTask();
   });
+}
+
+/* ================= 🌱 情境韓文 ================= */
+/* 內容先留白（sentences/vocab/grammar/dialogues/quiz 都是空陣列），
+   之後把真正的韓文內容填進對應主題的陣列即可，畫面會自動從「即將推出」變成可以練習。 */
+const SITUATIONAL_CATEGORIES = [
+  { id: "restaurant", icon: "🍽️", name: "餐廳", lessons: [
+    { id: "find-restaurant", name: "尋找餐廳", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "order", name: "點餐", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "pay", name: "結帳", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "bar", name: "酒吧", difficulty: 3, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+  ]},
+  { id: "shopping", icon: "🛒", name: "購物", lessons: [
+    { id: "browse", name: "逛街詢問", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "try-on", name: "試穿・尺寸", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "bargain", name: "退換貨・殺價", difficulty: 3, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "checkout-shop", name: "結帳付款", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+  ]},
+  { id: "transport", icon: "🚇", name: "交通", lessons: [
+    { id: "directions", name: "問路", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "subway", name: "搭地鐵", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "taxi", name: "搭計程車", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "bus", name: "搭公車", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+  ]},
+  { id: "hotel", icon: "🏨", name: "住宿", lessons: [
+    { id: "checkin", name: "辦理入住", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "room-issue", name: "房間問題", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "checkout-hotel", name: "退房", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+  ]},
+  { id: "travel", icon: "✈️", name: "旅行", lessons: [
+    { id: "airport", name: "機場報到", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "immigration", name: "入境審查", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "sightseeing", name: "觀光景點", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+  ]},
+  { id: "hospital", icon: "🏥", name: "醫院", lessons: [
+    { id: "symptoms", name: "描述症狀", difficulty: 3, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "pharmacy", name: "藥局買藥", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "appointment", name: "掛號預約", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+  ]},
+  { id: "cafe", icon: "☕", name: "咖啡廳", lessons: [
+    { id: "order-drink", name: "點飲料", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "customize", name: "客製化需求", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "seating", name: "座位・WiFi", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+  ]},
+  { id: "concert", icon: "🎤", name: "演唱會", lessons: [
+    { id: "tickets", name: "買票入場", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "cheering", name: "應援用語", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "merch", name: "周邊商品", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+  ]},
+  { id: "smalltalk", icon: "👥", name: "日常聊天", lessons: [
+    { id: "greetings", name: "打招呼介紹", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "weather", name: "近況・天氣", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "making-plans", name: "約時間見面", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+  ]},
+  { id: "work", icon: "💼", name: "打工", lessons: [
+    { id: "interview", name: "面試", difficulty: 3, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "asking-boss", name: "跟主管溝通", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "coworkers", name: "跟同事互動", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+  ]},
+];
+
+let situationalProgress = JSON.parse(localStorage.getItem("b1a4SituationalProgress") || "{}");
+function saveSituationalProgress() { try { localStorage.setItem("b1a4SituationalProgress", JSON.stringify(situationalProgress)); } catch (e) {} }
+function ensureLessonProgress(key) {
+  if (!situationalProgress[key]) situationalProgress[key] = { viewedSentences: [], quizScore: null, quizTotal: null };
+  return situationalProgress[key];
+}
+function starRatingHtml(n) {
+  n = Math.max(0, Math.min(5, Number(n) || 0));
+  let s = "";
+  for (let i = 0; i < 5; i++) s += i < n ? "★" : "☆";
+  return s;
+}
+
+let situCurrentCategory = null;
+let situCurrentLesson = null;
+let situView = "lessons"; // lessons | practice
+let situSentenceIndex = 0;
+let situPracticeStage = "sentences"; // sentences | vocab | grammar | dialogues | quiz | done
+let situQuizIndex = 0;
+let situQuizCorrect = 0;
+
+function renderSituationalHome() {
+  const grid = document.getElementById("situCategoryGrid");
+  if (!grid) return;
+  grid.innerHTML = SITUATIONAL_CATEGORIES.map(cat => `
+    <div class="situ-cat-card" onclick="openSituationalCategory('${cat.id}')">
+      <div class="situ-cat-icon">${cat.icon}</div>
+      <div class="situ-cat-name">${esc(cat.name)}</div>
+      <div class="situ-cat-count">${cat.lessons.length} 個主題</div>
+    </div>`).join("");
+}
+
+function findSituCategory(catId) { return SITUATIONAL_CATEGORIES.find(c => c.id === catId) || null; }
+function findSituLesson(catId, lessonId) {
+  const cat = findSituCategory(catId);
+  return cat ? (cat.lessons.find(l => l.id === lessonId) || null) : null;
+}
+
+function openSituationalCategory(catId) {
+  const cat = findSituCategory(catId);
+  if (!cat) return;
+  situCurrentCategory = catId;
+  situCurrentLesson = null;
+  situView = "lessons";
+  const titleEl = document.getElementById("situTitle");
+  if (titleEl) titleEl.textContent = `${cat.icon} ${cat.name}`;
+  renderSituationalBody();
+  document.getElementById("situationalOverlay")?.classList.add("show");
+  lockBodyScroll();
+  try { history.pushState({ page: document.querySelector(".page.active")?.id || "situational", situ: catId }, ""); } catch (e) {}
+}
+
+function situBack() {
+  if (situView === "practice") {
+    situView = "lessons";
+    situCurrentLesson = null;
+    const cat = findSituCategory(situCurrentCategory);
+    const titleEl = document.getElementById("situTitle");
+    if (titleEl && cat) titleEl.textContent = `${cat.icon} ${cat.name}`;
+    renderSituationalBody();
+    return;
+  }
+  if (history.state && history.state.situ) history.back();
+  else closeSituationalOverlay();
+}
+function closeSituationalOverlay() {
+  document.getElementById("situationalOverlay")?.classList.remove("show");
+  situCurrentCategory = null;
+  situCurrentLesson = null;
+  situView = "lessons";
+  unlockBodyScroll();
+}
+
+function renderSituationalBody() {
+  const body = document.getElementById("situBody");
+  if (!body) return;
+  if (situView === "practice") { renderSituationalPractice(); return; }
+  const cat = findSituCategory(situCurrentCategory);
+  if (!cat) return;
+  body.innerHTML = cat.lessons.map(l => {
+    const prog = ensureLessonProgress(`${cat.id}:${l.id}`);
+    const total = l.sentences.length;
+    const done = prog.viewedSentences.length;
+    return `
+      <div class="situ-lesson-row" onclick="openSituationalLesson('${cat.id}','${l.id}')">
+        <div class="situ-lesson-name">${esc(l.name)}</div>
+        <div class="situ-lesson-stars">${starRatingHtml(l.difficulty)}</div>
+        <div class="situ-lesson-count">${total ? `${done}/${total} 句` : "即將推出"}</div>
+      </div>
+      <div class="situ-lesson-divider"></div>`;
+  }).join("");
+}
+
+function openSituationalLesson(catId, lessonId) {
+  const lesson = findSituLesson(catId, lessonId);
+  if (!lesson) return;
+  situCurrentCategory = catId;
+  situCurrentLesson = lessonId;
+  situView = "practice";
+  situPracticeStage = "sentences";
+  situSentenceIndex = 0;
+  situQuizIndex = 0;
+  situQuizCorrect = 0;
+  const titleEl = document.getElementById("situTitle");
+  if (titleEl) titleEl.textContent = lesson.name;
+  renderSituationalBody();
+  try { history.pushState({ page: document.querySelector(".page.active")?.id || "situational", situ: situCurrentCategory, situLesson: lessonId }, ""); } catch (e) {}
+}
+
+function situEmptyState() {
+  return `
+    <div class="situ-empty">
+      <div class="situ-empty-icon">🌱</div>
+      <div class="situ-empty-title">即將推出</div>
+      <div class="situ-empty-sub">這個主題的內容還在準備中，敬請期待！</div>
+    </div>`;
+}
+
+function renderSituationalPractice() {
+  const body = document.getElementById("situBody");
+  if (!body) return;
+  const lesson = findSituLesson(situCurrentCategory, situCurrentLesson);
+  if (!lesson) return;
+
+  if (!lesson.sentences.length) { body.innerHTML = situEmptyState(); return; }
+
+  if (situPracticeStage === "sentences") {
+    const s = lesson.sentences[situSentenceIndex];
+    body.innerHTML = `
+      <div style="text-align:center;font-size:13px;color:var(--muted);font-weight:800;margin-bottom:14px;">${situSentenceIndex + 1} / ${lesson.sentences.length}</div>
+      <div class="situ-sentence-card">
+        <div class="situ-kr">${esc(s.kr)}</div>
+        <div class="situ-zh" id="situZh" style="display:none;">${esc(s.zh)}</div>
+        <div class="situ-actions">
+          <button type="button" class="ghost" onclick="speakKorean('${jsAttr(s.kr)}')">🔊 發音</button>
+          <button type="button" class="ghost" onclick="toggleSituZh()">👁️ 顯示翻譯</button>
+        </div>
+        <button type="button" class="ghost" style="margin-top:10px;width:100%;" onclick="aiExplainSituSentence(this)">🤖 AI解析</button>
+        <div id="situAiNote" class="situ-ai-note" style="display:none;"></div>
+      </div>
+      <button type="button" class="primary cute-btn" style="width:100%;margin-top:20px;" onclick="situAdvance()">${situSentenceIndex < lesson.sentences.length - 1 ? "下一句 ▶" : "繼續 ▶"}</button>
+    `;
+  } else if (situPracticeStage === "vocab") {
+    body.innerHTML = `
+      <div class="situ-section-title">⭐ 常用單字</div>
+      ${lesson.vocab.map(v => `<div class="situ-vocab-row"><div class="situ-vocab-kr">${esc(v.kr)}</div><div class="situ-vocab-zh">${esc(v.zh)}</div></div>`).join("")}
+      <button type="button" class="primary cute-btn" style="width:100%;margin-top:16px;" onclick="situAdvance()">繼續 ▶</button>
+    `;
+  } else if (situPracticeStage === "grammar") {
+    body.innerHTML = `
+      <div class="situ-section-title">⭐ 常用文法</div>
+      ${lesson.grammar.map(g => `<div class="situ-grammar-row"><div class="situ-grammar-kr">${esc(g.pattern)}</div><div class="situ-grammar-zh">${esc(g.meaning)}</div></div>`).join("")}
+      <button type="button" class="primary cute-btn" style="width:100%;margin-top:16px;" onclick="situAdvance()">繼續 ▶</button>
+    `;
+  } else if (situPracticeStage === "dialogues") {
+    body.innerHTML = `
+      <div class="situ-section-title">⭐ 小對話</div>
+      ${lesson.dialogues.map(d => `
+        <div class="situ-dialogue-line">
+          <div class="situ-dialogue-speaker">${esc(d.speaker)}</div>
+          <div class="situ-dialogue-text">
+            <div class="situ-dialogue-kr">${esc(d.kr)}</div>
+            <div class="situ-dialogue-zh">${esc(d.zh)}</div>
+          </div>
+        </div>`).join("")}
+      <button type="button" class="primary cute-btn" style="width:100%;margin-top:16px;" onclick="situAdvance()">繼續 ▶</button>
+    `;
+  } else if (situPracticeStage === "quiz") {
+    if (!lesson.quiz.length) { situPracticeStage = "done"; renderSituationalPractice(); return; }
+    const q = lesson.quiz[situQuizIndex];
+    body.innerHTML = `
+      <div class="situ-section-title">🎯 小測驗（${situQuizIndex + 1}/${lesson.quiz.length}）</div>
+      <div class="situ-quiz-question">${esc(q.question)}</div>
+      ${q.options.map((opt, i) => `<div class="situ-quiz-option" data-idx="${i}" onclick="answerSituQuiz(${i})">${esc(opt)}</div>`).join("")}
+    `;
+  } else if (situPracticeStage === "done") {
+    const key = `${situCurrentCategory}:${situCurrentLesson}`;
+    const prog = ensureLessonProgress(key);
+    body.innerHTML = `
+      <div style="text-align:center;padding:40px 10px;">
+        <div style="font-size:40px;">🎉</div>
+        <div style="font-size:20px;font-weight:1000;margin-top:10px;">學完了！</div>
+        <div style="font-size:15px;color:var(--muted);margin-top:8px;">
+          進度 ${prog.viewedSentences.length} / ${lesson.sentences.length}
+          ${prog.quizTotal ? `<br>小測驗 ${prog.quizScore} / ${prog.quizTotal}` : ""}
+        </div>
+        <button class="primary cute-btn" style="margin-top:20px;" onclick="situBack()">回主題列表</button>
+      </div>`;
+  }
+}
+
+function toggleSituZh() {
+  const el = document.getElementById("situZh");
+  if (el) el.style.display = el.style.display === "none" ? "block" : "none";
+}
+
+function aiExplainSituSentence(btnEl) {
+  const lesson = findSituLesson(situCurrentCategory, situCurrentLesson);
+  if (!lesson) return;
+  const s = lesson.sentences[situSentenceIndex];
+  if (!s) return;
+  const text = `請幫我解析這句韓文，給初學者看的簡短說明就好，不用太長：
+
+「${s.kr}」（中文意思：${s.zh || "未提供"}）
+
+請包含：
+1. 逐字/詞拆解（韓文詞彙＋中文意思）
+2. 用到的文法點簡短說明
+3. 語氣或使用情境的小提醒（例如正式/口語）
+
+請直接輸出說明文字，不要用 JSON、不要用 Markdown 標題符號。`;
+  runAiAssist(btnEl, text, (val) => {
+    const note = document.getElementById("situAiNote");
+    if (note) { note.textContent = val; note.style.display = "block"; }
+  });
+}
+
+function situAdvance() {
+  const lesson = findSituLesson(situCurrentCategory, situCurrentLesson);
+  if (!lesson) return;
+  const key = `${situCurrentCategory}:${situCurrentLesson}`;
+  const prog = ensureLessonProgress(key);
+
+  if (situPracticeStage === "sentences") {
+    const k = String(situSentenceIndex);
+    if (!prog.viewedSentences.includes(k)) prog.viewedSentences.push(k);
+    saveSituationalProgress();
+    if (situSentenceIndex < lesson.sentences.length - 1) {
+      situSentenceIndex++;
+      renderSituationalPractice();
+      return;
+    }
+    situPracticeStage = lesson.vocab.length ? "vocab" : (lesson.grammar.length ? "grammar" : (lesson.dialogues.length ? "dialogues" : (lesson.quiz.length ? "quiz" : "done")));
+  } else if (situPracticeStage === "vocab") {
+    situPracticeStage = lesson.grammar.length ? "grammar" : (lesson.dialogues.length ? "dialogues" : (lesson.quiz.length ? "quiz" : "done"));
+  } else if (situPracticeStage === "grammar") {
+    situPracticeStage = lesson.dialogues.length ? "dialogues" : (lesson.quiz.length ? "quiz" : "done");
+  } else if (situPracticeStage === "dialogues") {
+    situPracticeStage = lesson.quiz.length ? "quiz" : "done";
+  }
+  renderSituationalPractice();
+}
+
+function answerSituQuiz(idx) {
+  const lesson = findSituLesson(situCurrentCategory, situCurrentLesson);
+  if (!lesson) return;
+  const q = lesson.quiz[situQuizIndex];
+  const options = document.querySelectorAll(".situ-quiz-option");
+  options.forEach((el, i) => {
+    el.style.pointerEvents = "none";
+    if (i === q.answer) el.classList.add("correct");
+    else if (i === idx) el.classList.add("wrong");
+  });
+  if (idx === q.answer) situQuizCorrect++;
+
+  setTimeout(() => {
+    if (situQuizIndex < lesson.quiz.length - 1) {
+      situQuizIndex++;
+      renderSituationalPractice();
+    } else {
+      const key = `${situCurrentCategory}:${situCurrentLesson}`;
+      const prog = ensureLessonProgress(key);
+      prog.quizScore = situQuizCorrect;
+      prog.quizTotal = lesson.quiz.length;
+      saveSituationalProgress();
+      situPracticeStage = "done";
+      renderSituationalPractice();
+    }
+  }, 700);
 }
 
 function getGraduationCards(folderId) {
