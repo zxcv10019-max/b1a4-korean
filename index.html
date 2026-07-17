@@ -1471,14 +1471,21 @@ textarea {
 .situ-cat-name{ font-weight:1000; font-size:14px; color:#2f5524; margin-top:8px; }
 .situ-cat-count{ font-size:11.5px; color:#8b9887; font-weight:800; margin-top:4px; }
 
-.situ-lesson-row{
-  display:flex; align-items:center; justify-content:space-between; gap:10px;
-  padding:16px 4px; cursor:pointer;
+.situ-lesson-grid{
+  display:grid; grid-template-columns:1fr 1fr; gap:12px;
 }
-.situ-lesson-name{ font-weight:1000; font-size:15px; color:#20351f; flex:1; }
-.situ-lesson-stars{ font-size:13px; color:#f2b13c; letter-spacing:1px; flex:0 0 auto; }
-.situ-lesson-count{ font-size:12px; font-weight:800; color:#8b9887; flex:0 0 auto; min-width:56px; text-align:right; }
-.situ-lesson-divider{ height:1px; background:#eef2e6; margin:0 4px; }
+.situ-lesson-card{
+  background:#fff; border-radius:18px; padding:16px 14px 14px; cursor:pointer;
+  box-shadow:0 4px 14px rgba(72,108,39,.06); display:flex; flex-direction:column; min-height:150px;
+}
+.situ-lesson-card-head{ display:flex; align-items:center; justify-content:space-between; gap:6px; }
+.situ-lesson-card-title{ font-weight:1000; font-size:15px; color:#20351f; }
+.situ-lesson-card-arrow{ color:#b9c4ae; font-size:16px; font-weight:900; }
+.situ-lesson-card-sub{ font-size:12px; color:#aeb8a5; font-weight:700; margin-top:4px; }
+.situ-lesson-card-icon{ font-size:34px; text-align:center; margin:14px 0 10px; }
+.situ-lesson-card-count{ font-size:12px; font-weight:800; color:#8b9887; margin-top:auto; }
+.situ-lesson-card-bar{ height:5px; background:#eef2e6; border-radius:999px; margin-top:6px; overflow:hidden; }
+.situ-lesson-card-fill{ height:100%; background:linear-gradient(90deg,#9bc95d,#6fae37); border-radius:999px; }
 
 .situ-sentence-card{
   background:#fff; border:1.5px solid #e2ecd6; border-radius:22px; padding:32px 20px;
@@ -6955,57 +6962,37 @@ function runNextDailyTask() {
    之後把真正的韓文內容填進對應主題的陣列即可，畫面會自動從「即將推出」變成可以練習。 */
 const SITUATIONAL_CATEGORIES = [
   { id: "restaurant", icon: "🍽️", name: "餐廳", lessons: [
-    { id: "find-restaurant", name: "尋找餐廳", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-    { id: "order", name: "點餐", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-    { id: "pay", name: "結帳", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-    { id: "bar", name: "酒吧", difficulty: 3, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "find-restaurant", name: "尋找餐廳", subtitle: "식당 찾기", icon: "🏮", difficulty: 1, targetCount: 8, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "book-seat", name: "訂座找座", subtitle: "자리를 예약하기/찾기", icon: "🛋️", difficulty: 2, targetCount: 11, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "order", name: "點餐用餐", subtitle: "주문하기/식사하기", icon: "🍳", difficulty: 2, targetCount: 19, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "bar", name: "酒吧酒館", subtitle: "술집", icon: "🛢️", difficulty: 3, targetCount: 17, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
   ]},
   { id: "shopping", icon: "🛒", name: "購物", lessons: [
-    { id: "browse", name: "逛街詢問", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-    { id: "try-on", name: "試穿・尺寸", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-    { id: "bargain", name: "退換貨・殺價", difficulty: 3, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-    { id: "checkout-shop", name: "結帳付款", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "find-shop", name: "尋找商店", subtitle: "상점을 찾기", icon: "🏬", difficulty: 1, targetCount: 7, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "find-item", name: "尋找商品", subtitle: "상품을 찾기", icon: "🧺", difficulty: 1, targetCount: 6, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "buy-item", name: "購買商品", subtitle: "상품을 구매하기", icon: "🛍️", difficulty: 2, targetCount: 20, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
   ]},
   { id: "transport", icon: "🚇", name: "交通", lessons: [
-    { id: "directions", name: "問路", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-    { id: "subway", name: "搭地鐵", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-    { id: "taxi", name: "搭計程車", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-    { id: "bus", name: "搭公車", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "airport-terms", name: "機場用語", subtitle: "공항 용어", icon: "✈️", difficulty: 2, targetCount: 14, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "travel-terms", name: "出行用語", subtitle: "여행 용어", icon: "🚗", difficulty: 2, targetCount: 13, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "tram-bus", name: "電車公車", subtitle: "전차 버스", icon: "🚊", difficulty: 1, targetCount: 12, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "subway", name: "新幹線地鐵", subtitle: "신칸센 지하철", icon: "🚄", difficulty: 2, targetCount: 18, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "car-rental", name: "租車用語", subtitle: "렌터카 용어", icon: "🚙", difficulty: 2, targetCount: 10, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
   ]},
   { id: "hotel", icon: "🏨", name: "住宿", lessons: [
-    { id: "checkin", name: "辦理入住", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-    { id: "room-issue", name: "房間問題", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-    { id: "checkout-hotel", name: "退房", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "checkin", name: "預定入住", subtitle: "체크인 예약", icon: "🏡", difficulty: 1, targetCount: 14, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "checkout-hotel", name: "退房簽出", subtitle: "체크아웃 수속", icon: "🖨️", difficulty: 1, targetCount: 6, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "service-desk", name: "服務諮詢", subtitle: "서비스 지원 센터", icon: "💬", difficulty: 2, targetCount: 16, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
   ]},
-  { id: "travel", icon: "✈️", name: "旅行", lessons: [
-    { id: "airport", name: "機場報到", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-    { id: "immigration", name: "入境審查", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-    { id: "sightseeing", name: "觀光景點", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-  ]},
-  { id: "hospital", icon: "🏥", name: "醫院", lessons: [
-    { id: "symptoms", name: "描述症狀", difficulty: 3, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-    { id: "pharmacy", name: "藥局買藥", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-    { id: "appointment", name: "掛號預約", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-  ]},
-  { id: "cafe", icon: "☕", name: "咖啡廳", lessons: [
-    { id: "order-drink", name: "點飲料", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-    { id: "customize", name: "客製化需求", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-    { id: "seating", name: "座位・WiFi", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-  ]},
-  { id: "concert", icon: "🎤", name: "演唱會", lessons: [
-    { id: "tickets", name: "買票入場", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-    { id: "cheering", name: "應援用語", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-    { id: "merch", name: "周邊商品", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-  ]},
-  { id: "smalltalk", icon: "👥", name: "日常聊天", lessons: [
-    { id: "greetings", name: "打招呼介紹", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-    { id: "weather", name: "近況・天氣", difficulty: 1, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-    { id: "making-plans", name: "約時間見面", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-  ]},
-  { id: "work", icon: "💼", name: "打工", lessons: [
-    { id: "interview", name: "面試", difficulty: 3, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-    { id: "asking-boss", name: "跟主管溝通", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
-    { id: "coworkers", name: "跟同事互動", difficulty: 2, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+  { id: "travel", icon: "✈️", name: "旅行必備", lessons: [
+    { id: "pay-bill", name: "結帳付款", subtitle: "결산하기", icon: "💳", difficulty: 1, targetCount: 12, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "sightseeing", name: "景點遊覽", subtitle: "관광지 관람하기", icon: "🗼", difficulty: 1, targetCount: 15, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "bank-terms", name: "銀行用語", subtitle: "은행 용어", icon: "🏦", difficulty: 2, targetCount: 9, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "emergency", name: "緊急情況", subtitle: "긴급 상황", icon: "🚫", difficulty: 3, targetCount: 8, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "feelings", name: "情感表達", subtitle: "감정 표현", icon: "🙂", difficulty: 1, targetCount: 10, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "time-numbers", name: "時間數字", subtitle: "시간/숫자", icon: "🔢", difficulty: 1, targetCount: 10, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "weather-desc", name: "天氣描述", subtitle: "일기예보", icon: "🌤️", difficulty: 1, targetCount: 10, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
+    { id: "misc", name: "其他", subtitle: "기타", icon: "✨", difficulty: 1, targetCount: 10, sentences: [], vocab: [], grammar: [], dialogues: [], quiz: [] },
   ]},
 ];
 
@@ -7088,18 +7075,23 @@ function renderSituationalBody() {
   if (situView === "practice") { renderSituationalPractice(); return; }
   const cat = findSituCategory(situCurrentCategory);
   if (!cat) return;
-  body.innerHTML = cat.lessons.map(l => {
+  body.innerHTML = `<div class="situ-lesson-grid">` + cat.lessons.map(l => {
     const prog = ensureLessonProgress(`${cat.id}:${l.id}`);
-    const total = l.sentences.length;
-    const done = prog.viewedSentences.length;
+    const target = l.targetCount || l.sentences.length || 0;
+    const done = Math.min(prog.viewedSentences.length, target || prog.viewedSentences.length);
+    const pct = target ? Math.min(100, Math.round((done / target) * 100)) : 0;
     return `
-      <div class="situ-lesson-row" onclick="openSituationalLesson('${cat.id}','${l.id}')">
-        <div class="situ-lesson-name">${esc(l.name)}</div>
-        <div class="situ-lesson-stars">${starRatingHtml(l.difficulty)}</div>
-        <div class="situ-lesson-count">${total ? `${done}/${total} 句` : "即將推出"}</div>
-      </div>
-      <div class="situ-lesson-divider"></div>`;
-  }).join("");
+      <div class="situ-lesson-card" onclick="openSituationalLesson('${cat.id}','${l.id}')">
+        <div class="situ-lesson-card-head">
+          <span class="situ-lesson-card-title">${esc(l.name)}</span>
+          <span class="situ-lesson-card-arrow">›</span>
+        </div>
+        <div class="situ-lesson-card-sub">${esc(l.subtitle || "")}</div>
+        <div class="situ-lesson-card-icon">${l.icon || "📘"}</div>
+        <div class="situ-lesson-card-count">${done}/${target}</div>
+        <div class="situ-lesson-card-bar"><div class="situ-lesson-card-fill" style="width:${pct}%"></div></div>
+      </div>`;
+  }).join("") + `</div>`;
 }
 
 function openSituationalLesson(catId, lessonId) {
