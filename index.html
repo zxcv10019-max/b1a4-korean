@@ -2392,7 +2392,7 @@ textarea {
 
 /* 單字清單覆蓋頁（大分類 → 單字） */
 .word-list-overlay {
-  position:fixed; inset:0; background:#fff; z-index:500;
+  position:fixed; inset:0; background:#fff; z-index:900;
   display:flex; flex-direction:column;
   transform:translateX(100%); transition:transform .25s ease;
 }
@@ -5392,7 +5392,7 @@ function renderWordList() {
   const addFab = document.getElementById("wlAddFab");
   if (studyView) studyView.style.display = wlEditMode ? "none" : "block";
   if (editWrap) editWrap.style.display = wlEditMode ? "block" : "none";
-  if (addFab) addFab.style.display = wlEditMode ? "none" : "block";
+  if (addFab) addFab.style.display = "block";
 
   if (wlEditMode) return; // 編輯內容交給 editorWrap（單字花園小卡）處理
 
