@@ -1521,6 +1521,31 @@ textarea {
 .situ-empty .situ-empty-title{ font-size:18px; font-weight:1000; margin-top:14px; color:#3f7a1f; }
 .situ-empty .situ-empty-sub{ font-size:13px; color:#8b9887; margin-top:8px; }
 
+.situ-edit-section{ margin-bottom:22px; }
+.situ-edit-row{
+  display:flex; align-items:center; gap:8px; margin-bottom:8px;
+}
+.situ-edit-row input[type="text"]{
+  flex:1; min-width:0; border:1px solid #dce9cc; border-radius:10px; padding:9px 10px;
+  font-weight:700; font-size:14px; background:#fbfdf7;
+}
+.situ-edit-row input[type="text"]:focus{
+  outline:none; border-color:#83b842; background:#fff; box-shadow:0 0 0 3px rgba(131,184,66,.15);
+}
+.situ-edit-row select{
+  border:1px solid #dce9cc; border-radius:10px; padding:9px 6px; font-weight:900; background:#fbfdf7; flex:0 0 auto;
+}
+.situ-quiz-edit-card{
+  background:#fff; border:1px solid #e2ecd6; border-radius:16px; padding:14px; margin-bottom:12px;
+}
+.situ-quiz-edit-card > input[type="text"]{
+  width:100%; border:1px solid #dce9cc; border-radius:10px; padding:9px 10px; font-weight:900;
+  font-size:14.5px; margin-bottom:10px; background:#fbfdf7;
+}
+.situ-quiz-correct-radio{
+  display:flex; align-items:center; gap:4px; font-size:11px; font-weight:800; color:#6fae37; flex:0 0 auto; white-space:nowrap;
+}
+
 .design-title{font-size:20px;font-weight:1000;color:#2f5524;margin-bottom:12px;}
 .daily-korean{font-size:26px;font-weight:1000;color:#315321;margin:10px 0 6px;}
 .daily-zh{color:#6f7d66;font-weight:800;}
@@ -4150,7 +4175,7 @@ body.overlay-open .fab-wrap { display:none !important; }
     <div class="wl-header">
       <button type="button" class="wl-back" onclick="situBack()">‹</button>
       <div class="wl-title" id="situTitle">情境韓文</div>
-      <span style="width:34px"></span>
+      <button type="button" class="wl-settings-btn" id="situEditBtn" style="display:none;" onclick="toggleSituEditMode()" title="編輯內容">⚙️</button>
     </div>
     <div id="situBody" style="flex:1;overflow-y:auto;padding:16px;"></div>
   </div>
@@ -6996,6 +7021,33 @@ const SITUATIONAL_CATEGORIES = [
   ]},
 ];
 
+/* 使用者自行新增的內容會存在這裡（依 catId:lessonId 分開存），
+   啟動時會合併回 SITUATIONAL_CATEGORIES 對應的主題裡。 */
+let situationalContent = JSON.parse(localStorage.getItem("b1a4SituationalContent") || "{}");
+function saveSituationalContent() { try { localStorage.setItem("b1a4SituationalContent", JSON.stringify(situationalContent)); } catch (e) {} }
+function hydrateSituationalContent() {
+  SITUATIONAL_CATEGORIES.forEach(cat => {
+    cat.lessons.forEach(l => {
+      const saved = situationalContent[`${cat.id}:${l.id}`];
+      if (!saved) return;
+      l.sentences = saved.sentences || l.sentences;
+      l.vocab = saved.vocab || l.vocab;
+      l.grammar = saved.grammar || l.grammar;
+      l.dialogues = saved.dialogues || l.dialogues;
+      l.quiz = saved.quiz || l.quiz;
+    });
+  });
+}
+hydrateSituationalContent();
+function persistSituLesson(lesson) {
+  const key = `${situCurrentCategory}:${situCurrentLesson}`;
+  situationalContent[key] = {
+    sentences: lesson.sentences, vocab: lesson.vocab, grammar: lesson.grammar,
+    dialogues: lesson.dialogues, quiz: lesson.quiz
+  };
+  saveSituationalContent();
+}
+
 let situationalProgress = JSON.parse(localStorage.getItem("b1a4SituationalProgress") || "{}");
 function saveSituationalProgress() { try { localStorage.setItem("b1a4SituationalProgress", JSON.stringify(situationalProgress)); } catch (e) {} }
 function ensureLessonProgress(key) {
@@ -7012,6 +7064,7 @@ function starRatingHtml(n) {
 let situCurrentCategory = null;
 let situCurrentLesson = null;
 let situView = "lessons"; // lessons | practice
+let situEditMode = false;
 let situSentenceIndex = 0;
 let situPracticeStage = "sentences"; // sentences | vocab | grammar | dialogues | quiz | done
 let situQuizIndex = 0;
@@ -7040,8 +7093,11 @@ function openSituationalCategory(catId) {
   situCurrentCategory = catId;
   situCurrentLesson = null;
   situView = "lessons";
+  situEditMode = false;
   const titleEl = document.getElementById("situTitle");
   if (titleEl) titleEl.textContent = `${cat.icon} ${cat.name}`;
+  const editBtn = document.getElementById("situEditBtn");
+  if (editBtn) editBtn.style.display = "none";
   renderSituationalBody();
   document.getElementById("situationalOverlay")?.classList.add("show");
   lockBodyScroll();
@@ -7052,9 +7108,12 @@ function situBack() {
   if (situView === "practice") {
     situView = "lessons";
     situCurrentLesson = null;
+    situEditMode = false;
     const cat = findSituCategory(situCurrentCategory);
     const titleEl = document.getElementById("situTitle");
     if (titleEl && cat) titleEl.textContent = `${cat.icon} ${cat.name}`;
+    const editBtn = document.getElementById("situEditBtn");
+    if (editBtn) editBtn.style.display = "none";
     renderSituationalBody();
     return;
   }
@@ -7066,6 +7125,7 @@ function closeSituationalOverlay() {
   situCurrentCategory = null;
   situCurrentLesson = null;
   situView = "lessons";
+  situEditMode = false;
   unlockBodyScroll();
 }
 
@@ -7077,7 +7137,7 @@ function renderSituationalBody() {
   if (!cat) return;
   body.innerHTML = `<div class="situ-lesson-grid">` + cat.lessons.map(l => {
     const prog = ensureLessonProgress(`${cat.id}:${l.id}`);
-    const target = l.targetCount || l.sentences.length || 0;
+    const target = Math.max(l.targetCount || 0, l.sentences.length || 0);
     const done = Math.min(prog.viewedSentences.length, target || prog.viewedSentences.length);
     const pct = target ? Math.min(100, Math.round((done / target) * 100)) : 0;
     return `
@@ -7100,12 +7160,15 @@ function openSituationalLesson(catId, lessonId) {
   situCurrentCategory = catId;
   situCurrentLesson = lessonId;
   situView = "practice";
+  situEditMode = false;
   situPracticeStage = "sentences";
   situSentenceIndex = 0;
   situQuizIndex = 0;
   situQuizCorrect = 0;
   const titleEl = document.getElementById("situTitle");
   if (titleEl) titleEl.textContent = lesson.name;
+  const editBtn = document.getElementById("situEditBtn");
+  if (editBtn) { editBtn.style.display = "block"; editBtn.textContent = "⚙️"; }
   renderSituationalBody();
   try { history.pushState({ page: document.querySelector(".page.active")?.id || "situational", situ: situCurrentCategory, situLesson: lessonId }, ""); } catch (e) {}
 }
@@ -7114,9 +7177,18 @@ function situEmptyState() {
   return `
     <div class="situ-empty">
       <div class="situ-empty-icon">🌱</div>
-      <div class="situ-empty-title">即將推出</div>
-      <div class="situ-empty-sub">這個主題的內容還在準備中，敬請期待！</div>
+      <div class="situ-empty-title">還沒有內容</div>
+      <div class="situ-empty-sub">按下面的按鈕，自己新增句子、單字、文法或測驗吧！</div>
+      <button type="button" class="primary cute-btn" style="margin-top:18px;" onclick="toggleSituEditMode()">✏️ 新增內容</button>
     </div>`;
+}
+
+function toggleSituEditMode() {
+  if (situView !== "practice") return;
+  situEditMode = !situEditMode;
+  const editBtn = document.getElementById("situEditBtn");
+  if (editBtn) editBtn.textContent = situEditMode ? "✅" : "⚙️";
+  renderSituationalBody();
 }
 
 function renderSituationalPractice() {
@@ -7124,6 +7196,8 @@ function renderSituationalPractice() {
   if (!body) return;
   const lesson = findSituLesson(situCurrentCategory, situCurrentLesson);
   if (!lesson) return;
+
+  if (situEditMode) { renderSituEditForm(lesson); return; }
 
   if (!lesson.sentences.length) { body.innerHTML = situEmptyState(); return; }
 
@@ -7270,6 +7344,119 @@ function answerSituQuiz(idx) {
       renderSituationalPractice();
     }
   }, 700);
+}
+
+function situEditField(type, idx, field, value) {
+  const lesson = findSituLesson(situCurrentCategory, situCurrentLesson);
+  if (!lesson || !lesson[type] || !lesson[type][idx]) return;
+  lesson[type][idx][field] = value;
+  persistSituLesson(lesson);
+}
+function situAddItem(type) {
+  const lesson = findSituLesson(situCurrentCategory, situCurrentLesson);
+  if (!lesson) return;
+  const templates = {
+    sentences: { kr: "", zh: "" },
+    vocab: { kr: "", zh: "" },
+    grammar: { pattern: "", meaning: "" },
+    dialogues: { speaker: "A", kr: "", zh: "" },
+    quiz: { question: "", options: ["", "", ""], answer: 0 },
+  };
+  lesson[type].push(JSON.parse(JSON.stringify(templates[type])));
+  persistSituLesson(lesson);
+  renderSituEditForm(lesson);
+}
+function situDeleteItem(type, idx) {
+  const lesson = findSituLesson(situCurrentCategory, situCurrentLesson);
+  if (!lesson || !lesson[type]) return;
+  if (!confirm("確定要刪除這一項嗎？")) return;
+  lesson[type].splice(idx, 1);
+  persistSituLesson(lesson);
+  renderSituEditForm(lesson);
+}
+function situEditQuizOption(idx, optIdx, value) {
+  const lesson = findSituLesson(situCurrentCategory, situCurrentLesson);
+  if (!lesson || !lesson.quiz[idx]) return;
+  lesson.quiz[idx].options[optIdx] = value;
+  persistSituLesson(lesson);
+}
+function situSetQuizAnswer(idx, ansIdx) {
+  const lesson = findSituLesson(situCurrentCategory, situCurrentLesson);
+  if (!lesson || !lesson.quiz[idx]) return;
+  lesson.quiz[idx].answer = Number(ansIdx);
+  persistSituLesson(lesson);
+}
+
+function renderSituEditForm(lesson) {
+  const body = document.getElementById("situBody");
+  if (!body) return;
+  body.innerHTML = `
+    <div class="situ-edit-section">
+      <div class="situ-section-title">📝 句子</div>
+      ${lesson.sentences.map((s, i) => `
+        <div class="situ-edit-row">
+          <input type="text" placeholder="韓文" value="${escapeAttr(s.kr)}" oninput="situEditField('sentences',${i},'kr',this.value)">
+          <input type="text" placeholder="中文" value="${escapeAttr(s.zh)}" oninput="situEditField('sentences',${i},'zh',this.value)">
+          <button type="button" class="wc-simple-del" onclick="situDeleteItem('sentences',${i})">✕</button>
+        </div>`).join("")}
+      <button type="button" class="add-word-btn" onclick="situAddItem('sentences')">➕ 新增句子</button>
+    </div>
+
+    <div class="situ-edit-section">
+      <div class="situ-section-title">⭐ 常用單字</div>
+      ${lesson.vocab.map((v, i) => `
+        <div class="situ-edit-row">
+          <input type="text" placeholder="韓文" value="${escapeAttr(v.kr)}" oninput="situEditField('vocab',${i},'kr',this.value)">
+          <input type="text" placeholder="中文" value="${escapeAttr(v.zh)}" oninput="situEditField('vocab',${i},'zh',this.value)">
+          <button type="button" class="wc-simple-del" onclick="situDeleteItem('vocab',${i})">✕</button>
+        </div>`).join("")}
+      <button type="button" class="add-word-btn" onclick="situAddItem('vocab')">➕ 新增單字</button>
+    </div>
+
+    <div class="situ-edit-section">
+      <div class="situ-section-title">⭐ 常用文法</div>
+      ${lesson.grammar.map((g, i) => `
+        <div class="situ-edit-row">
+          <input type="text" placeholder="文法（例：~주세요）" value="${escapeAttr(g.pattern)}" oninput="situEditField('grammar',${i},'pattern',this.value)">
+          <input type="text" placeholder="意思（例：請...）" value="${escapeAttr(g.meaning)}" oninput="situEditField('grammar',${i},'meaning',this.value)">
+          <button type="button" class="wc-simple-del" onclick="situDeleteItem('grammar',${i})">✕</button>
+        </div>`).join("")}
+      <button type="button" class="add-word-btn" onclick="situAddItem('grammar')">➕ 新增文法</button>
+    </div>
+
+    <div class="situ-edit-section">
+      <div class="situ-section-title">⭐ 小對話</div>
+      ${lesson.dialogues.map((d, i) => `
+        <div class="situ-edit-row situ-edit-dialogue">
+          <select onchange="situEditField('dialogues',${i},'speaker',this.value)">
+            <option value="A" ${d.speaker === "A" ? "selected" : ""}>A</option>
+            <option value="B" ${d.speaker === "B" ? "selected" : ""}>B</option>
+          </select>
+          <input type="text" placeholder="韓文" value="${escapeAttr(d.kr)}" oninput="situEditField('dialogues',${i},'kr',this.value)">
+          <input type="text" placeholder="中文" value="${escapeAttr(d.zh)}" oninput="situEditField('dialogues',${i},'zh',this.value)">
+          <button type="button" class="wc-simple-del" onclick="situDeleteItem('dialogues',${i})">✕</button>
+        </div>`).join("")}
+      <button type="button" class="add-word-btn" onclick="situAddItem('dialogues')">➕ 新增對話</button>
+    </div>
+
+    <div class="situ-edit-section">
+      <div class="situ-section-title">🎯 小測驗</div>
+      ${lesson.quiz.map((q, i) => `
+        <div class="situ-quiz-edit-card">
+          <input type="text" placeholder="題目" value="${escapeAttr(q.question)}" oninput="situEditField('quiz',${i},'question',this.value)">
+          ${q.options.map((opt, oi) => `
+            <div class="situ-edit-row">
+              <label class="situ-quiz-correct-radio">
+                <input type="radio" name="situ-quiz-answer-${i}" ${q.answer === oi ? "checked" : ""} onchange="situSetQuizAnswer(${i},${oi})">
+                正確
+              </label>
+              <input type="text" placeholder="選項 ${oi + 1}" value="${escapeAttr(opt)}" oninput="situEditQuizOption(${i},${oi},this.value)">
+            </div>`).join("")}
+          <button type="button" class="wc-simple-del" onclick="situDeleteItem('quiz',${i})">✕ 刪除這一題</button>
+        </div>`).join("")}
+      <button type="button" class="add-word-btn" onclick="situAddItem('quiz')">➕ 新增測驗題</button>
+    </div>
+  `;
 }
 
 function getGraduationCards(folderId) {
