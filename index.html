@@ -2476,19 +2476,20 @@ textarea {
 /* 分組標題精簡化：只留一顆 ⋮ */
 .group-header .group-kebab-wrap { position:relative; flex:0 0 auto; }
 .group-header .group-kebab-btn {
-  border:1px solid var(--line); background:#fff; color:#4e8f24; font-size:15px;
-  width:26px; height:26px; border-radius:8px; cursor:pointer; line-height:1;
+  border:1.5px solid #cfe0b8; background:#fff; color:#4e8f24; font-size:20px; font-weight:900;
+  width:40px; height:40px; min-width:40px; min-height:40px; border-radius:10px; cursor:pointer; line-height:1;
+  display:flex; align-items:center; justify-content:center;
 }
 .group-header .group-kebab-btn:hover { background:#f0f8e8; }
 .group-kebab-menu {
-  display:none; position:absolute; right:0; top:32px; z-index:20;
+  display:none; position:absolute; right:0; top:44px; z-index:20;
   background:#fff; border:1px solid var(--line); border-radius:12px;
-  box-shadow:0 12px 26px rgba(72,108,39,.2); min-width:112px; overflow:hidden;
+  box-shadow:0 12px 26px rgba(72,108,39,.2); min-width:130px; overflow:hidden;
 }
 .group-kebab-menu.show { display:block; }
 .group-kebab-menu button {
   display:block; width:100%; text-align:left; border:0; background:#fff;
-  padding:9px 14px; font-size:12px; font-weight:800; color:#3f5634; cursor:pointer;
+  padding:12px 14px; font-size:13px; font-weight:800; color:#3f5634; cursor:pointer; min-height:44px;
 }
 .group-kebab-menu button:hover { background:#f0f8e8; }
 .group-kebab-menu button.danger { color:#c0473f; }
@@ -2928,13 +2929,14 @@ textarea {
 .celebrate-sub { font-size:16px; font-weight:900; color:#4e8f24; margin-top:6px; }
 
 /* ===== 右下角 FAB ===== */
-.fab-wrap { position:fixed; right:20px; bottom:86px; z-index:9500; display:flex; flex-direction:column; align-items:flex-end; gap:10px; }
+.fab-wrap { position:fixed; right:20px; bottom:86px; z-index:9500; display:flex; flex-direction:column; align-items:flex-end; gap:10px; pointer-events:none; }
 body.overlay-open .fab-wrap { display:none !important; }
 .fab-main-btn {
   width:58px; height:58px; border-radius:50%; border:0; cursor:pointer;
   background:linear-gradient(145deg,#8fce55,#5a9c2e); color:#fff; font-size:28px; font-weight:900;
   box-shadow:0 14px 30px rgba(80,140,40,.35); transition:transform .2s ease;
   display:flex; align-items:center; justify-content:center;
+  pointer-events:auto;
 }
 .fab-main-btn:active { transform:scale(.92); }
 .fab-wrap.open .fab-main-btn { transform:rotate(45deg); }
@@ -3534,6 +3536,7 @@ body.overlay-open .fab-wrap { display:none !important; }
               <option value="az">🔤 A-Z</option>
               <option value="progress">📈 完成率</option>
             </select>
+            <button type="button" class="ghost" style="font-size:13px;padding:8px 14px;" onclick="checkDuplicateWordsAcrossLibrary()">🔁 檢查重複（跨題庫）</button>
           </div>
 
           <div id="folderSearchEmpty" class="empty" style="display:none;">找不到符合的題庫</div>
@@ -6170,6 +6173,90 @@ function serializeEditorCards() {
 }
 
 /* ===== ✨ AI 檢查韓文錯字 ===== */
+let globalDuplicateItems = [];
+function ensureGlobalDuplicateModal() {
+  if (document.getElementById("globalDupMask")) return;
+  const modal = document.createElement("div");
+  modal.id = "globalDupMask";
+  modal.className = "hero-modal-mask";
+  modal.innerHTML = `
+    <div class="hero-modal" style="width:min(600px,100%);max-height:85vh;overflow:auto;">
+      <div class="hero-modal-head">
+        <div class="hero-modal-title">🔁 跨題庫重複單字檢查</div>
+        <button class="hero-modal-close" type="button" onclick="closeGlobalDuplicateModal()">關閉</button>
+      </div>
+      <div id="globalDupResultsWrap"></div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+function closeGlobalDuplicateModal() {
+  const m = document.getElementById("globalDupMask");
+  if (m) m.classList.remove("show");
+}
+function collectAllCardsWithIndex() {
+  const out = [];
+  (folders || []).forEach((f, fi) => {
+    parseCards(f.content || "").forEach((c, ci) => {
+      if (!c.term || !c.term.trim()) return;
+      out.push({ folderIdx: fi, cardIndex: ci, term: c.term.trim(), definition: c.definition, folderName: f.name });
+    });
+  });
+  return out;
+}
+function checkDuplicateWordsAcrossLibrary() {
+  const all = collectAllCardsWithIndex();
+  const groupsByTerm = {};
+  all.forEach(entry => {
+    if (!groupsByTerm[entry.term]) groupsByTerm[entry.term] = [];
+    groupsByTerm[entry.term].push(entry);
+  });
+  globalDuplicateItems = Object.keys(groupsByTerm)
+    .filter(term => groupsByTerm[term].length > 1)
+    .map(term => ({ term, entries: groupsByTerm[term] }));
+  renderGlobalDuplicateResults();
+}
+function renderGlobalDuplicateResults() {
+  ensureGlobalDuplicateModal();
+  const wrap = document.getElementById("globalDupResultsWrap");
+  if (!globalDuplicateItems.length) {
+    wrap.innerHTML = `<div class="empty" style="padding:20px 0;">🎉 整個題庫都沒有重複的單字！</div>`;
+  } else {
+    wrap.innerHTML = globalDuplicateItems.map((item, gi) => `
+      <div class="sen-grammar-card" style="margin-bottom:10px;">
+        <div style="font-weight:900;">${esc(item.term)}（出現 ${item.entries.length} 次）</div>
+        ${item.entries.map((entry, ei) => `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;padding:8px 10px;background:#f7fbf1;border-radius:10px;">
+            <div style="font-size:13px;color:#3a4a34;">
+              <div>${esc(entry.definition) || "（尚無翻譯）"}</div>
+              <div style="font-size:11px;color:#8b9887;margin-top:2px;">📁 ${esc(entry.folderName)}</div>
+            </div>
+            <button type="button" class="ghost" style="font-size:12px;padding:5px 10px;flex:0 0 auto;" onclick="deleteGlobalDuplicateEntry(${gi},${ei})">🗑 刪除這一筆</button>
+          </div>`).join("")}
+      </div>`).join("");
+  }
+  document.getElementById("globalDupMask").classList.add("show");
+}
+function deleteGlobalDuplicateEntry(groupIdx, entryIdx) {
+  const item = globalDuplicateItems[groupIdx];
+  if (!item) return;
+  const entry = item.entries[entryIdx];
+  if (!entry) return;
+  const f = folders[entry.folderIdx];
+  if (!f) return;
+  if (!confirm("確定要刪除這一筆嗎？")) return;
+  const cards = parseCards(f.content || "");
+  cards.splice(entry.cardIndex, 1);
+  f.content = cardsToContent(cards);
+  f.updated = today();
+  saveStorage();
+  if (current === entry.folderIdx) {
+    syncEditorCardsFromContent(f.content);
+    renderCardEditor();
+  }
+  renderFolders();
+  checkDuplicateWordsAcrossLibrary();
+}
+
 let duplicateCheckItems = [];
 function ensureDuplicateCheckModal() {
   if (document.getElementById("dupCheckMask")) return;
