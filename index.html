@@ -143,6 +143,7 @@ body {
   padding-bottom:calc(100px + env(safe-area-inset-bottom, 0px));
 }
 .page { display:none; }
+#library { overflow-x:hidden; touch-action:pan-y; }
 .page.active { display:block; }
 .card {
   background:var(--card);
@@ -243,9 +244,12 @@ button {
   grid-template-columns:1fr 1.2fr 1fr;
   gap:20px;
   margin-top:22px;
+  min-width:0;
 }
+.dashboard > * { min-width:0; }
 .panel {
   padding:28px;
+  min-width:0;
 }
 .progress-row {
   display:grid;
@@ -253,7 +257,9 @@ button {
   align-items:center;
   gap:12px;
   margin-top:22px;
+  min-width:0;
 }
+.progress-row > * { min-width:0; }
 .bar {
   height:8px;
   background:#e6eedb;
@@ -269,7 +275,7 @@ button {
 }
 .stats {
   display:grid;
-  grid-template-columns:repeat(3,1fr);
+  grid-template-columns:repeat(3, minmax(0,1fr));
   gap:16px;
   margin-top:22px;
 }
@@ -279,6 +285,7 @@ button {
   padding:20px;
   text-align:center;
   background:#fff;
+  min-width:0;
 }
 .stat-icon {
   font-size:30px;
@@ -4673,7 +4680,7 @@ async function logoutAccount() {
 }
 function getCloudPayload() {
   return {
-    folders, groups, stats, collapsedGroups,
+    folders, groups, categories, stats, collapsedGroups, collapsedCategories,
     masteryData, wrongBookData, graduationData,
     folderPracticeStats, flashSeenData, voiceSpeed,
     activityLog,
@@ -4701,8 +4708,10 @@ async function loadCloudData() {
       isLoadingCloud = true;
       folders = Array.isArray(data.folders) ? data.folders : [];
       groups = Array.isArray(data.groups) ? data.groups : [];
+      categories = Array.isArray(data.categories) ? data.categories : (categories || []);
       stats = data.stats || { practice:0 };
       collapsedGroups = Array.isArray(data.collapsedGroups) ? data.collapsedGroups : [];
+      collapsedCategories = Array.isArray(data.collapsedCategories) ? data.collapsedCategories : (collapsedCategories || []);
       masteryData = data.masteryData || masteryData || {};
       wrongBookData = data.wrongBookData || wrongBookData || {};
       graduationData = data.graduationData || graduationData || {};
