@@ -28,6 +28,7 @@
   --mint:#9ad9bd;
 }
 * { box-sizing:border-box; }
+button, a, [onclick] { touch-action: manipulation; }
 body {
   margin:0;
   font-family:"Noto Sans TC","Microsoft JhengHei",Arial,sans-serif;
@@ -6226,9 +6227,29 @@ function addEditorCard() {
   setTimeout(() => {
     const card = document.querySelector(`.word-card[data-id="${c.id}"]`);
     const el = card ? card.querySelector("input") : null;
-    if (card) card.scrollIntoView({ behavior: "smooth", block: "nearest" });
     if (el) el.focus();
+    scrollNewCardIntoView(card);
   }, 60);
+}
+function scrollNewCardIntoView(card) {
+  if (!card) return;
+  const doScroll = () => card.scrollIntoView({ behavior: "smooth", block: "center" });
+  if (window.visualViewport) {
+    let done = false;
+    const onResize = () => {
+      if (done) return;
+      done = true;
+      window.visualViewport.removeEventListener("resize", onResize);
+      doScroll();
+    };
+    window.visualViewport.addEventListener("resize", onResize);
+    // 保險：如果手機鍵盤沒有觸發 resize（例如鍵盤本來就開著、或桌機沒有鍵盤），還是要捲一次
+    setTimeout(() => {
+      if (!done) { done = true; window.visualViewport.removeEventListener("resize", onResize); doScroll(); }
+    }, 400);
+  } else {
+    setTimeout(doScroll, 350);
+  }
 }
 
 function deleteEditorCard(id) {
