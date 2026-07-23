@@ -2831,6 +2831,29 @@ textarea {
   transition:.15s;
 }
 .word-card.word-card-simple .wc-simple-del:hover { background:#ffe3e8; transform:scale(1.15); }
+.word-card.word-card-simple .wc-drag-handle {
+  flex:0 0 auto;
+  cursor:grab;
+  touch-action:none;
+  -webkit-user-select:none;
+  user-select:none;
+  color:#b7c4ab;
+  font-size:19px;
+  line-height:1;
+  padding:4px 4px;
+  border-radius:8px;
+  margin-right:-2px;
+}
+.word-card.word-card-simple .wc-drag-handle:hover { background:#eef5e4; color:#7b9a5c; }
+.word-card.word-card-simple .wc-drag-handle:active { cursor:grabbing; }
+.word-card.wc-dragging {
+  box-shadow:0 18px 34px rgba(72,108,39,.24);
+  opacity:.97;
+  z-index:80;
+  cursor:grabbing;
+  -webkit-user-select:none;
+  user-select:none;
+}
 .word-card.word-card-simple .wc-edit {
   flex:1;
   min-width:0;
@@ -6524,6 +6547,8 @@ function renderCardEditor(highlightId) {
   const visible = showAll ? filtered : filtered.slice(0, EDITOR_PREVIEW_LIMIT);
   const remaining = filtered.length - visible.length;
 
+  const canReorder = !query && editorCards.length > 1;
+
   list.innerHTML = visible.map(c => {
     const editing = c.id === highlightId || !!wordCardEditState[c.id];
     return `
@@ -6535,6 +6560,7 @@ function renderCardEditor(highlightId) {
         </div>
         <button type="button" class="wc-simple-del" title="完成" onclick="event.stopPropagation();toggleWordCardEdit('${c.id}')">✓</button>
       ` : `
+        ${canReorder ? `<span class="wc-drag-handle" title="按住拖曳排序" onclick="event.stopPropagation()">⠿</span>` : ""}
         <span class="wc-simple-label">KR</span>
         <span class="wc-simple-term">${esc(c.term) || "（未命名）"}</span>
         <span class="wc-simple-label">TW</span>
@@ -6550,6 +6576,7 @@ function renderCardEditor(highlightId) {
     list.innerHTML += `<button type="button" class="expand-more-btn" onclick="collapseEditorCards()">▴ 收合單字花園</button>`;
   }
 
+  if (canReorder) setupWordCardDragHandles();
   updateEditorCountLabels();
 }
 
@@ -6561,6 +6588,95 @@ function toggleWordCardEdit(id) {
 function toggleWordCardExpand(id) {
   wordCardExpandState[id] = !wordCardExpandState[id];
   if (!wordCardExpandState[id]) wordCardEditState[id] = false;
+  renderCardEditor();
+}
+
+/* --- 單字卡拖曳排序 --- */
+let wcDrag = null;
+
+function setupWordCardDragHandles() {
+  const list = document.getElementById("cardEditorList");
+  if (!list) return;
+  list.querySelectorAll(".wc-drag-handle").forEach(h => {
+    h.onpointerdown = onWcHandlePointerDown;
+  });
+}
+
+function onWcHandlePointerDown(e) {
+  if (e.pointerType === "mouse" && e.button !== 0) return;
+  const handle = e.currentTarget;
+  const card = handle.closest(".word-card");
+  const list = document.getElementById("cardEditorList");
+  if (!card || !list) return;
+  e.preventDefault();
+
+  const rect = card.getBoundingClientRect();
+  wcDrag = {
+    card,
+    list,
+    grabOffsetX: e.clientX - rect.left,
+    grabOffsetY: e.clientY - rect.top,
+  };
+  card.classList.add("wc-dragging");
+  try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+
+  document.addEventListener("pointermove", onWcHandlePointerMove);
+  document.addEventListener("pointerup", onWcHandlePointerUp);
+  document.addEventListener("pointercancel", onWcHandlePointerUp);
+}
+
+function onWcHandlePointerMove(e) {
+  if (!wcDrag) return;
+  e.preventDefault();
+  const { card, list, grabOffsetX, grabOffsetY } = wcDrag;
+  const x = e.clientX, y = e.clientY;
+
+  card.style.pointerEvents = "none";
+  const elAtPoint = document.elementFromPoint(x, y);
+  card.style.pointerEvents = "";
+  const target = elAtPoint ? elAtPoint.closest(".word-card") : null;
+
+  if (target && target !== card && target.parentElement === list) {
+    const tRect = target.getBoundingClientRect();
+    const before = (y - tRect.top) < tRect.height / 2;
+    if (before) {
+      if (target.previousElementSibling !== card) list.insertBefore(card, target);
+    } else {
+      const after = target.nextElementSibling;
+      if (after !== card) list.insertBefore(card, after);
+    }
+  }
+
+  card.style.transform = "";
+  const newRect = card.getBoundingClientRect();
+  const dx = (x - grabOffsetX) - newRect.left;
+  const dy = (y - grabOffsetY) - newRect.top;
+  card.style.transform = `translate(${dx}px, ${dy}px)`;
+}
+
+function onWcHandlePointerUp() {
+  if (!wcDrag) return;
+  const { card } = wcDrag;
+  card.classList.remove("wc-dragging");
+  card.style.transform = "";
+  card.style.pointerEvents = "";
+  wcDrag = null;
+  document.removeEventListener("pointermove", onWcHandlePointerMove);
+  document.removeEventListener("pointerup", onWcHandlePointerUp);
+  document.removeEventListener("pointercancel", onWcHandlePointerUp);
+  finalizeWordCardOrder();
+}
+
+function finalizeWordCardOrder() {
+  const list = document.getElementById("cardEditorList");
+  if (!list) return;
+  const ids = Array.from(list.querySelectorAll(".word-card[data-id]")).map(el => el.getAttribute("data-id"));
+  if (!ids.length) return;
+  const idSet = new Set(ids);
+  const reorderedVisible = ids.map(id => editorCards.find(c => c.id === id)).filter(Boolean);
+  const remainingCards = editorCards.filter(c => !idSet.has(c.id));
+  editorCards = [...reorderedVisible, ...remainingCards];
+  serializeEditorCards();
   renderCardEditor();
 }
 
