@@ -2840,6 +2840,13 @@ textarea {
 }
 .word-card.word-card-simple .wc-example-ai-btn:hover { background:#dcefc4; transform:scale(1.08); }
 .word-card.word-card-simple .wc-example-ai-btn:disabled { opacity:.6; cursor:default; transform:none; }
+.word-card.word-card-simple .wc-select-checkbox {
+  flex:0 0 auto;
+  width:18px;
+  height:18px;
+  accent-color:#83b842;
+  cursor:pointer;
+}
 .word-card.word-card-simple .wc-simple-label {
   font-size:11px;
   font-weight:900;
@@ -4252,6 +4259,15 @@ body.overlay-open .fab-wrap { display:none !important; }
               <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="aiGenerateFolderExamples(this)">📝 AI造句</button>
               <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="checkDuplicateWords()">🔁 檢查重複</button>
               <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="toggleBatchPaste()" id="batchPasteToggleBtn">📋 批次貼上</button>
+            </span>
+          </label>
+
+          <label style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <span style="font-size:12.5px;color:#74816c;">已選 <span id="editorSelectionCount">0</span> 個單字</span>
+            <span class="btns" style="margin:0;">
+              <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="selectAllEditorCards()">☑️ 全選</button>
+              <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="deselectAllEditorCards()">◻️ 取消全選</button>
+              <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="copySelectedFolderExamples()">📋 複製已選造句</button>
             </span>
           </label>
 
@@ -6179,6 +6195,7 @@ function newFolder() {
 
 /* ===== 題庫內容：小卡編輯引擎 ===== */
 let editorCards = [];
+let editorCardSelection = {};
 let editorCardSeq = 0;
 let wordCardExpandState = {};
 
@@ -6562,6 +6579,80 @@ ${JSON.stringify(items.map(x => ({ index: x.index, kr: x.term, zh: x.definition 
     }
   });
 }
+function isCardSelected(id) { return !!editorCardSelection[id]; }
+
+function toggleCardSelection(id, checked) {
+  if (checked) editorCardSelection[id] = true;
+  else delete editorCardSelection[id];
+  updateSelectionCountLabel();
+}
+
+function selectAllEditorCards() {
+  editorCards.forEach(c => { editorCardSelection[c.id] = true; });
+  renderCardEditor();
+}
+
+function deselectAllEditorCards() {
+  editorCardSelection = {};
+  renderCardEditor();
+}
+
+function updateSelectionCountLabel() {
+  const el = document.getElementById("editorSelectionCount");
+  if (el) el.textContent = Object.keys(editorCardSelection).length;
+}
+
+function copySelectedFolderExamples() {
+  const selectedIds = Object.keys(editorCardSelection).filter(id => editorCardSelection[id]);
+  if (!selectedIds.length) { alert("請先勾選要複製的單字（可以按「全選」一次選取全部）。"); return; }
+
+  const selectedSet = new Set(selectedIds);
+  const source = editorCards.filter(c => selectedSet.has(c.id) && c.term.trim());
+  const withExample = source.filter(c => c.example && c.example.trim());
+  if (!withExample.length) {
+    alert("已選取的單字都還沒有例句，請先用「AI造句」產生例句再複製。");
+    return;
+  }
+
+  const text = withExample.map(c => {
+    const lines = [`${c.term.trim()}${c.definition.trim() ? `（${c.definition.trim()}）` : ""}`, c.example.trim()];
+    if (c.exampleZh && c.exampleZh.trim()) lines.push(c.exampleZh.trim());
+    return lines.join("\n");
+  }).join("\n\n");
+
+  const skipped = source.length - withExample.length;
+  copyTextToClipboard(text, () => {
+    let msg = `已複製 ${withExample.length} 個單字的造句！`;
+    if (skipped > 0) msg += `（另有 ${skipped} 個還沒有例句，已略過）`;
+    alert(msg);
+  });
+}
+
+function copyTextToClipboard(text, onDone) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(onDone).catch(() => fallbackCopyText(text, onDone));
+  } else {
+    fallbackCopyText(text, onDone);
+  }
+}
+
+function fallbackCopyText(text, onDone) {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try {
+    document.execCommand("copy");
+    onDone();
+  } catch (e) {
+    alert("複製失敗，請手動選取文字複製。");
+  }
+  document.body.removeChild(ta);
+}
+
 function renderTypoCheckResults() {
   ensureTypoCheckModal();
   const wrap = document.getElementById("typoCheckResultsWrap");
@@ -6627,6 +6718,10 @@ function renderCardEditor(highlightId) {
   const list = document.getElementById("cardEditorList");
   if (!list) return;
 
+  Object.keys(editorCardSelection).forEach(id => {
+    if (!editorCards.find(c => c.id === id)) delete editorCardSelection[id];
+  });
+
   const query = (document.getElementById("editorWordSearch")?.value || "").trim().toLowerCase();
   const filtered = query
     ? editorCards.filter(c => c.term.toLowerCase().includes(query) || c.definition.toLowerCase().includes(query))
@@ -6635,11 +6730,13 @@ function renderCardEditor(highlightId) {
   if (!editorCards.length) {
     list.innerHTML = `<div class="empty-fox"><span class="ef-icon">🦊</span>還沒有任何單字哦～<div class="ef-sub">快新增第一個吧！</div></div>`;
     updateEditorCountLabels();
+    updateSelectionCountLabel();
     return;
   }
   if (query && !filtered.length) {
     list.innerHTML = `<div class="empty-fox"><span class="ef-icon">🍂</span>找不到符合「${esc(query)}」的單字</div>`;
     updateEditorCountLabels();
+    updateSelectionCountLabel();
     return;
   }
 
@@ -6666,6 +6763,7 @@ function renderCardEditor(highlightId) {
         </div>
       ` : `
         ${canReorder ? `<span class="wc-drag-handle" title="按住拖曳排序" onclick="event.stopPropagation()">⠿</span>` : ""}
+        <input type="checkbox" class="wc-select-checkbox" title="選取這個單字" onclick="event.stopPropagation()" onchange="toggleCardSelection('${c.id}', this.checked)"${isCardSelected(c.id) ? " checked" : ""}>
         <span class="wc-simple-label">KR</span>
         <span class="wc-simple-term">${esc(c.term) || "（未命名）"}</span>
         <span class="wc-simple-label">TW</span>
@@ -6684,6 +6782,7 @@ function renderCardEditor(highlightId) {
 
   if (canReorder) setupWordCardDragHandles();
   updateEditorCountLabels();
+  updateSelectionCountLabel();
 }
 
 function toggleWordCardEdit(id) {
