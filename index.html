@@ -2741,6 +2741,15 @@ textarea {
 .wc-icon-btn.wc-speak { color:#4e8f24; }
 .wc-icon-btn.wc-del:hover { background:#ffe3e8; }
 .wc-icon-btn.wc-expand-toggle { color:#7a8a72; font-size:12px; }
+.wc-example-view {
+  font-size:12px;
+  color:#7b8a70;
+  margin-top:3px;
+  white-space:normal;
+  line-height:1.45;
+  cursor:pointer;
+}
+.wc-example-view-zh { color:#4e8f24; font-weight:700; }
 
 .wc-divider { height:1px; background:#e5efd8; margin:8px 0 10px; }
 .wc-detail { display:flex; flex-direction:column; gap:8px; }
@@ -5708,6 +5717,7 @@ function renderWordList() {
               <span class="wc-def">${esc(c.definition) || "（尚無翻譯）"}</span>
               <button type="button" class="wc-icon-btn wc-speak" title="發音" onclick="event.stopPropagation();speakKorean('${jsAttr(c.term)}')">🔊</button>
             </div>
+            ${c.example ? `<div class="wc-example-view" onclick="event.stopPropagation();speakKorean('${jsAttr(c.example)}')">📝 ${esc(c.example)}${c.exampleZh ? `<span class="wc-example-view-zh"> — ${esc(c.exampleZh)}</span>` : ""}</div>` : ""}
           </div>
         </div>`).join("");
     }
