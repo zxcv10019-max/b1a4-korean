@@ -2783,11 +2783,63 @@ textarea {
 /* ===== 單字花園：簡易版（KR / TW 標籤）===== */
 .word-card.word-card-simple {
   display:flex;
+  flex-wrap:wrap;
   align-items:center;
   gap:10px;
   padding:11px 14px;
   cursor:pointer;
 }
+.word-card.word-card-simple .wc-example {
+  flex:1 0 100%;
+  font-size:12.5px;
+  font-weight:700;
+  color:#7b8a70;
+  background:#f3f8ec;
+  border-radius:8px;
+  padding:6px 9px;
+  white-space:normal;
+  line-height:1.5;
+}
+.word-card.word-card-simple .wc-example-zh {
+  color:#4e8f24;
+  font-weight:800;
+}
+.word-card.word-card-simple .wc-example-edit {
+  flex:1 0 100%;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.word-card.word-card-simple .wc-example-edit input {
+  flex:1;
+  min-width:0;
+  border:1px solid #dce9cc;
+  border-radius:10px;
+  padding:6px 9px;
+  font-weight:700;
+  font-size:12.5px;
+  background:#fbfdf7;
+}
+.word-card.word-card-simple .wc-example-edit input:focus {
+  outline:none;
+  border-color:#83b842;
+  background:#fff;
+  box-shadow:0 0 0 3px rgba(131,184,66,.15);
+}
+.word-card.word-card-simple .wc-example-ai-btn {
+  border:0;
+  background:#eaf5dd;
+  color:#4e8f24;
+  font-size:14px;
+  cursor:pointer;
+  min-width:32px;
+  min-height:32px;
+  border-radius:10px;
+  flex:0 0 auto;
+  transition:.15s;
+}
+.word-card.word-card-simple .wc-example-ai-btn:hover { background:#dcefc4; transform:scale(1.08); }
+.word-card.word-card-simple .wc-example-ai-btn:disabled { opacity:.6; cursor:default; transform:none; }
 .word-card.word-card-simple .wc-simple-label {
   font-size:11px;
   font-weight:900;
@@ -4197,6 +4249,7 @@ body.overlay-open .fab-wrap { display:none !important; }
               <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="fixMergedKrZhCards()">🔧 修正黏在一起的中文</button>
               <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="aiTranslateFolderCards(this)">🌐 AI翻譯</button>
               <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="aiCheckFolderTypos(this)">✨ AI檢查錯字</button>
+              <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="aiGenerateFolderExamples(this)">📝 AI造句</button>
               <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="checkDuplicateWords()">🔁 檢查重複</button>
               <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="toggleBatchPaste()" id="batchPasteToggleBtn">📋 批次貼上</button>
             </span>
@@ -5567,7 +5620,7 @@ function loadWlCardsFromFolder() {
   const meta = f.cardMeta || {};
   wlCards = parseCards(f.content).map(c => {
     const m = meta[c.term] || {};
-    return { term: c.term, definition: c.definition, root: m.root || "", aiNote: m.aiNote || "", note: m.note || "" };
+    return { term: c.term, definition: c.definition, root: m.root || "", aiNote: m.aiNote || "", note: m.note || "", example: m.example || "", exampleZh: m.exampleZh || "" };
   });
 }
 
@@ -5577,7 +5630,7 @@ function wlPersist() {
   f.content = cardsToContent(wlCards);
   const meta = {};
   wlCards.forEach(c => {
-    if (c.term && (c.root || c.aiNote || c.note)) meta[c.term] = { root: c.root || "", aiNote: c.aiNote || "", note: c.note || "" };
+    if (c.term && (c.root || c.aiNote || c.note || c.example || c.exampleZh)) meta[c.term] = { root: c.root || "", aiNote: c.aiNote || "", note: c.note || "", example: c.example || "", exampleZh: c.exampleZh || "" };
   });
   f.cardMeta = meta;
   f.updated = today();
@@ -6158,7 +6211,7 @@ function syncEditorCardsFromContent(content) {
   const meta = (current !== null && current !== undefined && folders[current] && folders[current].cardMeta) || {};
   editorCards = parseRawLinesLenient(content).map(c => {
     const m = meta[c.term] || {};
-    return { id: "wc" + (editorCardSeq++), term: c.term, definition: c.definition, root: m.root || "", aiNote: m.aiNote || "", note: m.note || "" };
+    return { id: "wc" + (editorCardSeq++), term: c.term, definition: c.definition, root: m.root || "", aiNote: m.aiNote || "", note: m.note || "", example: m.example || "", exampleZh: m.exampleZh || "" };
   });
 }
 
@@ -6190,8 +6243,8 @@ function serializeEditorCards() {
   if (current !== null && current !== undefined && folders[current]) {
     const meta = {};
     editorCards.forEach(c => {
-      if (c.term && (c.root || c.aiNote || c.note)) {
-        meta[c.term] = { root: c.root || "", aiNote: c.aiNote || "", note: c.note || "" };
+      if (c.term && (c.root || c.aiNote || c.note || c.example || c.exampleZh)) {
+        meta[c.term] = { root: c.root || "", aiNote: c.aiNote || "", note: c.note || "", example: c.example || "", exampleZh: c.exampleZh || "" };
       }
     });
     folders[current].cardMeta = meta;
@@ -6462,6 +6515,53 @@ ${JSON.stringify(items.map(x => ({ index: x.index, kr: x.term, zh: x.definition 
     }
   });
 }
+function aiGenerateFolderExamples(btnEl) {
+  const items = editorCards
+    .map((c, i) => ({ index: i, term: c.term.trim(), definition: c.definition.trim() }))
+    .filter(x => x.term && !editorCards[x.index].example.trim());
+  if (!items.length) { alert("目前沒有需要造句的單字（每個單字都已經有例句了）"); return; }
+
+  const text = `請幫我針對下面這些韓文單字，各自造一個簡短、適合初學者的韓文例句，並附上對應的繁體中文翻譯。請只回傳有效的 JSON 陣列，不要輸出 Markdown、程式碼框、標題或其他文字。
+
+單字清單：
+${JSON.stringify(items.map(x => ({ index: x.index, kr: x.term, zh: x.definition })), null, 2)}
+
+請用這個格式回傳：
+[
+  { "index": 0, "example_kr": "韓文例句", "example_zh": "中文翻譯" }
+]
+
+規則：
+1. 每一個 index 都要盡量給出例句，除非完全無法辨識這個韓文詞。
+2. 例句要簡短自然（大約一句日常對話的長度），並且要包含這個單字本身（可以是加了助詞、語尾變化後的形式）。
+3. example_zh 只放例句的中文翻譯本身，不要加註解、拼音或韓文。
+4. 使用繁體中文，語氣自然口語化。`;
+
+  runAiAssist(btnEl, text, (val) => {
+    try {
+      const result = parseAiJson(val);
+      if (!Array.isArray(result)) throw new Error("回覆不是陣列");
+      let count = 0;
+      result.forEach(r => {
+        const idx = Number(r.index);
+        const orig = items.find(x => x.index === idx);
+        const kr = String(r.example_kr || "").trim();
+        const zh = String(r.example_zh || "").trim();
+        if (orig && editorCards[orig.index] && kr && !editorCards[orig.index].example.trim()) {
+          editorCards[orig.index].example = kr;
+          editorCards[orig.index].exampleZh = zh;
+          count++;
+        }
+      });
+      renderCardEditor();
+      serializeEditorCards();
+      alert(count > 0 ? `已為 ${count} 個單字造句，記得檢查一下再確認！` : "AI 沒有回傳可用的例句，請再試一次。");
+    } catch (error) {
+      console.error("AI 造句 JSON 錯誤：", error, val);
+      alert("AI 回覆格式無法解析，請再按一次「AI造句」。");
+    }
+  });
+}
 function renderTypoCheckResults() {
   ensureTypoCheckModal();
   const wrap = document.getElementById("typoCheckResultsWrap");
@@ -6559,6 +6659,11 @@ function renderCardEditor(highlightId) {
           <input type="text" placeholder="中文" value="${escapeAttr(c.definition)}" oninput="updateEditorCard('${c.id}','definition',this.value)" onkeydown="handleWordCardEnter(event)">
         </div>
         <button type="button" class="wc-simple-del" title="完成" onclick="event.stopPropagation();toggleWordCardEdit('${c.id}')">✓</button>
+        <div class="wc-example-edit" onclick="event.stopPropagation()">
+          <input type="text" placeholder="韓文例句（選填）" value="${escapeAttr(c.example || "")}" oninput="updateEditorCard('${c.id}','example',this.value)">
+          <input type="text" placeholder="例句中文翻譯（選填）" value="${escapeAttr(c.exampleZh || "")}" oninput="updateEditorCard('${c.id}','exampleZh',this.value)">
+          <button type="button" class="wc-example-ai-btn" title="用 AI 造句" onclick="aiGenerateSingleExample('${c.id}', this)">📝</button>
+        </div>
       ` : `
         ${canReorder ? `<span class="wc-drag-handle" title="按住拖曳排序" onclick="event.stopPropagation()">⠿</span>` : ""}
         <span class="wc-simple-label">KR</span>
@@ -6566,6 +6671,7 @@ function renderCardEditor(highlightId) {
         <span class="wc-simple-label">TW</span>
         <span class="wc-simple-def">${esc(c.definition) || "（尚無翻譯）"}</span>
         <button type="button" class="wc-simple-del" title="刪除" onclick="event.stopPropagation();deleteEditorCard('${c.id}')">✕</button>
+        ${c.example ? `<div class="wc-example">📝 ${esc(c.example)}${c.exampleZh ? `<span class="wc-example-zh"> — ${esc(c.exampleZh)}</span>` : ""}</div>` : ""}
       `}
     </div>`;
   }).join("");
@@ -6691,9 +6797,9 @@ function moveEditorCardToFolder(id) {
     const line = `${c.term}\t${c.definition}`;
     target.content = (target.content ? target.content + "\n" : "") + line;
     target.updated = today();
-    if (c.root || c.aiNote || c.note) {
+    if (c.root || c.aiNote || c.note || c.example || c.exampleZh) {
       target.cardMeta = target.cardMeta || {};
-      target.cardMeta[c.term] = { root: c.root || "", aiNote: c.aiNote || "", note: c.note || "" };
+      target.cardMeta[c.term] = { root: c.root || "", aiNote: c.aiNote || "", note: c.note || "", example: c.example || "", exampleZh: c.exampleZh || "" };
     }
     saveStorage();
     editorCards = editorCards.filter(x => x.id !== id);
@@ -6713,6 +6819,40 @@ function updateEditorCard(id, field, value) {
   if (!c) return;
   c[field] = value;
   serializeEditorCards();
+}
+
+function aiGenerateSingleExample(id, btnEl) {
+  const c = editorCards.find(x => x.id === id);
+  if (!c || !c.term.trim()) { alert("請先輸入韓文單字，再用 AI 造句。"); return; }
+  const term = c.term.trim();
+  const definition = c.definition.trim();
+  const text = `請針對這個韓文單字造一個簡短、適合初學者的韓文例句，並附上繁體中文翻譯。請只回傳有效的 JSON 物件，不要輸出 Markdown、程式碼框或其他文字。
+
+單字："${term}"${definition ? `（中文意思：${definition}）` : ""}
+
+請用這個格式回傳：
+{ "example_kr": "韓文例句", "example_zh": "中文翻譯" }
+
+規則：
+1. 例句要簡短自然，並且要包含這個單字本身（可以是加了助詞、語尾變化後的形式）。
+2. example_zh 只放例句的中文翻譯本身，不要加註解、拼音或韓文。
+3. 使用繁體中文，語氣自然口語化。`;
+
+  runAiAssist(btnEl, text, (val) => {
+    try {
+      const result = parseAiJson(val);
+      const kr = String((result && result.example_kr) || "").trim();
+      const zh = String((result && result.example_zh) || "").trim();
+      if (!kr) throw new Error("沒有例句");
+      c.example = kr;
+      c.exampleZh = zh;
+      renderCardEditor(c.id);
+      serializeEditorCards();
+    } catch (error) {
+      console.error("AI 單字造句 JSON 錯誤：", error, val);
+      alert("AI 回覆格式無法解析，請再試一次。");
+    }
+  });
 }
 
 function handleWordCardEnter(e) {
@@ -6738,7 +6878,7 @@ function handleWordCardEnter(e) {
 }
 
 function addEditorCard() {
-  const c = { id: "wc" + (editorCardSeq++), term: "", definition: "", root: "", aiNote: "", note: "" };
+  const c = { id: "wc" + (editorCardSeq++), term: "", definition: "", root: "", aiNote: "", note: "", example: "", exampleZh: "" };
   editorCards.push(c);
   editorExpanded = true;
   serializeEditorCards();
