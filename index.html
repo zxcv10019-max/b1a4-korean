@@ -5305,7 +5305,6 @@ function ooExampleTabsHtml(vocabId, examples, sessionId) {
     <button class="${active === "teacher" ? "primary" : "ghost"}" style="padding:6px 12px;font-size:12px;" onclick="event.stopPropagation();ooSetExampleTab('${vocabId}','teacher')">👨‍🏫 老師（${teacherEx.length}）</button>
     <button class="${active === "ai" ? "primary" : "ghost"}" style="padding:6px 12px;font-size:12px;" onclick="event.stopPropagation();ooSetExampleTab('${vocabId}','ai')">🤖 AI（${aiEx.length}）</button>
     <button class="ghost" style="padding:6px 12px;font-size:12px;" onclick="event.stopPropagation();ooStartAiExampleCard('${vocabId}','${sessionId || ""}')">✨ AI幫我造句</button>
-    <span style="margin-left:auto;font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer;" onclick="event.stopPropagation();ooOpenApiKeySettings()">⚙️</span>
   </div>`;
   const list = active === "ai" ? aiEx : teacherEx;
   const editingHere = ooCardEditState && ooCardEditState.vocabId === vocabId && ooCardEditState.source === active;
@@ -5385,77 +5384,22 @@ function ooDeleteExample(vocabId, exampleId) {
   ooRender();
 }
 
-/* ---- AI 造句：真的呼叫 AI 幫忙生成句子（需要使用者自己填入 API 金鑰） ---- */
-const OO_APIKEY_STORAGE = "bana_oo_api_key";
-function ooGetApiKey() { return localStorage.getItem(OO_APIKEY_STORAGE) || ""; }
-function ooSetApiKey(k) { localStorage.setItem(OO_APIKEY_STORAGE, k || ""); }
-function ooEnsureApiKeyModal() {
-  if (document.getElementById("ooApiKeyMask")) return;
-  const modal = document.createElement("div");
-  modal.id = "ooApiKeyMask";
-  modal.className = "hero-modal-mask";
-  modal.innerHTML = `
-    <div class="hero-modal" style="width:min(480px,100%);max-height:80vh;overflow:auto;">
-      <div class="hero-modal-head">
-        <div class="hero-modal-title">⚙️ AI造句設定</div>
-        <button class="hero-modal-close" type="button" onclick="ooCloseApiKeySettings()">關閉</button>
-      </div>
-      <div style="font-size:13px;color:var(--muted);font-weight:800;margin-bottom:10px;line-height:1.6;">
-        要讓「🪄 AI造句」真的自動生成句子，需要填入你自己的 Anthropic API 金鑰（到 <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a> 申請）。金鑰只會存在你目前這個瀏覽器的 localStorage，不會傳到別的地方；但因為是瀏覽器直接呼叫 API，請不要把這個檔案分享給別人，避免金鑰外流。
-      </div>
-      <label style="font-weight:900;color:#4e8f24;">API 金鑰</label>
-      <input type="password" id="ooApiKeyInput" class="cute-input" style="margin:6px 0 16px;width:100%;box-sizing:border-box;" placeholder="sk-ant-...">
-      <button class="primary cute-btn" style="width:100%;" onclick="ooSaveApiKeySettings()">💾 儲存</button>
-    </div>`;
-  document.body.appendChild(modal);
-}
-function ooOpenApiKeySettings() {
-  ooEnsureApiKeyModal();
-  document.getElementById("ooApiKeyInput").value = ooGetApiKey();
-  document.getElementById("ooApiKeyMask").classList.add("show");
-}
-function ooCloseApiKeySettings() {
-  const m = document.getElementById("ooApiKeyMask");
-  if (m) m.classList.remove("show");
-}
-function ooSaveApiKeySettings() {
-  const v = document.getElementById("ooApiKeyInput").value.trim();
-  ooSetApiKey(v);
-  ooCloseApiKeySettings();
-  alert("已儲存！之後點「🪄 請AI幫我造句」就會自動生成句子了。");
-}
+/* ---- AI 造句：直接沿用網站原本「我的」頁面設定好的 AI 金鑰，不用再另外設定一次 ---- */
 async function ooGenerateAiSentence(word, zh) {
-  const key = ooGetApiKey();
-  if (!key) { ooOpenApiKeySettings(); return null; }
+  const prompt = `請幫我用韓文單字「${word}」${zh ? `（意思：${zh}）` : ""}造一句自然、口語、適合韓語學習者的例句。只回傳有效 JSON，不要有其他文字或 Markdown 符號，格式：\n{"korean":"...","chinese":"..."}`;
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": key,
-        "anthropic-version": "2023-06-01",
-        "anthropic-dangerous-direct-browser-access": "true"
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 200,
-        messages: [{
-          role: "user",
-          content: `用韓文單字「${word}」${zh ? `（意思：${zh}）` : ""}造一句自然、口語、適合韓語學習者的例句。只回傳 JSON，不要有其他文字或 Markdown 符號，格式：{"korean":"...","chinese":"..."}`
-        }]
-      })
-    });
-    if (!res.ok) {
-      const errText = await res.text().catch(() => "");
-      throw new Error("API 回應錯誤：" + res.status + " " + errText);
-    }
-    const data = await res.json();
-    const text = (data.content || []).map(b => b.text || "").join("").trim();
-    const clean = text.replace(/```json|```/g, "").trim();
-    return JSON.parse(clean);
+    const raw = await callAI(prompt);
+    return parseAiJson(raw);
   } catch (e) {
-    console.error(e);
-    alert("AI造句失敗，請確認 API 金鑰是否正確、額度是否足夠，或稍後再試。");
+    console.warn("AI造句失敗：", e);
+    if (!getOpenAiKey()) {
+      return new Promise(resolve => {
+        openAiPromptModal(prompt, val => {
+          try { resolve(parseAiJson(val)); } catch (err) { alert("AI回覆格式無法解析，請確認為完整JSON。"); resolve(null); }
+        });
+      });
+    }
+    alert("AI造句失敗：" + (e.message || e));
     return null;
   }
 }
