@@ -3645,7 +3645,7 @@ body.overlay-open .fab-wrap { display:none !important; }
             <div style="font-size:34px;">📁</div>
             <div style="flex:1;">
               <div style="font-weight:1000;font-size:17px;">1對1上課</div>
-              <div id="ooEntryMeta" style="font-size:13px;color:var(--muted);font-weight:800;margin-top:4px;">單字 0・短句 0・文法 0・上課紀錄 0</div>
+              <div id="ooEntryMeta" style="font-size:13px;color:var(--muted);font-weight:800;margin-top:4px;">單字 0・造句 0・短句 0・文法 0・上課紀錄 0</div>
             </div>
             <div style="color:#4e8f24;font-weight:900;">進入 ›</div>
           </div>
@@ -4940,6 +4940,8 @@ let oneOnOne = (function () {
 })();
 let ooView = "main";
 let ooCurrentSessionId = null;
+let ooCurrentVocabId = null;
+let ooVocabDetailReturn = null; // { view: 'vocab' | 'sessionDetail', sessionId }
 
 function ooId(prefix) { return prefix + "_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 function ooSave() {
@@ -4947,10 +4949,15 @@ function ooSave() {
   if (typeof scheduleCloudSave === "function") scheduleCloudSave();
   ooUpdateEntryCard();
 }
+function ooTotalExamples() {
+  let n = 0;
+  oneOnOne.vocab.forEach(v => { n += (v.examples || []).length; });
+  return n;
+}
 function ooUpdateEntryCard() {
   const el = document.getElementById("ooEntryMeta");
   if (!el) return;
-  el.textContent = `單字 ${oneOnOne.vocab.length}・短句 ${oneOnOne.sentences.length}・文法 ${oneOnOne.grammar.length}・上課紀錄 ${oneOnOne.sessions.length}`;
+  el.textContent = `單字 ${oneOnOne.vocab.length}・造句 ${ooTotalExamples()}・短句 ${oneOnOne.sentences.length}・文法 ${oneOnOne.grammar.length}・上課紀錄 ${oneOnOne.sessions.length}`;
 }
 
 /* 解析老師貼上的內容：每行一筆，可以只有韓文，也可以用「韓文｜中文」或「韓文|中文」或 Tab 分隔 */
@@ -4978,7 +4985,7 @@ function ooAddSession(dateStr, vocabText, sentenceText, grammarText) {
   };
   const summary = { vocab: { new: [], existing: [] }, sentence: { new: [], existing: [] }, grammar: { new: [], existing: [] } };
 
-  function processCategory(text, masterArr, idsKey, newIdsKey, summaryKey, idPrefix) {
+  function processCategory(text, masterArr, idsKey, newIdsKey, summaryKey, idPrefix, extraFields) {
     ooParseLines(text).forEach(it => {
       if (!it.kr) return;
       const found = masterArr.find(x => x.kr === it.kr);
@@ -4986,7 +4993,7 @@ function ooAddSession(dateStr, vocabText, sentenceText, grammarText) {
         if (!session[idsKey].includes(found.id)) session[idsKey].push(found.id);
         summary[summaryKey].existing.push(found.kr);
       } else {
-        const entry = { id: ooId(idPrefix), kr: it.kr, zh: it.zh, firstSessionId: session.id, createdAt: Date.now() };
+        const entry = Object.assign({ id: ooId(idPrefix), kr: it.kr, zh: it.zh, firstSessionId: session.id, createdAt: Date.now() }, extraFields || {});
         masterArr.push(entry);
         session[idsKey].push(entry.id);
         session[newIdsKey].push(entry.id);
@@ -4995,7 +5002,7 @@ function ooAddSession(dateStr, vocabText, sentenceText, grammarText) {
     });
   }
 
-  processCategory(vocabText, oneOnOne.vocab, "vocabIds", "newVocabIds", "vocab", "oovoc");
+  processCategory(vocabText, oneOnOne.vocab, "vocabIds", "newVocabIds", "vocab", "oovoc", { examples: [] });
   processCategory(sentenceText, oneOnOne.sentences, "sentenceIds", "newSentenceIds", "sentence", "oosen");
   processCategory(grammarText, oneOnOne.grammar, "grammarIds", "newGrammarIds", "grammar", "oogram");
 
@@ -5004,12 +5011,44 @@ function ooAddSession(dateStr, vocabText, sentenceText, grammarText) {
   return { session, summary };
 }
 
+/* 造句：附屬於單字，每個單字自己保管一份 examples 陣列，不獨立成一個題型 */
+function ooAddExample(vocabId, source, korean, chinese, sessionId) {
+  const v = oneOnOne.vocab.find(x => x.id === vocabId);
+  if (!v) return null;
+  if (!Array.isArray(v.examples)) v.examples = [];
+  const ex = {
+    id: ooId("ex"),
+    source: source === "ai" ? "ai" : "teacher",
+    korean: (korean || "").trim(),
+    chinese: (chinese || "").trim(),
+    sessionId: sessionId || null,
+    createdAt: Date.now()
+  };
+  v.examples.push(ex);
+  ooSave();
+  return ex;
+}
+function ooExamplesCumulativeAt(session) {
+  let count = 0;
+  oneOnOne.vocab.forEach(v => { (v.examples || []).forEach(ex => { if (ex.createdAt <= session.createdAt) count++; }); });
+  return count;
+}
+function ooExamplesForSession(sessionId) {
+  const result = [];
+  oneOnOne.vocab.forEach(v => {
+    const exs = (v.examples || []).filter(ex => ex.sessionId === sessionId);
+    if (exs.length) result.push({ vocab: v, examples: exs });
+  });
+  return result;
+}
+
 /* ---- 畫面渲染 ---- */
 function ooGo(view) { ooView = view; ooCurrentSessionId = null; ooRender(); }
 function ooRender() {
   const root = document.getElementById("ooRoot");
   if (!root) return;
-  if (ooView === "vocab") return ooRenderSimpleList(root, "vocab", "🟩 單字");
+  if (ooView === "vocab") return ooRenderVocabList(root);
+  if (ooView === "vocabDetail") return ooRenderVocabDetail(root);
   if (ooView === "sentence") return ooRenderSimpleList(root, "sentences", "🟦 短句");
   if (ooView === "grammar") return ooRenderSimpleList(root, "grammar", "🟨 文法");
   if (ooView === "sessions") return ooRenderSessions(root);
@@ -5019,12 +5058,141 @@ function ooRender() {
 function ooRenderMain(root) {
   root.innerHTML = `
     <div class="oo-grid">
-      <div class="oo-tile" onclick="ooGo('vocab')"><div class="oo-tile-emoji">🟩</div><div class="oo-tile-title">單字</div><div class="oo-tile-meta">${oneOnOne.vocab.length} 個</div></div>
+      <div class="oo-tile" onclick="ooGo('vocab')"><div class="oo-tile-emoji">🟩</div><div class="oo-tile-title">單字</div><div class="oo-tile-meta">${oneOnOne.vocab.length} 個・造句 ${ooTotalExamples()}</div></div>
       <div class="oo-tile" onclick="ooGo('sentence')"><div class="oo-tile-emoji">🟦</div><div class="oo-tile-title">短句</div><div class="oo-tile-meta">${oneOnOne.sentences.length} 句</div></div>
       <div class="oo-tile" onclick="ooGo('grammar')"><div class="oo-tile-emoji">🟨</div><div class="oo-tile-title">文法</div><div class="oo-tile-meta">${oneOnOne.grammar.length} 個</div></div>
       <div class="oo-tile" onclick="ooGo('sessions')"><div class="oo-tile-emoji">🗂️</div><div class="oo-tile-title">上課紀錄</div><div class="oo-tile-meta">${oneOnOne.sessions.length} 次</div></div>
     </div>`;
 }
+
+/* 單字列表：簡潔顯示，右側用 📝 數字提示這個字有沒有造句，點進去看詳細 */
+function ooVocabRowHtml(v, onclickCall, chip) {
+  const count = (v.examples || []).length;
+  const chipHtml = chip ? `<span class="${chip === "new" ? "oo-chip-new" : "oo-chip-old"}">${chip === "new" ? "✨ 新增" : "🔁 已學過"}</span>` : "";
+  return `<div class="oo-item-row" style="cursor:pointer;justify-content:space-between;" onclick="${onclickCall}">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      ${chipHtml}<span class="oo-item-kr">${esc(v.kr)}</span>${v.zh ? `<span class="oo-item-zh">${esc(v.zh)}</span>` : ""}
+    </div>
+    ${count > 0 ? `<span class="oo-chip-old">📝 ${count}</span>` : ""}
+  </div>`;
+}
+function ooVocabListHtml(list) {
+  if (!list.length) return `<div class="empty-fox"><span class="ef-icon">🌱</span>還沒有資料，從「上課紀錄」新增一次上課內容吧！</div>`;
+  return list.slice().reverse().map(v => ooVocabRowHtml(v, `ooOpenVocabDetail('${v.id}','vocab')`)).join("");
+}
+function ooRenderVocabList(root) {
+  const list = oneOnOne.vocab;
+  root.innerHTML = `
+    <div class="topbar">
+      <button class="ghost" onclick="ooGo('main')">‹ 返回</button>
+      <h2>🟩 單字（${list.length}）</h2>
+    </div>
+    <input class="folder-search-input" placeholder="🔍 搜尋..." oninput="ooFilterVocabList(this.value)">
+    <div id="ooVocabListWrap">${ooVocabListHtml(list)}</div>`;
+}
+function ooFilterVocabList(q) {
+  q = (q || "").trim().toLowerCase();
+  const list = oneOnOne.vocab.filter(v => !q || v.kr.toLowerCase().includes(q) || (v.zh || "").toLowerCase().includes(q));
+  const wrap = document.getElementById("ooVocabListWrap");
+  if (wrap) wrap.innerHTML = ooVocabListHtml(list);
+}
+
+/* 單字詳細頁：老師造句 / AI造句 分開顯示，並可以新增造句 */
+function ooOpenVocabDetail(vocabId, returnView, returnSessionId) {
+  ooCurrentVocabId = vocabId;
+  ooVocabDetailReturn = { view: returnView || "vocab", sessionId: returnSessionId || null };
+  ooView = "vocabDetail";
+  ooRender();
+}
+function ooCloseVocabDetail() {
+  const ret = ooVocabDetailReturn || { view: "vocab" };
+  if (ret.view === "sessionDetail" && ret.sessionId) {
+    ooCurrentSessionId = ret.sessionId;
+    ooView = "sessionDetail";
+  } else {
+    ooView = "vocab";
+    ooCurrentSessionId = null;
+  }
+  ooRender();
+}
+function ooRenderVocabDetail(root) {
+  const v = oneOnOne.vocab.find(x => x.id === ooCurrentVocabId);
+  if (!v) { ooView = "vocab"; return ooRenderVocabList(root); }
+  if (!Array.isArray(v.examples)) v.examples = [];
+  const teacherEx = v.examples.filter(e => e.source === "teacher");
+  const aiEx = v.examples.filter(e => e.source === "ai");
+  const ret = ooVocabDetailReturn || { view: "vocab" };
+  const backLabel = ret.view === "sessionDetail" ? "‹ 返回上課紀錄" : "‹ 返回單字";
+  function exBlock(label, arr) {
+    if (!arr.length) return "";
+    return `<div style="margin-bottom:16px;">
+      <div style="font-weight:1000;margin-bottom:8px;">${label}</div>
+      ${arr.map(e => `<div class="oo-item-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
+        <div class="oo-item-kr">${esc(e.korean)}</div>
+        ${e.chinese ? `<div class="oo-item-zh">${esc(e.chinese)}</div>` : ""}
+      </div>`).join("")}
+    </div>`;
+  }
+  root.innerHTML = `
+    <div class="topbar">
+      <button class="ghost" onclick="ooCloseVocabDetail()">${backLabel}</button>
+      <h2>${esc(v.kr)}　${esc(v.zh || "")}</h2>
+    </div>
+    ${exBlock("👩‍🏫 老師造句", teacherEx)}
+    ${exBlock("🤖 AI造句", aiEx)}
+    ${(!teacherEx.length && !aiEx.length) ? `<div class="empty-fox"><span class="ef-icon">📝</span>這個單字還沒有造句</div>` : ""}
+    <button class="primary cute-btn" style="width:100%;margin-top:10px;" onclick="ooOpenAddExample()">＋ 新增造句</button>`;
+}
+
+/* 新增造句的彈窗：選來源（老師造句／AI造句）＋ 韓文／中文 */
+function ooEnsureExampleModal() {
+  if (document.getElementById("ooExampleMask")) return;
+  const modal = document.createElement("div");
+  modal.id = "ooExampleMask";
+  modal.className = "hero-modal-mask";
+  modal.innerHTML = `
+    <div class="hero-modal" style="width:min(520px,100%);max-height:88vh;overflow:auto;">
+      <div class="hero-modal-head">
+        <div class="hero-modal-title">📝 新增造句</div>
+        <button class="hero-modal-close" type="button" onclick="ooCloseAddExample()">關閉</button>
+      </div>
+      <div style="font-weight:900;color:#4e8f24;margin-bottom:8px;">造句來源</div>
+      <div style="display:flex;gap:18px;margin-bottom:16px;">
+        <label style="display:flex;align-items:center;gap:6px;font-weight:900;cursor:pointer;"><input type="radio" name="ooExSource" value="teacher" checked> 👩‍🏫 老師造句</label>
+        <label style="display:flex;align-items:center;gap:6px;font-weight:900;cursor:pointer;"><input type="radio" name="ooExSource" value="ai"> 🤖 AI造句</label>
+      </div>
+      <label style="font-weight:900;color:#4e8f24;">韓文句子</label>
+      <textarea id="ooExampleKr" class="oo-textarea" rows="2" style="margin:6px 0 14px;"></textarea>
+      <label style="font-weight:900;color:#4e8f24;">中文翻譯（選填）</label>
+      <textarea id="ooExampleZh" class="oo-textarea" rows="2" style="margin:6px 0 16px;"></textarea>
+      <button class="primary cute-btn" style="width:100%;" onclick="ooSubmitAddExample()">💾 儲存造句</button>
+    </div>`;
+  document.body.appendChild(modal);
+}
+function ooOpenAddExample() {
+  ooEnsureExampleModal();
+  document.getElementById("ooExampleKr").value = "";
+  document.getElementById("ooExampleZh").value = "";
+  document.getElementsByName("ooExSource").forEach(r => { r.checked = (r.value === "teacher"); });
+  document.getElementById("ooExampleMask").classList.add("show");
+}
+function ooCloseAddExample() {
+  const m = document.getElementById("ooExampleMask");
+  if (m) m.classList.remove("show");
+}
+function ooSubmitAddExample() {
+  const kr = document.getElementById("ooExampleKr").value.trim();
+  if (!kr) { alert("請輸入韓文句子"); return; }
+  const zh = document.getElementById("ooExampleZh").value.trim();
+  let source = "teacher";
+  document.getElementsByName("ooExSource").forEach(r => { if (r.checked) source = r.value; });
+  const ret = ooVocabDetailReturn || { view: "vocab" };
+  const sessionId = (ret.view === "sessionDetail" && ret.sessionId) ? ret.sessionId : null;
+  ooAddExample(ooCurrentVocabId, source, kr, zh, sessionId);
+  ooCloseAddExample();
+  ooRender();
+}
+
 function ooListHtml(list) {
   if (!list.length) return `<div class="empty-fox"><span class="ef-icon">🌱</span>還沒有資料，從「上課紀錄」新增一次上課內容吧！</div>`;
   return list.slice().reverse().map(it => `
@@ -5064,8 +5232,9 @@ function ooRenderSessions(root) {
         <div class="oo-session-row" onclick="ooOpenSessionDetail('${s.id}')">
           <div class="oo-session-date">📅 ${esc(s.date)}</div>
           <div class="oo-session-counts">
-            <span>短句 ${s.sentenceIds.length}</span>
             <span>單字 ${s.vocabIds.length}（新 ${s.newVocabIds.length}）</span>
+            <span>造句 ${ooExamplesForSession(s.id).reduce((sum, g) => sum + g.examples.length, 0)}</span>
+            <span>短句 ${s.sentenceIds.length}</span>
             <span>文法 ${s.grammarIds.length}</span>
             <span style="color:#4e8f24;">📊 累計單字 ${ooCumulativeAt(s, "vocab")}</span>
           </div>
@@ -5076,7 +5245,8 @@ function ooOpenSessionDetail(id) { ooCurrentSessionId = id; ooView = "sessionDet
 function ooRenderSessionDetail(root) {
   const s = oneOnOne.sessions.find(x => x.id === ooCurrentSessionId);
   if (!s) { ooView = "sessions"; return ooRenderSessions(root); }
-  function block(title, ids, newIds, masterArr) {
+  function block(title, ids, newIds, masterArr, opts) {
+    opts = opts || {};
     if (!ids.length) return "";
     return `<div style="margin-bottom:18px;">
       <div style="font-weight:1000;margin-bottom:8px;">${title}（${ids.length}）</div>
@@ -5084,6 +5254,7 @@ function ooRenderSessionDetail(root) {
         const item = masterArr.find(x => x.id === id);
         if (!item) return "";
         const isNew = newIds.includes(id);
+        if (opts.vocab) return ooVocabRowHtml(item, `ooOpenVocabDetail('${item.id}','sessionDetail','${s.id}')`, isNew ? "new" : "old");
         return `<div class="oo-item-row">
           <span class="${isNew ? "oo-chip-new" : "oo-chip-old"}">${isNew ? "✨ 新增" : "🔁 已學過"}</span>
           <span class="oo-item-kr">${esc(item.kr)}</span>${item.zh ? `<span class="oo-item-zh">${esc(item.zh)}</span>` : ""}
@@ -5091,23 +5262,38 @@ function ooRenderSessionDetail(root) {
       }).join("")}
     </div>`;
   }
-  const empty = !s.vocabIds.length && !s.sentenceIds.length && !s.grammarIds.length;
+  function compositionsBlock() {
+    const groups = ooExamplesForSession(s.id);
+    if (!groups.length) return "";
+    const total = groups.reduce((sum, g) => sum + g.examples.length, 0);
+    return `<div style="margin-bottom:18px;">
+      <div style="font-weight:1000;margin-bottom:8px;">💬 造句（${total}）</div>
+      ${groups.map(g => `
+        <div class="oo-item-row" style="flex-direction:column;align-items:flex-start;gap:6px;cursor:pointer;" onclick="ooOpenVocabDetail('${g.vocab.id}','sessionDetail','${s.id}')">
+          <div><span class="oo-item-kr">${esc(g.vocab.kr)}</span>${g.vocab.zh ? `<span class="oo-item-zh">${esc(g.vocab.zh)}</span>` : ""}</div>
+          ${g.examples.map(ex => `<div style="font-size:13px;">${ex.source === "ai" ? "🤖" : "👩‍🏫"} ${esc(ex.korean)}</div>`).join("")}
+        </div>`).join("")}
+    </div>`;
+  }
+  const examplesCount = ooExamplesForSession(s.id).reduce((sum, g) => sum + g.examples.length, 0);
+  const empty = !s.vocabIds.length && !s.sentenceIds.length && !s.grammarIds.length && !examplesCount;
   root.innerHTML = `
     <div class="topbar">
       <button class="ghost" onclick="ooGo('sessions')">‹ 返回上課紀錄</button>
       <h2>📅 ${esc(s.date)}</h2>
     </div>
     <div class="oo-item-row" style="background:#eaf5dd;border:none;font-weight:900;color:#4e8f24;">
-      📊 到這次上課為止，累計：單字 ${ooCumulativeAt(s, "vocab")}・短句 ${ooCumulativeAt(s, "sentences")}・文法 ${ooCumulativeAt(s, "grammar")}
+      📊 到這次上課為止，累計：單字 ${ooCumulativeAt(s, "vocab")}・造句 ${ooExamplesCumulativeAt(s)}・短句 ${ooCumulativeAt(s, "sentences")}・文法 ${ooCumulativeAt(s, "grammar")}
     </div>
     <div style="height:14px;"></div>
-    ${block("🟩 單字", s.vocabIds, s.newVocabIds, oneOnOne.vocab)}
-    ${block("🟦 短句", s.sentenceIds, s.newSentenceIds, oneOnOne.sentences)}
-    ${block("🟨 文法", s.grammarIds, s.newGrammarIds, oneOnOne.grammar)}
+    ${block("🟩 單字", s.vocabIds, s.newVocabIds, oneOnOne.vocab, { vocab: true })}
+    ${compositionsBlock()}
+    ${block("🟨 短句", s.sentenceIds, s.newSentenceIds, oneOnOne.sentences)}
+    ${block("📘 文法", s.grammarIds, s.newGrammarIds, oneOnOne.grammar)}
     ${empty ? `<div class="empty-fox"><span class="ef-icon">🌱</span>這次上課還沒有內容</div>` : ""}`;
 }
 
-/* ---- 新增上課紀錄的彈窗 ---- */
+/* ---- 新增上課紀錄的彈窗（單字／短句／文法；造句改為附屬在單字裡新增） ---- */
 function ooEnsureAddModal() {
   if (document.getElementById("ooAddMask")) return;
   const modal = document.createElement("div");
@@ -5125,11 +5311,13 @@ function ooEnsureAddModal() {
       <label style="font-weight:900;color:#4e8f24;">🟩 單字（每行一個，可用「韓文｜中文」）</label>
       <textarea id="ooAddVocab" class="oo-textarea" rows="5" placeholder="먹다｜吃&#10;학교｜學校" style="margin:6px 0 16px;"></textarea>
 
-      <label style="font-weight:900;color:#4e8f24;">🟦 短句（每行一句）</label>
+      <label style="font-weight:900;color:#4e8f24;">🟨 短句（每行一句）</label>
       <textarea id="ooAddSentence" class="oo-textarea" rows="4" placeholder="오늘 뭐 했어요?｜今天做了什麼？" style="margin:6px 0 16px;"></textarea>
 
-      <label style="font-weight:900;color:#4e8f24;">🟨 文法（每行一個）</label>
+      <label style="font-weight:900;color:#4e8f24;">📘 文法（每行一個）</label>
       <textarea id="ooAddGrammar" class="oo-textarea" rows="3" placeholder="-았/었어요｜過去式" style="margin:6px 0 16px;"></textarea>
+
+      <div style="font-size:12px;color:var(--muted);font-weight:800;margin-bottom:10px;">💬 造句要新增的話，儲存後點進單字裡的「＋ 新增造句」即可，會自動歸在這次上課。</div>
 
       <button class="primary cute-btn" style="width:100%;" onclick="ooSubmitAddSession()">💾 儲存上課紀錄</button>
     </div>`;
@@ -5167,7 +5355,7 @@ function ooSubmitAddSession() {
 }
 function ooShowSummary(summary) {
   const parts = [];
-  [["vocab", "🟩 單字"], ["sentence", "🟦 短句"], ["grammar", "🟨 文法"]].forEach(([key, label]) => {
+  [["vocab", "🟩 單字"], ["sentence", "🟨 短句"], ["grammar", "📘 文法"]].forEach(([key, label]) => {
     const s = summary[key];
     if (!s.new.length && !s.existing.length) return;
     parts.push(`
@@ -5189,6 +5377,7 @@ function ooShowSummary(summary) {
     </div>`;
   document.body.appendChild(modal);
 }
+
 
 /* ===== 學習活動紀錄 (for streak + GitHub 風格日曆) ===== */
 const ACTIVITY_LOG_KEY = "b1a4ActivityLog";
