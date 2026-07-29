@@ -3641,9 +3641,26 @@ body.overlay-open .fab-wrap { display:none !important; }
             <button type="button" class="ghost" style="font-size:13px;padding:8px 14px;" onclick="checkDuplicateWordsAcrossLibrary()">🔁 檢查重複（跨題庫）</button>
           </div>
 
+          <div class="card" style="padding:20px 22px;margin-bottom:18px;cursor:pointer;display:flex;align-items:center;gap:16px;" onclick="goPage('oneOnOne')">
+            <div style="font-size:34px;">📁</div>
+            <div style="flex:1;">
+              <div style="font-weight:1000;font-size:17px;">1對1上課</div>
+              <div id="ooEntryMeta" style="font-size:13px;color:var(--muted);font-weight:800;margin-top:4px;">單字 0・短句 0・文法 0・上課紀錄 0</div>
+            </div>
+            <div style="color:#4e8f24;font-weight:900;">進入 ›</div>
+          </div>
+
           <div id="folderSearchEmpty" class="empty" style="display:none;">找不到符合的題庫</div>
           <div id="folderGrid" class="folder-grid"></div>
         </div>
+      </section>
+
+      <section id="oneOnOne" class="page">
+        <div class="topbar">
+          <button class="ghost" onclick="goPage('library')">‹ 返回題庫</button>
+          <h2>📁 1對1上課</h2>
+        </div>
+        <div id="ooRoot"></div>
       </section>
 
       <section id="situational" class="page">
@@ -4905,6 +4922,264 @@ let categories = JSON.parse(localStorage.getItem("b1a4_categories_v1") || "[]");
 let collapsedCategories = JSON.parse(localStorage.getItem("b1a4_collapsed_categories") || "[]");
 let stats = JSON.parse(localStorage.getItem("b1a4_green_study_stats_v3") || "{\"practice\":0}");
 
+/* ===== 📁 1對1上課：單字／短句／文法「只留一份」＋上課紀錄只做引用 ===== */
+const OO_STORAGE_KEY = "bana_oneOnOne_v1";
+let oneOnOne = (function () {
+  try {
+    const saved = JSON.parse(localStorage.getItem(OO_STORAGE_KEY) || "null");
+    if (saved && typeof saved === "object") {
+      return {
+        vocab: Array.isArray(saved.vocab) ? saved.vocab : [],
+        sentences: Array.isArray(saved.sentences) ? saved.sentences : [],
+        grammar: Array.isArray(saved.grammar) ? saved.grammar : [],
+        sessions: Array.isArray(saved.sessions) ? saved.sessions : []
+      };
+    }
+  } catch (e) {}
+  return { vocab: [], sentences: [], grammar: [], sessions: [] };
+})();
+let ooView = "main";
+let ooCurrentSessionId = null;
+
+function ooId(prefix) { return prefix + "_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function ooSave() {
+  localStorage.setItem(OO_STORAGE_KEY, JSON.stringify(oneOnOne));
+  if (typeof scheduleCloudSave === "function") scheduleCloudSave();
+  ooUpdateEntryCard();
+}
+function ooUpdateEntryCard() {
+  const el = document.getElementById("ooEntryMeta");
+  if (!el) return;
+  el.textContent = `單字 ${oneOnOne.vocab.length}・短句 ${oneOnOne.sentences.length}・文法 ${oneOnOne.grammar.length}・上課紀錄 ${oneOnOne.sessions.length}`;
+}
+
+/* 解析老師貼上的內容：每行一筆，可以只有韓文，也可以用「韓文｜中文」或「韓文|中文」或 Tab 分隔 */
+function ooParseLines(text) {
+  return (text || "").split("\n").map(l => l.trim()).filter(Boolean).map(line => {
+    let kr = line, zh = "";
+    if (line.includes("\t")) {
+      const i = line.indexOf("\t"); kr = line.slice(0, i); zh = line.slice(i + 1);
+    } else if (line.includes("｜")) {
+      const i = line.indexOf("｜"); kr = line.slice(0, i); zh = line.slice(i + 1);
+    } else if (line.includes("|")) {
+      const i = line.indexOf("|"); kr = line.slice(0, i); zh = line.slice(i + 1);
+    }
+    return { kr: kr.trim(), zh: zh.trim() };
+  });
+}
+
+/* 新增一次上課紀錄：已存在的資料只被「引用」，不會建立第二份 */
+function ooAddSession(dateStr, vocabText, sentenceText, grammarText) {
+  const session = {
+    id: ooId("sess"), date: dateStr || today(),
+    vocabIds: [], sentenceIds: [], grammarIds: [],
+    newVocabIds: [], newSentenceIds: [], newGrammarIds: [],
+    createdAt: Date.now()
+  };
+  const summary = { vocab: { new: [], existing: [] }, sentence: { new: [], existing: [] }, grammar: { new: [], existing: [] } };
+
+  function processCategory(text, masterArr, idsKey, newIdsKey, summaryKey, idPrefix) {
+    ooParseLines(text).forEach(it => {
+      if (!it.kr) return;
+      const found = masterArr.find(x => x.kr === it.kr);
+      if (found) {
+        if (!session[idsKey].includes(found.id)) session[idsKey].push(found.id);
+        summary[summaryKey].existing.push(found.kr);
+      } else {
+        const entry = { id: ooId(idPrefix), kr: it.kr, zh: it.zh, firstSessionId: session.id, createdAt: Date.now() };
+        masterArr.push(entry);
+        session[idsKey].push(entry.id);
+        session[newIdsKey].push(entry.id);
+        summary[summaryKey].new.push(entry.kr);
+      }
+    });
+  }
+
+  processCategory(vocabText, oneOnOne.vocab, "vocabIds", "newVocabIds", "vocab", "oovoc");
+  processCategory(sentenceText, oneOnOne.sentences, "sentenceIds", "newSentenceIds", "sentence", "oosen");
+  processCategory(grammarText, oneOnOne.grammar, "grammarIds", "newGrammarIds", "grammar", "oogram");
+
+  oneOnOne.sessions.unshift(session);
+  ooSave();
+  return { session, summary };
+}
+
+/* ---- 畫面渲染 ---- */
+function ooGo(view) { ooView = view; ooCurrentSessionId = null; ooRender(); }
+function ooRender() {
+  const root = document.getElementById("ooRoot");
+  if (!root) return;
+  if (ooView === "vocab") return ooRenderSimpleList(root, "vocab", "🟩 單字");
+  if (ooView === "sentence") return ooRenderSimpleList(root, "sentences", "🟦 短句");
+  if (ooView === "grammar") return ooRenderSimpleList(root, "grammar", "🟨 文法");
+  if (ooView === "sessions") return ooRenderSessions(root);
+  if (ooView === "sessionDetail") return ooRenderSessionDetail(root);
+  return ooRenderMain(root);
+}
+function ooRenderMain(root) {
+  root.innerHTML = `
+    <div class="oo-grid">
+      <div class="oo-tile" onclick="ooGo('vocab')"><div class="oo-tile-emoji">🟩</div><div class="oo-tile-title">單字</div><div class="oo-tile-meta">${oneOnOne.vocab.length} 個</div></div>
+      <div class="oo-tile" onclick="ooGo('sentence')"><div class="oo-tile-emoji">🟦</div><div class="oo-tile-title">短句</div><div class="oo-tile-meta">${oneOnOne.sentences.length} 句</div></div>
+      <div class="oo-tile" onclick="ooGo('grammar')"><div class="oo-tile-emoji">🟨</div><div class="oo-tile-title">文法</div><div class="oo-tile-meta">${oneOnOne.grammar.length} 個</div></div>
+      <div class="oo-tile" onclick="ooGo('sessions')"><div class="oo-tile-emoji">🗂️</div><div class="oo-tile-title">上課紀錄</div><div class="oo-tile-meta">${oneOnOne.sessions.length} 次</div></div>
+    </div>`;
+}
+function ooListHtml(list) {
+  if (!list.length) return `<div class="empty-fox"><span class="ef-icon">🌱</span>還沒有資料，從「上課紀錄」新增一次上課內容吧！</div>`;
+  return list.slice().reverse().map(it => `
+    <div class="oo-item-row"><span class="oo-item-kr">${esc(it.kr)}</span>${it.zh ? `<span class="oo-item-zh">${esc(it.zh)}</span>` : ""}</div>`).join("");
+}
+function ooRenderSimpleList(root, arrKey, title) {
+  const list = oneOnOne[arrKey] || [];
+  root.innerHTML = `
+    <div class="topbar">
+      <button class="ghost" onclick="ooGo('main')">‹ 返回</button>
+      <h2>${title}（${list.length}）</h2>
+    </div>
+    <input class="folder-search-input" placeholder="🔍 搜尋..." oninput="ooFilterList('${arrKey}', this.value)">
+    <div id="ooListWrap">${ooListHtml(list)}</div>`;
+}
+function ooFilterList(arrKey, q) {
+  q = (q || "").trim().toLowerCase();
+  const list = (oneOnOne[arrKey] || []).filter(it => !q || it.kr.toLowerCase().includes(q) || (it.zh || "").toLowerCase().includes(q));
+  const wrap = document.getElementById("ooListWrap");
+  if (wrap) wrap.innerHTML = ooListHtml(list);
+}
+function ooRenderSessions(root) {
+  const sessions = oneOnOne.sessions;
+  root.innerHTML = `
+    <div class="topbar">
+      <button class="ghost" onclick="ooGo('main')">‹ 返回</button>
+      <h2>🗂️ 上課紀錄（${sessions.length}）</h2>
+      <button class="primary" onclick="ooOpenAddSession()">＋ 新增上課紀錄</button>
+    </div>
+    <div id="ooSessionListWrap">
+      ${sessions.length ? sessions.map(s => `
+        <div class="oo-session-row" onclick="ooOpenSessionDetail('${s.id}')">
+          <div class="oo-session-date">📅 ${esc(s.date)}</div>
+          <div class="oo-session-counts">
+            <span>短句：${s.sentenceIds.length}</span>
+            <span>單字：${s.vocabIds.length}</span>
+            <span>文法：${s.grammarIds.length}</span>
+          </div>
+        </div>`).join("") : `<div class="empty-fox"><span class="ef-icon">🗂️</span>還沒有上課紀錄，按上面「＋ 新增上課紀錄」開始吧！</div>`}
+    </div>`;
+}
+function ooOpenSessionDetail(id) { ooCurrentSessionId = id; ooView = "sessionDetail"; ooRender(); }
+function ooRenderSessionDetail(root) {
+  const s = oneOnOne.sessions.find(x => x.id === ooCurrentSessionId);
+  if (!s) { ooView = "sessions"; return ooRenderSessions(root); }
+  function block(title, ids, newIds, masterArr) {
+    if (!ids.length) return "";
+    return `<div style="margin-bottom:18px;">
+      <div style="font-weight:1000;margin-bottom:8px;">${title}（${ids.length}）</div>
+      ${ids.map(id => {
+        const item = masterArr.find(x => x.id === id);
+        if (!item) return "";
+        const isNew = newIds.includes(id);
+        return `<div class="oo-item-row">
+          <span class="${isNew ? "oo-chip-new" : "oo-chip-old"}">${isNew ? "✨ 新增" : "🔁 已學過"}</span>
+          <span class="oo-item-kr">${esc(item.kr)}</span>${item.zh ? `<span class="oo-item-zh">${esc(item.zh)}</span>` : ""}
+        </div>`;
+      }).join("")}
+    </div>`;
+  }
+  const empty = !s.vocabIds.length && !s.sentenceIds.length && !s.grammarIds.length;
+  root.innerHTML = `
+    <div class="topbar">
+      <button class="ghost" onclick="ooGo('sessions')">‹ 返回上課紀錄</button>
+      <h2>📅 ${esc(s.date)}</h2>
+    </div>
+    ${block("🟩 單字", s.vocabIds, s.newVocabIds, oneOnOne.vocab)}
+    ${block("🟦 短句", s.sentenceIds, s.newSentenceIds, oneOnOne.sentences)}
+    ${block("🟨 文法", s.grammarIds, s.newGrammarIds, oneOnOne.grammar)}
+    ${empty ? `<div class="empty-fox"><span class="ef-icon">🌱</span>這次上課還沒有內容</div>` : ""}`;
+}
+
+/* ---- 新增上課紀錄的彈窗 ---- */
+function ooEnsureAddModal() {
+  if (document.getElementById("ooAddMask")) return;
+  const modal = document.createElement("div");
+  modal.id = "ooAddMask";
+  modal.className = "hero-modal-mask";
+  modal.innerHTML = `
+    <div class="hero-modal" style="width:min(640px,100%);max-height:88vh;overflow:auto;">
+      <div class="hero-modal-head">
+        <div class="hero-modal-title">🗂️ 新增上課紀錄</div>
+        <button class="hero-modal-close" type="button" onclick="ooCloseAddSession()">關閉</button>
+      </div>
+      <label style="font-weight:900;color:#4e8f24;">📅 上課日期</label>
+      <input type="date" id="ooAddDate" class="cute-input" style="margin:6px 0 16px;width:100%;">
+
+      <label style="font-weight:900;color:#4e8f24;">🟩 單字（每行一個，可用「韓文｜中文」）</label>
+      <textarea id="ooAddVocab" class="oo-textarea" rows="5" placeholder="먹다｜吃&#10;학교｜學校" style="margin:6px 0 16px;"></textarea>
+
+      <label style="font-weight:900;color:#4e8f24;">🟦 短句（每行一句）</label>
+      <textarea id="ooAddSentence" class="oo-textarea" rows="4" placeholder="오늘 뭐 했어요?｜今天做了什麼？" style="margin:6px 0 16px;"></textarea>
+
+      <label style="font-weight:900;color:#4e8f24;">🟨 文法（每行一個）</label>
+      <textarea id="ooAddGrammar" class="oo-textarea" rows="3" placeholder="-았/었어요｜過去式" style="margin:6px 0 16px;"></textarea>
+
+      <button class="primary cute-btn" style="width:100%;" onclick="ooSubmitAddSession()">💾 儲存上課紀錄</button>
+    </div>`;
+  document.body.appendChild(modal);
+}
+function ooOpenAddSession() {
+  ooEnsureAddModal();
+  document.getElementById("ooAddDate").value = new Date().toISOString().slice(0, 10);
+  document.getElementById("ooAddVocab").value = "";
+  document.getElementById("ooAddSentence").value = "";
+  document.getElementById("ooAddGrammar").value = "";
+  document.getElementById("ooAddMask").classList.add("show");
+}
+function ooCloseAddSession() {
+  const m = document.getElementById("ooAddMask");
+  if (m) m.classList.remove("show");
+}
+function ooSubmitAddSession() {
+  const raw = document.getElementById("ooAddDate").value;
+  const date = raw ? raw.replaceAll("-", "/") : today();
+  const vocabText = document.getElementById("ooAddVocab").value;
+  const sentenceText = document.getElementById("ooAddSentence").value;
+  const grammarText = document.getElementById("ooAddGrammar").value;
+  if (!vocabText.trim() && !sentenceText.trim() && !grammarText.trim()) {
+    alert("請至少輸入一項內容（單字／短句／文法）");
+    return;
+  }
+  const { session, summary } = ooAddSession(date, vocabText, sentenceText, grammarText);
+  ooCloseAddSession();
+  ooShowSummary(summary);
+  ooCurrentSessionId = session.id;
+  ooView = "sessionDetail";
+  ooRender();
+  if (typeof logActivity === "function") logActivity("oneOnOne", session.vocabIds.length + session.sentenceIds.length + session.grammarIds.length);
+}
+function ooShowSummary(summary) {
+  const parts = [];
+  [["vocab", "🟩 單字"], ["sentence", "🟦 短句"], ["grammar", "🟨 文法"]].forEach(([key, label]) => {
+    const s = summary[key];
+    if (!s.new.length && !s.existing.length) return;
+    parts.push(`
+      <div style="margin-bottom:14px;">
+        <div style="font-weight:1000;margin-bottom:6px;">${label}　新增：${s.new.length}　已存在：${s.existing.length}</div>
+        ${s.new.length ? `<div style="font-size:13px;color:#4e8f24;font-weight:800;">✨ 新增：${s.new.map(esc).join("、")}</div>` : ""}
+        ${s.existing.length ? `<div style="font-size:13px;color:var(--muted);font-weight:800;margin-top:4px;">🔁 已存在：${s.existing.map(esc).join("、")}</div>` : ""}
+      </div>`);
+  });
+  const modal = document.createElement("div");
+  modal.className = "hero-modal-mask show";
+  modal.innerHTML = `
+    <div class="hero-modal" style="width:min(560px,100%);max-height:80vh;overflow:auto;">
+      <div class="hero-modal-head">
+        <div class="hero-modal-title">✅ 上課紀錄已儲存</div>
+        <button class="hero-modal-close" type="button" onclick="this.closest('.hero-modal-mask').remove()">關閉</button>
+      </div>
+      ${parts.join("") || `<div class="empty">這次沒有新增任何內容。</div>`}
+    </div>`;
+  document.body.appendChild(modal);
+}
+
 /* ===== 學習活動紀錄 (for streak + GitHub 風格日曆) ===== */
 const ACTIVITY_LOG_KEY = "b1a4ActivityLog";
 let activityLog = {};
@@ -5456,6 +5731,7 @@ function goPage(id) {
   if (id === "dialogue" && typeof renderDialogueList === "function") renderDialogueList();
   if (id === "reading" && typeof renderReadingHome === "function") renderReadingHome();
   if (id === "situational" && typeof renderSituationalHome === "function") renderSituationalHome();
+  if (id === "oneOnOne") { ooView = "main"; ooCurrentSessionId = null; ooRender(); }
   renderGraduationPanel();
   updateFolderGraduationBadges();
   renderStudyUpgradePanel();
@@ -9340,6 +9616,22 @@ function installHeroManager() {
     .hero-modal-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
     .hero-modal-title{font-size:24px;font-weight:1000;color:#315321}
     .hero-modal-close{border:0;background:#eef8df;color:#315321;border-radius:999px;padding:8px 12px;font-weight:1000;cursor:pointer}
+    .oo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:22px;margin-top:22px;}
+    .oo-tile{background:#fff;border:1px solid var(--line);border-radius:20px;padding:30px 18px;text-align:center;cursor:pointer;box-shadow:0 12px 24px rgba(67,105,44,.07);transition:transform .15s;}
+    .oo-tile:hover{transform:translateY(-3px);}
+    .oo-tile-emoji{font-size:36px;margin-bottom:10px;}
+    .oo-tile-title{font-weight:1000;font-size:17px;margin-bottom:6px;}
+    .oo-tile-meta{font-size:13px;color:var(--muted);font-weight:800;}
+    .oo-session-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:12px;cursor:pointer;box-shadow:0 8px 18px rgba(67,105,44,.06);}
+    .oo-session-row:hover{transform:translateY(-2px);}
+    .oo-session-date{font-weight:1000;font-size:16px;}
+    .oo-session-counts{font-size:13px;color:var(--muted);font-weight:800;display:flex;gap:14px;}
+    .oo-item-row{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin-bottom:8px;flex-wrap:wrap;}
+    .oo-item-kr{font-weight:900;}
+    .oo-item-zh{color:var(--muted);font-size:13px;}
+    .oo-chip-new{background:#fff1d6;color:#a06b00;border-radius:10px;padding:3px 9px;font-size:12px;font-weight:900;white-space:nowrap;}
+    .oo-chip-old{background:#e3f0d2;color:#4e8f24;border-radius:10px;padding:3px 9px;font-size:12px;font-weight:900;white-space:nowrap;}
+    .oo-textarea{width:100%;border:1px solid var(--line);border-radius:14px;padding:10px 12px;font-family:inherit;font-size:14px;resize:vertical;}
     .hero-add-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:14px;border-radius:20px;background:#f4faed;border:1px solid #d9ecc4;margin-bottom:14px}
     .hero-add-row input[type=file]{max-width:260px}
     .hero-add-row input[type=text]{min-width:220px;flex:1;border:1px solid #d9ecc4;border-radius:14px;padding:10px 12px;background:#fff}
@@ -13249,6 +13541,7 @@ setupFlashSwipe();
 
 initFirebaseSync();
 renderFolders();
+ooUpdateEntryCard();
 renderDashboard();
 try { history.replaceState({ page: "home" }, ""); } catch (e) {}
 
