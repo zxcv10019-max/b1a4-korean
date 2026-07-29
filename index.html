@@ -5278,20 +5278,90 @@ function ooExampleCardHtml(vocabId, ex, sessionId) {
     </div>
   </div>`;
 }
+/* 造句的新增／編輯：不跳 Modal，直接把那張卡片換成可編輯的輸入框（像 Notion／備忘錄那樣就地編輯） */
+let ooCardEditState = null; // { vocabId, exampleId: null|id, source, kr, zh, sessionId }
+function ooExampleEditCardHtml() {
+  const st = ooCardEditState;
+  return `<div class="oo-item-row" style="flex-direction:column;align-items:stretch;gap:8px;border-color:#9bc95d;border-width:2px;">
+    <input type="text" id="ooCardEditKr" class="cute-input" placeholder="韓文句子" value="${escapeAttr(st.kr || "")}" style="width:100%;box-sizing:border-box;">
+    <input type="text" id="ooCardEditZh" class="cute-input" placeholder="中文翻譯（選填）" value="${escapeAttr(st.zh || "")}" style="width:100%;box-sizing:border-box;">
+    <div class="btns">
+      <button class="ghost" style="flex:1;" onclick="ooCancelExampleCardEdit()">✖ 取消</button>
+      <button class="primary" style="flex:1;" onclick="ooSaveExampleCardEdit()">✔ 完成</button>
+    </div>
+  </div>`;
+}
 let ooExampleTabState = {};
-function ooSetExampleTab(vocabId, tab) { ooExampleTabState[vocabId] = tab; ooRender(); }
+function ooSetExampleTab(vocabId, tab) {
+  if (ooCardEditState && ooCardEditState.vocabId === vocabId) ooCardEditState = null;
+  ooExampleTabState[vocabId] = tab;
+  ooRender();
+}
 function ooExampleTabsHtml(vocabId, examples, sessionId) {
   const teacherEx = examples.filter(e => e.source === "teacher");
   const aiEx = examples.filter(e => e.source === "ai");
   const active = ooExampleTabState[vocabId] || "teacher";
-  const tabBar = `<div class="btns" style="gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+  const tabBar = `<div class="btns" style="gap:6px;margin-bottom:10px;flex-wrap:wrap;align-items:center;">
     <button class="${active === "teacher" ? "primary" : "ghost"}" style="padding:6px 12px;font-size:12px;" onclick="event.stopPropagation();ooSetExampleTab('${vocabId}','teacher')">👨‍🏫 老師（${teacherEx.length}）</button>
     <button class="${active === "ai" ? "primary" : "ghost"}" style="padding:6px 12px;font-size:12px;" onclick="event.stopPropagation();ooSetExampleTab('${vocabId}','ai')">🤖 AI（${aiEx.length}）</button>
-    <button class="ghost" style="padding:6px 12px;font-size:12px;" onclick="event.stopPropagation();ooOpenAddExampleFor('${vocabId}','${sessionId || ""}','ai')">✨ AI幫我造句</button>
+    <button class="ghost" style="padding:6px 12px;font-size:12px;" onclick="event.stopPropagation();ooStartAiExampleCard('${vocabId}','${sessionId || ""}')">✨ AI幫我造句</button>
+    <span style="margin-left:auto;font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer;" onclick="event.stopPropagation();ooOpenApiKeySettings()">⚙️</span>
   </div>`;
   const list = active === "ai" ? aiEx : teacherEx;
-  const listHtml = list.length ? list.map(ex => ooExampleCardHtml(vocabId, ex, sessionId)).join("") : `<div class="empty" style="padding:8px 0;">還沒有${active === "ai" ? "AI" : "老師"}造句</div>`;
-  return tabBar + listHtml + `<button class="ghost" style="width:100%;margin-top:8px;" onclick="event.stopPropagation();ooOpenAddExampleFor('${vocabId}','${sessionId || ""}')">＋ 新增造句</button>`;
+  const editingHere = ooCardEditState && ooCardEditState.vocabId === vocabId && ooCardEditState.source === active;
+  let bodyHtml;
+  if (!list.length && !editingHere) {
+    bodyHtml = `<div class="empty" style="padding:8px 0;">還沒有${active === "ai" ? "AI" : "老師"}造句</div>`;
+  } else {
+    bodyHtml = list.map(ex => (editingHere && ooCardEditState.exampleId === ex.id) ? ooExampleEditCardHtml() : ooExampleCardHtml(vocabId, ex, sessionId)).join("");
+    if (editingHere && ooCardEditState.exampleId === null) bodyHtml += ooExampleEditCardHtml();
+  }
+  const addBtn = editingHere ? "" : `<button class="ghost" style="width:100%;margin-top:8px;" onclick="event.stopPropagation();ooStartNewExampleCard('${vocabId}','${active}','${sessionId || ""}')">➕ 新增一句</button>`;
+  return tabBar + bodyHtml + addBtn;
+}
+function ooStartNewExampleCard(vocabId, source, sessionId) {
+  ooCardEditState = { vocabId, exampleId: null, source, kr: "", zh: "", sessionId: sessionId || null };
+  ooRender();
+}
+async function ooStartAiExampleCard(vocabId, sessionId) {
+  ooCardEditState = { vocabId, exampleId: null, source: "ai", kr: "", zh: "", sessionId: sessionId || null };
+  ooExampleTabState[vocabId] = "ai";
+  ooRender();
+  const v = oneOnOne.vocab.find(x => x.id === vocabId);
+  if (!v) return;
+  const result = await ooGenerateAiSentence(v.kr, v.zh);
+  if (!result || !ooCardEditState || ooCardEditState.vocabId !== vocabId || ooCardEditState.exampleId !== null) return;
+  ooCardEditState.kr = result.korean || "";
+  ooCardEditState.zh = result.chinese || "";
+  ooRender();
+}
+function ooOpenEditExample(vocabId, exampleId, sessionId) {
+  const v = oneOnOne.vocab.find(x => x.id === vocabId);
+  const ex = v && (v.examples || []).find(e => e.id === exampleId);
+  if (!ex) return;
+  ooCardEditState = { vocabId, exampleId, source: ex.source, kr: ex.korean, zh: ex.chinese, sessionId: sessionId || ex.sessionId || null };
+  ooExampleTabState[vocabId] = ex.source;
+  ooRender();
+}
+function ooCancelExampleCardEdit() {
+  ooCardEditState = null;
+  ooRender();
+}
+function ooSaveExampleCardEdit() {
+  const st = ooCardEditState;
+  if (!st) return;
+  const kr = (document.getElementById("ooCardEditKr")?.value || "").trim();
+  if (!kr) { alert("請輸入韓文句子"); return; }
+  const zh = (document.getElementById("ooCardEditZh")?.value || "").trim();
+  if (st.exampleId) {
+    const v = oneOnOne.vocab.find(x => x.id === st.vocabId);
+    const ex = v && (v.examples || []).find(e => e.id === st.exampleId);
+    if (ex) { ex.source = st.source; ex.korean = kr; ex.chinese = zh; ooSave(); }
+  } else {
+    ooAddExample(st.vocabId, st.source, kr, zh, st.sessionId);
+  }
+  ooCardEditState = null;
+  ooRender();
 }
 function ooCopyExample(kr, zh) {
   const text = zh ? `${kr}\n${zh}` : kr;
@@ -5528,94 +5598,6 @@ function ooRenderVocabDetail(root) {
       <h2>${esc(v.kr)}　${esc(v.zh || "")}</h2>
     </div>
     ${ooExampleTabsHtml(v.id, v.examples, ret.sessionId)}`;
-}
-
-/* 新增／編輯造句的彈窗：選來源（老師造句／AI造句）＋ 韓文／中文，卡片式清單取代 textarea 直接輸入 */
-let ooExampleModalVocabId = null;
-let ooExampleModalSessionId = null;
-let ooExampleModalEditId = null;
-function ooEnsureExampleModal() {
-  if (document.getElementById("ooExampleMask")) return;
-  const modal = document.createElement("div");
-  modal.id = "ooExampleMask";
-  modal.className = "hero-modal-mask";
-  modal.innerHTML = `
-    <div class="hero-modal" style="width:min(520px,100%);max-height:88vh;overflow:auto;">
-      <div class="hero-modal-head">
-        <div class="hero-modal-title" id="ooExampleModalTitle">📝 新增造句</div>
-        <button class="hero-modal-close" type="button" onclick="ooCloseAddExample()">關閉</button>
-      </div>
-      <div style="font-weight:900;color:#4e8f24;margin-bottom:8px;">造句來源</div>
-      <div style="display:flex;gap:18px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
-        <label style="display:flex;align-items:center;gap:6px;font-weight:900;cursor:pointer;"><input type="radio" name="ooExSource" value="teacher" checked> 👩‍🏫 老師造句</label>
-        <label style="display:flex;align-items:center;gap:6px;font-weight:900;cursor:pointer;"><input type="radio" name="ooExSource" value="ai"> 🤖 AI造句</label>
-        <button type="button" class="ghost" style="padding:4px 10px;font-size:12px;" onclick="ooFillAiSentence('ooExampleKr','ooExampleZh', ooExampleModalVocabId, 'ooExSource')">🪄 請AI幫我造句</button>
-      </div>
-      <label style="font-weight:900;color:#4e8f24;">韓文句子</label>
-      <textarea id="ooExampleKr" class="oo-textarea" rows="2" style="margin:6px 0 14px;"></textarea>
-      <label style="font-weight:900;color:#4e8f24;">中文翻譯（選填）</label>
-      <textarea id="ooExampleZh" class="oo-textarea" rows="2" style="margin:6px 0 16px;"></textarea>
-      <div class="btns">
-        <button class="ghost" style="flex:1;" onclick="ooCloseAddExample()">取消</button>
-        <button class="primary cute-btn" style="flex:1;" onclick="ooSubmitAddExample()">💾 儲存</button>
-      </div>
-      <div style="text-align:right;margin-top:6px;"><span style="font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer;" onclick="ooOpenApiKeySettings()">⚙️ 設定AI金鑰</span></div>
-    </div>`;
-  document.body.appendChild(modal);
-}
-function ooOpenExampleModalCommon(prefill, titleText) {
-  ooEnsureExampleModal();
-  document.getElementById("ooExampleKr").value = prefill ? (prefill.korean || "") : "";
-  document.getElementById("ooExampleZh").value = prefill ? (prefill.chinese || "") : "";
-  const src = prefill ? prefill.source : "teacher";
-  document.getElementsByName("ooExSource").forEach(r => { r.checked = (r.value === src); });
-  const titleEl = document.getElementById("ooExampleModalTitle");
-  if (titleEl) titleEl.textContent = titleText || (prefill ? "✏️ 編輯造句" : "📝 新增造句");
-  document.getElementById("ooExampleMask").classList.add("show");
-}
-/* 從單字詳細頁的「＋新增造句」按鈕開啟 */
-function ooOpenAddExample() {
-  ooExampleModalVocabId = ooCurrentVocabId;
-  const ret = ooVocabDetailReturn || {};
-  ooExampleModalSessionId = (ret.view === "sessionDetail" && ret.sessionId) ? ret.sessionId : null;
-  ooExampleModalEditId = null;
-  ooOpenExampleModalCommon(null);
-}
-/* 從上課紀錄裡單字展開列的分頁（或任何地方）直接開啟，指定 vocabId／sessionId／預設來源 */
-function ooOpenAddExampleFor(vocabId, sessionId, defaultSource) {
-  ooExampleModalVocabId = vocabId;
-  ooExampleModalSessionId = sessionId || null;
-  ooExampleModalEditId = null;
-  ooOpenExampleModalCommon(defaultSource ? { source: defaultSource } : null);
-}
-function ooOpenEditExample(vocabId, exampleId, sessionId) {
-  const v = oneOnOne.vocab.find(x => x.id === vocabId);
-  const ex = v && (v.examples || []).find(e => e.id === exampleId);
-  if (!ex) return;
-  ooExampleModalVocabId = vocabId;
-  ooExampleModalSessionId = sessionId || null;
-  ooExampleModalEditId = exampleId;
-  ooOpenExampleModalCommon(ex, "✏️ 編輯造句");
-}
-function ooCloseAddExample() {
-  const m = document.getElementById("ooExampleMask");
-  if (m) m.classList.remove("show");
-}
-function ooSubmitAddExample() {
-  const kr = document.getElementById("ooExampleKr").value.trim();
-  if (!kr) { alert("請輸入韓文句子"); return; }
-  const zh = document.getElementById("ooExampleZh").value.trim();
-  let source = "teacher";
-  document.getElementsByName("ooExSource").forEach(r => { if (r.checked) source = r.value; });
-  if (ooExampleModalEditId) {
-    const v = oneOnOne.vocab.find(x => x.id === ooExampleModalVocabId);
-    const ex = v && (v.examples || []).find(e => e.id === ooExampleModalEditId);
-    if (ex) { ex.source = source === "ai" ? "ai" : "teacher"; ex.korean = kr; ex.chinese = zh; ooSave(); }
-  } else {
-    ooAddExample(ooExampleModalVocabId, source, kr, zh, ooExampleModalSessionId);
-  }
-  ooCloseAddExample();
-  ooRender();
 }
 
 function ooListHtml(list) {
