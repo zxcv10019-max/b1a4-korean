@@ -5046,6 +5046,11 @@ function ooFilterList(arrKey, q) {
   const wrap = document.getElementById("ooListWrap");
   if (wrap) wrap.innerHTML = ooListHtml(list);
 }
+/* 累計統計：以「這次上課當下」為基準，自動從主資料庫算出累計量，不需要手動輸入 */
+function ooCumulativeAt(session, key) {
+  const arr = oneOnOne[key] || [];
+  return arr.filter(x => x.createdAt <= session.createdAt).length;
+}
 function ooRenderSessions(root) {
   const sessions = oneOnOne.sessions;
   root.innerHTML = `
@@ -5059,9 +5064,10 @@ function ooRenderSessions(root) {
         <div class="oo-session-row" onclick="ooOpenSessionDetail('${s.id}')">
           <div class="oo-session-date">📅 ${esc(s.date)}</div>
           <div class="oo-session-counts">
-            <span>短句：${s.sentenceIds.length}</span>
-            <span>單字：${s.vocabIds.length}</span>
-            <span>文法：${s.grammarIds.length}</span>
+            <span>短句 ${s.sentenceIds.length}</span>
+            <span>單字 ${s.vocabIds.length}（新 ${s.newVocabIds.length}）</span>
+            <span>文法 ${s.grammarIds.length}</span>
+            <span style="color:#4e8f24;">📊 累計單字 ${ooCumulativeAt(s, "vocab")}</span>
           </div>
         </div>`).join("") : `<div class="empty-fox"><span class="ef-icon">🗂️</span>還沒有上課紀錄，按上面「＋ 新增上課紀錄」開始吧！</div>`}
     </div>`;
@@ -5091,6 +5097,10 @@ function ooRenderSessionDetail(root) {
       <button class="ghost" onclick="ooGo('sessions')">‹ 返回上課紀錄</button>
       <h2>📅 ${esc(s.date)}</h2>
     </div>
+    <div class="oo-item-row" style="background:#eaf5dd;border:none;font-weight:900;color:#4e8f24;">
+      📊 到這次上課為止，累計：單字 ${ooCumulativeAt(s, "vocab")}・短句 ${ooCumulativeAt(s, "sentences")}・文法 ${ooCumulativeAt(s, "grammar")}
+    </div>
+    <div style="height:14px;"></div>
     ${block("🟩 單字", s.vocabIds, s.newVocabIds, oneOnOne.vocab)}
     ${block("🟦 短句", s.sentenceIds, s.newSentenceIds, oneOnOne.sentences)}
     ${block("🟨 文法", s.grammarIds, s.newGrammarIds, oneOnOne.grammar)}
