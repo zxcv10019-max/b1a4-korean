@@ -4382,6 +4382,7 @@ body.overlay-open .fab-wrap { display:none !important; }
     <button data-tab="practiceHub" onclick="goBottomTab('practiceHub')"><span class="bn-ico">🎮</span>學習</button>
     <button data-tab="progressHub" onclick="goBottomTab('progressHub')"><span class="bn-ico">📈</span>進度</button>
     <button data-tab="profile" onclick="goBottomTab('profile')"><span class="bn-ico">👤</span>我的</button>
+    <button data-tab="oneOnOne" onclick="goBottomTab('oneOnOne')"><span class="bn-ico">📁</span>1對1</button>
   </nav>
 </div>
 
@@ -5011,7 +5012,75 @@ function ooRemoveFromSession(category, itemId, sessionId) {
   ooRender();
 }
 
-/* 造句：附屬於單字，每個單字自己保管一份 examples 陣列，不獨立成一個題型 */
+/* 短句「編輯短句」彈窗共用主題庫的整套元件（AI翻譯／整句解析／單字解析／文法解析／補充說明），
+   這裡只負責存檔的目的地換成 oneOnOne.sentences，並且引用（不重複建立）到目前這次上課紀錄 */
+function ooSaveSentenceFromEditor(values) {
+  const sessionId = sentenceEditorContext && sentenceEditorContext.sessionId;
+  const s = oneOnOne.sessions.find(x => x.id === sessionId);
+  if (!s) { closeSentenceEditor(); return; }
+  if (sentenceEditingId) {
+    const entry = oneOnOne.sentences.find(x => x.id === sentenceEditingId);
+    if (entry) Object.assign(entry, values);
+  } else {
+    const found = oneOnOne.sentences.find(x => x.kr === values.kr);
+    if (found) {
+      if (!s.sentenceIds.includes(found.id)) s.sentenceIds.push(found.id);
+    } else {
+      const entry = Object.assign({ id: ooId("oosen"), firstSessionId: s.id, createdAt: Date.now() }, values);
+      oneOnOne.sentences.push(entry);
+      s.sentenceIds.push(entry.id);
+      s.newSentenceIds.push(entry.id);
+    }
+  }
+  ooSave();
+  if (typeof logActivity === "function") logActivity("oneOnOne", 1);
+  closeSentenceEditor();
+  ooRender();
+  if (typeof showSaveToast === "function") showSaveToast();
+}
+function ooMakeSentenceCardHtml(s, sessionId, isNew) {
+  const ex = sentenceExpanded[s.id] || {};
+  const teacherOn = !!teacherMode[s.id];
+  const items = s.items || [];
+  const grammarList = s.grammar || [];
+  const itemsHtml = items.length ? items.map((it, wi) => sentenceItemRowHtml(s.id, it, wi, teacherOn)).join("") : `<div class="empty" style="padding:8px 0;">尚無單字解析</div>`;
+  const grammarHtml = grammarList.length ? grammarList.map(g => sentenceGrammarCardHtml(g)).join("") : `<div class="empty" style="padding:8px 0;">尚無文法解析</div>`;
+  const chip = isNew ? `<span class="oo-chip-new">✨ 新增</span>` : `<span class="oo-chip-old">🔁 已學過</span>`;
+  return `
+    <div class="card sentence-card">
+      <div class="sen-head">
+        <div class="sen-kr">${chip} 🇰🇷 ${esc(s.kr)}</div>
+        <div class="btns">
+          <button class="gram-icon-btn" onclick="openSentenceEditor('${s.id}', {oo:true, sessionId:'${sessionId}'})" title="編輯／單字解析／AI">✏️</button>
+          <button class="gram-icon-btn" onclick="ooRemoveFromSession('sentences','${s.id}','${sessionId}')" title="從這次上課移除">🗑</button>
+        </div>
+      </div>
+      <div class="sen-zh">🇹🇼 ${esc(s.zh || "（尚未填寫翻譯）")}</div>
+      <div class="btns" style="margin-top:10px;">
+        <button class="ghost" onclick="speakKorean('${jsAttr(s.kr)}')">🔊 播放整句</button>
+        <button class="ghost" onclick="speakKoreanSlow('${jsAttr(s.kr)}')">🐢 慢速播放</button>
+      </div>
+
+      ${s.analysis ? `<div class="sen-section-toggle" onclick="toggleSentenceSection('${s.id}','analysis')">💡 整句解析<span>${ex.analysis ? "▴" : "▾"}</span></div><div class="sen-section-body ${ex.analysis ? "" : "sen-collapsed"}"><div class="sen-teacher-note">${esc(s.analysis).replace(/\n/g, "<br>")}</div></div>` : ""}
+
+      <div class="sen-section-toggle" onclick="toggleSentenceSection('${s.id}','words')">📖 單字解析（${items.length}）<span>${ex.words ? "▴" : "▾"}</span></div>
+      <div class="sen-section-body ${ex.words ? "" : "sen-collapsed"}">
+        <div class="btns" style="justify-content:flex-end;margin-bottom:8px;">
+          <button class="ghost" style="font-size:11px;" onclick="toggleTeacherMode('${s.id}')">${teacherOn ? "👀 顯示所有答案" : "🎓 老師模式"}</button>
+        </div>
+        <div class="sen-word-grid">${itemsHtml}</div>
+      </div>
+
+      <div class="sen-section-toggle" onclick="toggleSentenceSection('${s.id}','grammar')">📘 文法解析（${grammarList.length}）<span>${ex.grammar ? "▴" : "▾"}</span></div>
+      <div class="sen-section-body ${ex.grammar ? "" : "sen-collapsed"}"><div class="sen-word-grid">${grammarHtml}</div></div>
+
+      ${s.teacherNote ? `
+      <div class="sen-section-toggle" onclick="toggleSentenceSection('${s.id}','teacherNote')">📝 補充說明<span>${ex.teacherNote ? "▴" : "▾"}</span></div>
+      <div class="sen-section-body ${ex.teacherNote ? "" : "sen-collapsed"}"><div class="sen-teacher-note">${esc(s.teacherNote).replace(/\n/g, "<br>")}</div></div>` : ""}
+    </div>`;
+}
+
+
 function ooAddExample(vocabId, source, korean, chinese, sessionId) {
   const v = oneOnOne.vocab.find(x => x.id === vocabId);
   if (!v) return null;
@@ -5349,19 +5418,31 @@ function ooRenderSessions(root) {
             <span>短句 ${s.sentenceIds.length}</span>
             <span>文法 ${s.grammarIds.length}</span>
             <span style="color:#4e8f24;">📊 累計單字 ${ooCumulativeAt(s, "vocab")}</span>
+            <button class="ghost" style="padding:2px 8px;font-size:12px;" onclick="event.stopPropagation();ooDeleteSession('${s.id}')" title="刪除這筆上課紀錄">🗑</button>
           </div>
         </div>`).join("") : `<div class="empty-fox"><span class="ef-icon">🗂️</span>還沒有上課紀錄，按上面「＋ 新增上課紀錄」開始吧！</div>`}
     </div>`;
+}
+function ooDeleteSession(sessionId) {
+  const s = oneOnOne.sessions.find(x => x.id === sessionId);
+  if (!s) return;
+  if (!confirm(`確定要刪除「${s.date}」這筆上課紀錄嗎？\n（單字、短句、文法本身不會被刪除，只有這筆紀錄會消失）`)) return;
+  oneOnOne.sessions = oneOnOne.sessions.filter(x => x.id !== sessionId);
+  ooSave();
+  ooRender();
 }
 function ooOpenSessionDetail(id) { ooCurrentSessionId = id; ooExpandedVocabId = null; ooView = "sessionDetail"; ooRender(); }
 function ooRenderSessionDetail(root) {
   const s = oneOnOne.sessions.find(x => x.id === ooCurrentSessionId);
   if (!s) { ooView = "sessions"; return ooRenderSessions(root); }
   function categoryHeader(category, title, count) {
+    const addBtn = category === "sentences"
+      ? `<button class="ghost" style="padding:5px 10px;font-size:12px;" onclick="openSentenceEditor(null, {oo:true, sessionId:'${s.id}'})">＋ 新增</button>`
+      : `<button class="ghost" style="padding:5px 10px;font-size:12px;" onclick="ooOpenQuickAdd('${category}')">＋ 新增</button>`;
     return `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
       <div style="font-weight:1000;">${title}（${count}）</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="ghost" style="padding:5px 10px;font-size:12px;" onclick="ooOpenQuickAdd('${category}')">＋ 新增</button>
+        ${addBtn}
         <button class="ghost" style="padding:5px 10px;font-size:12px;" onclick="ooOpenBankPicker('${category}')">📚 從題庫加入</button>
       </div>
     </div>`;
@@ -5401,17 +5482,6 @@ function ooRenderSessionDetail(root) {
         <div style="text-align:right;margin-top:6px;"><span style="font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer;" onclick="ooOpenApiKeySettings()">⚙️ 設定AI金鑰</span></div>
       </div>`;
   }
-  function sentenceRow(item, isNew) {
-    const chip = isNew ? `<span class="oo-chip-new">✨ 新增</span>` : `<span class="oo-chip-old">🔁 已學過</span>`;
-    return `<div class="oo-item-row" style="flex-direction:column;align-items:stretch;gap:6px;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">${chip}<span class="oo-item-kr">${esc(item.kr)}</span>${item.zh ? `<span class="oo-item-zh">${esc(item.zh)}</span>` : ""}</div>
-        ${rowActions("sentences", item.id)}
-      </div>
-      ${item.teacherNote ? `<div style="font-size:12px;color:var(--muted);">👩‍🏫 ${esc(item.teacherNote)}</div>` : ""}
-      ${item.aiNote ? `<div style="font-size:12px;color:var(--muted);">🤖 ${esc(item.aiNote)}</div>` : ""}
-    </div>`;
-  }
   function grammarRow(item, isNew) {
     const chip = isNew ? `<span class="oo-chip-new">✨ 新增</span>` : `<span class="oo-chip-old">🔁 已學過</span>`;
     return `<div class="oo-item-row" style="flex-direction:column;align-items:stretch;gap:6px;">
@@ -5432,7 +5502,7 @@ function ooRenderSessionDetail(root) {
         if (!item) return "";
         const isNew = newIds.includes(id);
         if (category === "vocab") return vocabRowWithInline(item, isNew);
-        if (category === "sentences") return sentenceRow(item, isNew);
+        if (category === "sentences") return ooMakeSentenceCardHtml(item, s.id, isNew);
         return grammarRow(item, isNew);
       }).join("")}
     </div>`;
@@ -5457,6 +5527,7 @@ function ooRenderSessionDetail(root) {
     <div class="topbar">
       <button class="ghost" onclick="ooGo('sessions')">‹ 返回上課紀錄</button>
       <h2>📅 ${esc(s.date)}</h2>
+      <button class="ghost" onclick="ooDeleteSession('${s.id}')" title="刪除這筆上課紀錄">🗑 刪除</button>
     </div>
     <div class="oo-item-row" style="background:#eaf5dd;border:none;font-weight:900;color:#4e8f24;">
       📊 到這次上課為止，累計：單字 ${ooCumulativeAt(s, "vocab")}・造句 ${ooExamplesCumulativeAt(s)}・短句 ${ooCumulativeAt(s, "sentences")}・文法 ${ooCumulativeAt(s, "grammar")}
@@ -6148,7 +6219,8 @@ const BOTTOM_TAB_MAP = {
   practiceHub:"practiceHub", flash:"practiceHub", test:"practiceHub", match:"practiceHub", listen:"practiceHub",
   progressHub:"progressHub",
   aiHub:"profile", // 保留給任何遺留連結，實際頁面已移除
-  profile:"profile"
+  profile:"profile",
+  oneOnOne:"oneOnOne"
 };
 const VOCAB_PAGES = ["library","flash","grammar","sentence","reading","match","listen"];
 
@@ -10086,7 +10158,7 @@ function installHeroManager() {
     .oo-session-counts{font-size:13px;color:var(--muted);font-weight:800;display:flex;gap:14px;}
     .oo-item-row{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin-bottom:8px;flex-wrap:wrap;}
     .oo-item-kr{font-weight:900;}
-    .oo-item-zh{color:var(--muted);font-size:13px;}
+    .oo-item-zh{color:var(--muted);font-size:13px;display:block;width:100%;margin-top:2px;}
     .oo-chip-new{background:#fff1d6;color:#a06b00;border-radius:10px;padding:3px 9px;font-size:12px;font-weight:900;white-space:nowrap;}
     .oo-chip-old{background:#e3f0d2;color:#4e8f24;border-radius:10px;padding:3px 9px;font-size:12px;font-weight:900;white-space:nowrap;}
     .oo-chip-teacher{background:#e6efff;color:#2f5fa8;border-radius:10px;padding:3px 9px;font-size:12px;font-weight:900;white-space:nowrap;}
@@ -11709,32 +11781,37 @@ function sentenceGrammarCardHtml(g) {
   </div>`;
 }
 
+/* 判斷這個短句是「主題庫」的還是「1對1上課」的，決定要重繪哪個頁面 */
+function ooSentenceRefreshDispatch(id) {
+  if (oneOnOne.sentences.some(x => x.id === id)) { ooRender(); return true; }
+  return false;
+}
 function toggleItemHidden(sentenceId, idx) {
   const key = sentenceId + "_" + idx;
   hiddenItems[key] = !hiddenItems[key];
-  renderSentenceList();
+  if (!ooSentenceRefreshDispatch(sentenceId)) renderSentenceList();
 }
 function toggleNoteExpanded(sentenceId, idx) {
   const key = sentenceId + "_" + idx;
   noteExpanded[key] = !noteExpanded[key];
-  renderSentenceList();
+  if (!ooSentenceRefreshDispatch(sentenceId)) renderSentenceList();
 }
 
 function toggleSentenceSection(id, section) {
   if (!sentenceExpanded[id]) sentenceExpanded[id] = {};
   sentenceExpanded[id][section] = !sentenceExpanded[id][section];
-  renderSentenceList();
+  if (!ooSentenceRefreshDispatch(id)) renderSentenceList();
 }
 function toggleTeacherMode(id) {
   teacherMode[id] = !teacherMode[id];
   if (teacherMode[id]) {
     Object.keys(teacherRevealed).forEach(k => { if (k.startsWith(id + "_")) delete teacherRevealed[k]; });
   }
-  renderSentenceList();
+  if (!ooSentenceRefreshDispatch(id)) renderSentenceList();
 }
 function revealTeacherWord(id, idx) {
   teacherRevealed[id + "_" + idx] = true;
-  renderSentenceList();
+  if (!ooSentenceRefreshDispatch(id)) renderSentenceList();
 }
 function toggleSentenceFavorite(id) {
   const s = sentenceEntries.find(x => x.id === id);
@@ -11746,13 +11823,21 @@ function toggleSentenceFavorite(id) {
   renderSentenceList();
 }
 function toggleItemVocab(sentenceId, idx) {
-  const s = sentenceEntries.find(x => x.id === sentenceId);
-  if (!s || !s.items[idx]) return;
-  const it = s.items[idx];
-  it.addToVocab = !it.addToVocab;
-  saveSentenceEntries();
-  if (it.addToVocab) syncItemToVocabFolder(s, it);
-  renderSentenceList();
+  let s = sentenceEntries.find(x => x.id === sentenceId);
+  if (s) {
+    if (!s.items[idx]) return;
+    const it = s.items[idx];
+    it.addToVocab = !it.addToVocab;
+    saveSentenceEntries();
+    if (it.addToVocab) syncItemToVocabFolder(s, it);
+    renderSentenceList();
+    return;
+  }
+  const os = oneOnOne.sentences.find(x => x.id === sentenceId);
+  if (!os || !os.items[idx]) return;
+  os.items[idx].addToVocab = !os.items[idx].addToVocab;
+  ooSave();
+  ooRender();
 }
 
 /* ---- 題庫選擇彈窗（取代 window.prompt，手機/PWA環境下 prompt 常常不會顯示，導致加入單字卡看似沒反應） ---- */
@@ -11860,8 +11945,9 @@ function openSentenceEditor(id, context) {
   sentenceEditingId = id;
   sentenceEditorContext = context || null;
   const title = document.getElementById("sentenceEditorTitle");
+  const isOo = !!(context && context.oo);
   if (id) {
-    const s = sentenceEntries.find(x => x.id === id);
+    const s = isOo ? oneOnOne.sentences.find(x => x.id === id) : sentenceEntries.find(x => x.id === id);
     if (!s) return;
     title.textContent = "✏️ 編輯短句";
     document.getElementById("senEditKr").value = s.kr || "";
@@ -11871,7 +11957,7 @@ function openSentenceEditor(id, context) {
     document.getElementById("senEditTags").value = (s.tags || []).join(", ");
     sentenceEditorWords = (s.items || []).map(it => ({ ...it }));
     sentenceEditorGrammar = (s.grammar || []).map(g => ({ ...g }));
-    if (s.chapterId) sentenceEditorContext = { novelId: s.novelId, chapterId: s.chapterId };
+    if (!isOo && s.chapterId) sentenceEditorContext = { novelId: s.novelId, chapterId: s.chapterId };
   } else {
     title.textContent = "📝 新增短句";
     document.getElementById("senEditKr").value = "";
@@ -12437,6 +12523,11 @@ function saveSentenceEntry() {
   const tags = document.getElementById("senEditTags").value.split(",").map(t => t.trim()).filter(Boolean);
   const items = sentenceEditorWords.filter(w => w.kr.trim());
   const grammar = sentenceEditorGrammar.filter(g => (g.pattern || g.phrase || g.meaning).trim());
+
+  if (sentenceEditorContext && sentenceEditorContext.oo) {
+    ooSaveSentenceFromEditor({ kr, zh, analysis, teacherNote, tags, items, grammar });
+    return;
+  }
 
   let s;
   if (sentenceEditingId) {
