@@ -5043,6 +5043,101 @@ function ooExamplesForSession(sessionId) {
   });
   return result;
 }
+function ooExampleRowHtml(ex) {
+  const chipClass = ex.source === "ai" ? "oo-chip-ai" : "oo-chip-teacher";
+  const chipLabel = ex.source === "ai" ? "🤖 AI造句" : "👩‍🏫 老師造句";
+  return `<div class="oo-item-row"><span class="${chipClass}">${chipLabel}</span><span class="oo-item-kr">${esc(ex.korean)}</span>${ex.chinese ? `<span class="oo-item-zh">${esc(ex.chinese)}</span>` : ""}</div>`;
+}
+
+/* ---- AI 造句：真的呼叫 AI 幫忙生成句子（需要使用者自己填入 API 金鑰） ---- */
+const OO_APIKEY_STORAGE = "bana_oo_api_key";
+function ooGetApiKey() { return localStorage.getItem(OO_APIKEY_STORAGE) || ""; }
+function ooSetApiKey(k) { localStorage.setItem(OO_APIKEY_STORAGE, k || ""); }
+function ooEnsureApiKeyModal() {
+  if (document.getElementById("ooApiKeyMask")) return;
+  const modal = document.createElement("div");
+  modal.id = "ooApiKeyMask";
+  modal.className = "hero-modal-mask";
+  modal.innerHTML = `
+    <div class="hero-modal" style="width:min(480px,100%);max-height:80vh;overflow:auto;">
+      <div class="hero-modal-head">
+        <div class="hero-modal-title">⚙️ AI造句設定</div>
+        <button class="hero-modal-close" type="button" onclick="ooCloseApiKeySettings()">關閉</button>
+      </div>
+      <div style="font-size:13px;color:var(--muted);font-weight:800;margin-bottom:10px;line-height:1.6;">
+        要讓「🪄 AI造句」真的自動生成句子，需要填入你自己的 Anthropic API 金鑰（到 <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a> 申請）。金鑰只會存在你目前這個瀏覽器的 localStorage，不會傳到別的地方；但因為是瀏覽器直接呼叫 API，請不要把這個檔案分享給別人，避免金鑰外流。
+      </div>
+      <label style="font-weight:900;color:#4e8f24;">API 金鑰</label>
+      <input type="password" id="ooApiKeyInput" class="cute-input" style="margin:6px 0 16px;width:100%;box-sizing:border-box;" placeholder="sk-ant-...">
+      <button class="primary cute-btn" style="width:100%;" onclick="ooSaveApiKeySettings()">💾 儲存</button>
+    </div>`;
+  document.body.appendChild(modal);
+}
+function ooOpenApiKeySettings() {
+  ooEnsureApiKeyModal();
+  document.getElementById("ooApiKeyInput").value = ooGetApiKey();
+  document.getElementById("ooApiKeyMask").classList.add("show");
+}
+function ooCloseApiKeySettings() {
+  const m = document.getElementById("ooApiKeyMask");
+  if (m) m.classList.remove("show");
+}
+function ooSaveApiKeySettings() {
+  const v = document.getElementById("ooApiKeyInput").value.trim();
+  ooSetApiKey(v);
+  ooCloseApiKeySettings();
+  alert("已儲存！之後點「🪄 請AI幫我造句」就會自動生成句子了。");
+}
+async function ooGenerateAiSentence(word, zh) {
+  const key = ooGetApiKey();
+  if (!key) { ooOpenApiKeySettings(); return null; }
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": key,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 200,
+        messages: [{
+          role: "user",
+          content: `用韓文單字「${word}」${zh ? `（意思：${zh}）` : ""}造一句自然、口語、適合韓語學習者的例句。只回傳 JSON，不要有其他文字或 Markdown 符號，格式：{"korean":"...","chinese":"..."}`
+        }]
+      })
+    });
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      throw new Error("API 回應錯誤：" + res.status + " " + errText);
+    }
+    const data = await res.json();
+    const text = (data.content || []).map(b => b.text || "").join("").trim();
+    const clean = text.replace(/```json|```/g, "").trim();
+    return JSON.parse(clean);
+  } catch (e) {
+    console.error(e);
+    alert("AI造句失敗，請確認 API 金鑰是否正確、額度是否足夠，或稍後再試。");
+    return null;
+  }
+}
+async function ooFillAiSentence(krId, zhId, vocabId, radioName) {
+  const v = oneOnOne.vocab.find(x => x.id === vocabId);
+  if (!v) return;
+  const btn = event && event.target ? event.target : null;
+  const originalText = btn ? btn.textContent : "";
+  if (btn) { btn.disabled = true; btn.textContent = "🪄 生成中..."; }
+  const result = await ooGenerateAiSentence(v.kr, v.zh);
+  if (btn) { btn.disabled = false; btn.textContent = originalText || "🪄 請AI幫我造句"; }
+  if (!result) return;
+  const krEl = document.getElementById(krId);
+  const zhEl = document.getElementById(zhId);
+  if (krEl) krEl.value = result.korean || "";
+  if (zhEl) zhEl.value = result.chinese || "";
+  if (radioName) document.getElementsByName(radioName).forEach(r => { r.checked = (r.value === "ai"); });
+}
 function ooToggleVocabExpand(vocabId) {
   ooExpandedVocabId = (ooExpandedVocabId === vocabId) ? null : vocabId;
   ooRender();
@@ -5174,15 +5269,17 @@ function ooEnsureExampleModal() {
         <button class="hero-modal-close" type="button" onclick="ooCloseAddExample()">關閉</button>
       </div>
       <div style="font-weight:900;color:#4e8f24;margin-bottom:8px;">造句來源</div>
-      <div style="display:flex;gap:18px;margin-bottom:16px;">
+      <div style="display:flex;gap:18px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
         <label style="display:flex;align-items:center;gap:6px;font-weight:900;cursor:pointer;"><input type="radio" name="ooExSource" value="teacher" checked> 👩‍🏫 老師造句</label>
         <label style="display:flex;align-items:center;gap:6px;font-weight:900;cursor:pointer;"><input type="radio" name="ooExSource" value="ai"> 🤖 AI造句</label>
+        <button type="button" class="ghost" style="padding:4px 10px;font-size:12px;" onclick="ooFillAiSentence('ooExampleKr','ooExampleZh', ooCurrentVocabId, 'ooExSource')">🪄 請AI幫我造句</button>
       </div>
       <label style="font-weight:900;color:#4e8f24;">韓文句子</label>
       <textarea id="ooExampleKr" class="oo-textarea" rows="2" style="margin:6px 0 14px;"></textarea>
       <label style="font-weight:900;color:#4e8f24;">中文翻譯（選填）</label>
       <textarea id="ooExampleZh" class="oo-textarea" rows="2" style="margin:6px 0 16px;"></textarea>
       <button class="primary cute-btn" style="width:100%;" onclick="ooSubmitAddExample()">💾 儲存造句</button>
+      <div style="text-align:right;margin-top:6px;"><span style="font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer;" onclick="ooOpenApiKeySettings()">⚙️ 設定AI金鑰</span></div>
     </div>`;
   document.body.appendChild(modal);
 }
@@ -5266,17 +5363,19 @@ function ooRenderSessionDetail(root) {
     const rowHtml = ooVocabRowHtml(item, `ooToggleVocabExpand('${item.id}')`, isNew ? "new" : "old");
     if (ooExpandedVocabId !== item.id) return rowHtml;
     const exs = (item.examples || []).filter(e => e.sessionId === s.id);
-    const exHtml = exs.map(e => `<div class="oo-inline-ex">${e.source === "ai" ? "🤖" : "👩‍🏫"} ${esc(e.korean)}${e.chinese ? `<span class="oo-item-zh">${esc(e.chinese)}</span>` : ""}</div>`).join("");
+    const exHtml = exs.map(e => ooExampleRowHtml(e)).join("");
     return rowHtml + `
       <div class="oo-inline-panel">
         ${exHtml}
         <div class="oo-inline-source">
           <label><input type="radio" name="ooInlineSource_${item.id}" value="teacher" checked> 👩‍🏫 老師造句</label>
           <label><input type="radio" name="ooInlineSource_${item.id}" value="ai"> 🤖 AI造句</label>
+          <button type="button" id="ooInlineKr_${item.id}_aiBtn" class="ghost" style="padding:4px 10px;font-size:12px;" onclick="ooFillAiSentence('ooInlineKr_${item.id}','ooInlineZh_${item.id}','${item.id}','ooInlineSource_${item.id}')">🪄 請AI幫我造句</button>
         </div>
         <textarea id="ooInlineKr_${item.id}" class="oo-inline-textarea" rows="2" placeholder="韓文句子"></textarea>
         <textarea id="ooInlineZh_${item.id}" class="oo-inline-textarea" rows="2" placeholder="中文翻譯（選填）"></textarea>
         <button class="primary cute-btn" style="width:100%;" onclick="ooSubmitInlineExample('${item.id}')">💾 新增造句</button>
+        <div style="text-align:right;margin-top:6px;"><span style="font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer;" onclick="ooOpenApiKeySettings()">⚙️ 設定AI金鑰</span></div>
       </div>`;
   }
   function block(title, ids, newIds, masterArr, opts) {
@@ -5303,10 +5402,11 @@ function ooRenderSessionDetail(root) {
     return `<div style="margin-bottom:18px;">
       <div style="font-weight:1000;margin-bottom:8px;">💬 造句（${total}）</div>
       ${groups.map(g => `
-        <div class="oo-item-row" style="flex-direction:column;align-items:flex-start;gap:6px;cursor:pointer;" onclick="ooOpenVocabDetail('${g.vocab.id}','sessionDetail','${s.id}')">
-          <div><span class="oo-item-kr">${esc(g.vocab.kr)}</span>${g.vocab.zh ? `<span class="oo-item-zh">${esc(g.vocab.zh)}</span>` : ""}</div>
-          ${g.examples.map(ex => `<div style="font-size:13px;">${ex.source === "ai" ? "🤖" : "👩‍🏫"} ${esc(ex.korean)}</div>`).join("")}
-        </div>`).join("")}
+        <div class="oo-item-row" style="cursor:pointer;" onclick="ooOpenVocabDetail('${g.vocab.id}','sessionDetail','${s.id}')">
+          <span class="oo-chip-old">💬</span>
+          <span class="oo-item-kr">${esc(g.vocab.kr)}</span>${g.vocab.zh ? `<span class="oo-item-zh">${esc(g.vocab.zh)}</span>` : ""}
+        </div>
+        ${g.examples.map(ex => ooExampleRowHtml(ex)).join("")}`).join("")}
     </div>`;
   }
   const examplesCount = ooExamplesForSession(s.id).reduce((sum, g) => sum + g.examples.length, 0);
@@ -9869,10 +9969,10 @@ function installHeroManager() {
     .oo-item-zh{color:var(--muted);font-size:13px;}
     .oo-chip-new{background:#fff1d6;color:#a06b00;border-radius:10px;padding:3px 9px;font-size:12px;font-weight:900;white-space:nowrap;}
     .oo-chip-old{background:#e3f0d2;color:#4e8f24;border-radius:10px;padding:3px 9px;font-size:12px;font-weight:900;white-space:nowrap;}
+    .oo-chip-teacher{background:#e6efff;color:#2f5fa8;border-radius:10px;padding:3px 9px;font-size:12px;font-weight:900;white-space:nowrap;}
+    .oo-chip-ai{background:#f3e8ff;color:#7a3fa0;border-radius:10px;padding:3px 9px;font-size:12px;font-weight:900;white-space:nowrap;}
     .oo-textarea{width:100%;border:1px solid var(--line);border-radius:14px;padding:10px 12px;font-family:inherit;font-size:14px;resize:vertical;}
 .oo-inline-panel{background:#f7fbf1;border:1px solid var(--line);border-top:none;border-radius:0 0 14px 14px;padding:14px 16px;margin:-10px 0 8px;}
-.oo-inline-ex{font-size:13px;margin-bottom:6px;}
-.oo-inline-ex .oo-item-zh{display:block;margin-left:22px;}
 .oo-inline-source{display:flex;gap:16px;margin-bottom:8px;}
 .oo-inline-source label{display:flex;align-items:center;gap:5px;font-size:13px;font-weight:900;cursor:pointer;color:#3f5634;}
 .oo-inline-textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-family:inherit;font-size:13px;resize:vertical;margin-bottom:8px;box-sizing:border-box;}
