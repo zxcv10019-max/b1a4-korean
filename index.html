@@ -4965,9 +4965,10 @@ function renderOoHomeCard() {
   const latest = ooLatestUnfinishedSession();
   if (!latest) { el.innerHTML = ""; return; }
   const pct = ooSessionCompletion(latest);
+  const title = latest.date === today() ? "📅 今天要複習" : "📅 接下來要複習";
   el.innerHTML = `
     <div class="card panel" style="margin-bottom:16px;">
-      <div style="font-weight:1000;color:#4e8f24;margin-bottom:6px;">📅 今天要複習</div>
+      <div style="font-weight:1000;color:#4e8f24;margin-bottom:6px;">${title}</div>
       <div style="font-size:17px;font-weight:1000;margin-bottom:8px;">${esc(latest.date)}</div>
       <div style="font-size:13px;color:var(--muted);font-weight:800;margin-bottom:10px;">
         ${latest.vocabIds.length} 個單字・${latest.sentenceIds.length} 個短句
@@ -5038,8 +5039,16 @@ function ooSessionCompletion(s) {
   const done = OO_LEARN_STEPS.filter(step => p[step.key]).length;
   return Math.round((done / OO_LEARN_STEPS.length) * 100);
 }
+function ooSortedSessionsDesc() {
+  return oneOnOne.sessions.slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+}
+function ooSortedSessionsAsc() {
+  return oneOnOne.sessions.slice().sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+}
 function ooLatestUnfinishedSession() {
-  return oneOnOne.sessions.find(s => !s.completedAt) || oneOnOne.sessions[0] || null;
+  if (!oneOnOne.sessions.length) return null;
+  const asc = ooSortedSessionsAsc();
+  return asc.find(s => !s.completedAt) || asc[asc.length - 1];
 }
 /* 把這堂課的單字＋短句＋文法整理成一份題庫（folder），這樣單字卡／測驗／配對／遺忘挑戰／弱點挑戰
    都可以直接沿用網站原本的功能，只是範圍限定在這一堂課 */
@@ -5380,9 +5389,10 @@ function ooRender() {
 }
 function ooRenderMain(root) {
   const latest = ooLatestUnfinishedSession();
+  const heroTitle = latest && latest.date === today() ? "📅 今天要複習" : "📅 接下來要複習";
   const heroHtml = latest ? `
     <div class="card" style="padding:20px;margin-bottom:16px;">
-      <div style="font-weight:1000;color:#4e8f24;margin-bottom:6px;">📅 今天要複習</div>
+      <div style="font-weight:1000;color:#4e8f24;margin-bottom:6px;">${heroTitle}</div>
       <div style="font-size:18px;font-weight:1000;margin-bottom:10px;">${esc(latest.date)}</div>
       <div style="font-size:13px;color:var(--muted);font-weight:800;margin-bottom:10px;">
         ${latest.vocabIds.length} 個單字・${latest.sentenceIds.length} 個短句・${latest.grammarIds.length} 個文法
@@ -5397,7 +5407,7 @@ function ooRenderMain(root) {
     </div>`;
   const historyHtml = oneOnOne.sessions.length ? `
     <div style="font-weight:1000;margin:18px 0 8px;">🗂️ 所有上課紀錄</div>
-    ${oneOnOne.sessions.map(s => `
+    ${ooSortedSessionsDesc().map(s => `
       <div class="oo-session-row" onclick="ooOpenSessionDetail('${s.id}')">
         <div class="oo-session-date">${s.completedAt ? "✅" : "📅"} ${esc(s.date)}</div>
         <div class="oo-session-counts">
