@@ -451,6 +451,18 @@ textarea {
   font-weight:1000;
   margin:12px 0 14px;
 }
+.oo-quiz-shell{max-width:480px;margin:0 auto;text-align:center;}
+.oo-quiz-topline{display:flex;justify-content:space-between;align-items:center;font-weight:900;color:#3f5634;font-size:13px;margin-bottom:8px;}
+.oo-quiz-progress-track{height:8px;background:#e7efd9;border-radius:999px;overflow:hidden;margin-bottom:30px;}
+.oo-quiz-progress-fill{height:100%;background:linear-gradient(90deg,#9bc95d,#6fae37);border-radius:999px;transition:width .2s;}
+.oo-quiz-word{font-size:32px;font-weight:1000;color:#3f5634;margin:16px 0 8px;word-break:break-word;line-height:1.3;}
+.oo-quiz-roman{font-size:14px;color:var(--muted);font-style:italic;margin-bottom:32px;}
+.oo-quiz-options{display:flex;flex-direction:column;gap:12px;margin-bottom:4px;}
+.oo-quiz-option{width:100%;padding:16px;border-radius:16px;border:1.5px solid var(--line);background:#fff;font-size:16px;font-weight:800;color:#3f5634;cursor:pointer;transition:.15s;font-family:inherit;}
+.oo-quiz-option:hover:not(:disabled){border-color:#9bc95d;transform:translateY(-2px);}
+.oo-quiz-option.correct{background:#eaf5dd;border-color:#6fae37;color:#3f6b1f;}
+.oo-quiz-option.wrong{background:#fde2e1;border-color:#e0736e;color:#a43a34;}
+.oo-quiz-option:disabled{cursor:default;}
 .result-ok {
   color:#609f32;
   font-weight:900;
@@ -4811,6 +4823,7 @@ function getCloudPayload() {
     folderPracticeStats, flashSeenData, voiceSpeed,
     activityLog,
     lyricsSongs, favorites, grammarPoints, grammarCategories, sentenceEntries, novels, novelChapters, dialogues, dialogueCategories,
+    oneOnOne,
     updatedAt: new Date().toISOString()
   };
 }
@@ -4851,6 +4864,15 @@ async function loadCloudData() {
       novelChapters = Array.isArray(data.novelChapters) ? data.novelChapters : (novelChapters || []);
       dialogues = Array.isArray(data.dialogues) ? data.dialogues : (dialogues || []);
       dialogueCategories = Array.isArray(data.dialogueCategories) ? data.dialogueCategories : (dialogueCategories || []);
+      if (data.oneOnOne && typeof data.oneOnOne === "object") {
+        oneOnOne = {
+          vocab: Array.isArray(data.oneOnOne.vocab) ? data.oneOnOne.vocab : [],
+          sentences: Array.isArray(data.oneOnOne.sentences) ? data.oneOnOne.sentences : [],
+          grammar: Array.isArray(data.oneOnOne.grammar) ? data.oneOnOne.grammar : [],
+          sessions: Array.isArray(data.oneOnOne.sessions) ? data.oneOnOne.sessions : []
+        };
+        localStorage.setItem(OO_STORAGE_KEY, JSON.stringify(oneOnOne));
+      }
       current = folders.length ? 0 : null;
       writeLocalOnly();
       localStorage.setItem("b1a4MasteryData", JSON.stringify(masteryData));
@@ -4882,6 +4904,10 @@ async function loadCloudData() {
       if (typeof renderLearningCalendar === "function") renderLearningCalendar();
       if (typeof renderDetailedStats === "function") renderDetailedStats();
       if (typeof updateHeroStats === "function") updateHeroStats();
+      if (typeof ooSyncPracticeFolders === "function") ooSyncPracticeFolders();
+      if (typeof ooUpdateEntryCard === "function") ooUpdateEntryCard();
+      if (typeof renderOoHomeCard === "function") renderOoHomeCard();
+      if (typeof ooRender === "function") ooRender();
       isLoadingCloud = false;
       updateSyncUI("已登入：" + (cloudUser.email || cloudUser.displayName || "Google 帳號") + "，題庫已同步。", "已同步", true);
     } else {
@@ -9816,7 +9842,7 @@ function renderTestGrid() {
   }).join("");
 }
 
-/* ===== 一題一題（App 模式）===== */
+/* ---- 一題一題（App 模式）：大字題目＋羅馬拼音＋進度條＋選擇題卡片 ---- */
 function renderSingleTestQuestion(index) {
   if (!testCards || !testCards.length) return;
   currentQIndex = Math.max(0, Math.min(index, testCards.length - 1));
@@ -9830,31 +9856,41 @@ function renderSingleTestQuestion(index) {
   const q = document.getElementById("questions");
   if (!q) return;
 
-  let feedbackHtml = "";
+  if (!c._choices) {
+    const pool = Array.from(new Set(testCards.map(x => x.answer))).filter(a => a !== c.answer);
+    const distractors = shuffle(pool).slice(0, Math.min(3, pool.length));
+    c._choices = shuffle([c.answer, ...distractors]);
+  }
+
+  const isKorean = /[가-힣]/.test(String(c.prompt));
+  const roman = isKorean ? romanizeHangul(c.prompt) : "";
+
+  const optionsHtml = c._choices.map(choice => {
+    let cls = "oo-quiz-option";
+    if (saved) {
+      if (choice === c.answer) cls += " correct";
+      else if (choice === saved.userAnswer && !saved.ok) cls += " wrong";
+    }
+    return `<button type="button" class="${cls}" ${saved ? "disabled" : ""} onclick="submitSingleTestChoice('${jsAttr(choice)}')">${esc(choice)}</button>`;
+  }).join("");
+
   let actionHtml = "";
   if (saved) {
-    feedbackHtml = saved.ok
-      ? `<div class="result-ok" style="font-size:17px;margin-top:10px;">✔ 答對了！真棒！</div>`
-      : `<div class="result-bad" style="font-size:17px;margin-top:10px;">✘ 答錯了</div><div class="answer">正確答案：${esc(c.answer)}</div>`;
-    if (i < total - 1) {
-      actionHtml = `<button type="button" class="primary" style="width:100%;margin-top:14px;" onclick="goToNextTestQuestion()">下一題 ›</button>`;
-    } else {
-      actionHtml = `<button type="button" class="primary" style="width:100%;margin-top:14px;" onclick="finishSingleTest()">🎉 查看成績</button>`;
-    }
-  } else {
-    actionHtml = `<button type="button" class="primary" style="width:100%;margin-top:14px;" onclick="submitSingleTestAnswer()">✅ 送出答案</button>`;
+    actionHtml = i < total - 1
+      ? `<button type="button" class="primary cute-btn" style="width:100%;margin-top:14px;" onclick="goToNextTestQuestion()">下一題 ›</button>`
+      : `<button type="button" class="primary cute-btn" style="width:100%;margin-top:14px;" onclick="finishSingleTest()">🎉 查看成績</button>`;
   }
 
   q.innerHTML = `
-    <div class="q" style="max-width:520px;margin-left:auto;margin-right:auto;">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
+    <div class="oo-quiz-shell">
+      <div class="oo-quiz-topline">
         <div>第 ${i + 1} / ${total} 題・${esc(c.label)}</div>
         <div style="font-size:12px;color:var(--muted);font-weight:900;">已作答 ${answeredCount}／${total}</div>
       </div>
-      <div class="prompt-box">${esc(c.prompt)}${/[가-힣]/.test(String(c.prompt)) ? addSpeakButtonHtml(c.prompt) : ""}</div>
-      <input id="singleAns" placeholder="請輸入答案..." value="${saved ? escapeAttr(saved.userAnswer) : ""}" ${saved ? "readonly" : ""}
-        onkeydown="if(event.key==='Enter'){event.preventDefault(); ${saved ? (i < total - 1 ? "goToNextTestQuestion()" : "finishSingleTest()") : "submitSingleTestAnswer()"};}">
-      ${feedbackHtml}
+      <div class="oo-quiz-progress-track"><div class="oo-quiz-progress-fill" style="width:${Math.round((answeredCount / total) * 100)}%;"></div></div>
+      <div class="oo-quiz-word">${esc(c.prompt)}${isKorean ? addSpeakButtonHtml(c.prompt) : ""}</div>
+      ${roman ? `<div class="oo-quiz-roman">${esc(roman)}</div>` : ""}
+      <div class="oo-quiz-options">${optionsHtml}</div>
       ${actionHtml}
       <div class="btns" style="justify-content:space-between;margin-top:14px;">
         <button type="button" class="ghost" ${i === 0 ? "disabled" : ""} onclick="renderSingleTestQuestion(${i - 1})">‹ 上一題</button>
@@ -9874,18 +9910,14 @@ function renderSingleTestQuestion(index) {
       return `<div class="${cls}" onclick="renderSingleTestQuestion(${idx})" style="cursor:pointer;">${idx + 1}</div>`;
     }).join("");
   }
-
-  setTimeout(() => { const el = document.getElementById("singleAns"); if (el) el.focus(); }, 30);
 }
 
-function submitSingleTestAnswer() {
+function submitSingleTestChoice(choice) {
   const i = currentQIndex;
   const c = testCards[i];
-  const input = document.getElementById("singleAns");
-  const userAnswer = input ? input.value : "";
   const ans = c.answer || c.definition || "";
-  const ok = isFuzzyCorrect(userAnswer, ans);
-  testResults[i] = { ok, userAnswer };
+  const ok = choice === ans;
+  testResults[i] = { ok, userAnswer: choice };
   recordAnswerResult(c, i, ok);
   saveStorage();
   renderSingleTestQuestion(i);
