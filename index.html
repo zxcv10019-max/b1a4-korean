@@ -2281,6 +2281,7 @@ textarea {
   border-radius:10px;
 }
 .forest-folder-card.active { border-color:#83b842; background:#f7fdf1; }
+.forest-folder-card.ffc-menu-open { overflow:visible; z-index:40; }
 .ffc-head { display:flex; align-items:center; gap:6px; }
 .ffc-folder-ico { font-size:15px; flex:0 0 auto; }
 .ffc-name-inline {
@@ -6234,10 +6235,15 @@ function toggleFfcKebab(id) {
   if (!menu) return;
   const isOpen = menu.classList.contains("show");
   closeAllFfcKebabs();
-  if (!isOpen) menu.classList.add("show");
+  if (!isOpen) {
+    menu.classList.add("show");
+    const card = menu.closest(".forest-folder-card");
+    if (card) card.classList.add("ffc-menu-open");
+  }
 }
 function closeAllFfcKebabs() {
   document.querySelectorAll(".ffc-kebab-menu.show, .group-kebab-menu.show").forEach(m => m.classList.remove("show"));
+  document.querySelectorAll(".forest-folder-card.ffc-menu-open").forEach(c => c.classList.remove("ffc-menu-open"));
 }
 document.addEventListener("click", closeAllFfcKebabs);
 
