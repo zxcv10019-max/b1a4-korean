@@ -4943,6 +4943,7 @@ let ooView = "main";
 let ooCurrentSessionId = null;
 let ooCurrentVocabId = null;
 let ooVocabDetailReturn = null; // { view: 'vocab' | 'sessionDetail', sessionId }
+let ooExpandedVocabId = null; // 課程頁單字列表中，正在原地展開造句的單字 id
 
 function ooId(prefix) { return prefix + "_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 function ooSave() {
@@ -5042,9 +5043,24 @@ function ooExamplesForSession(sessionId) {
   });
   return result;
 }
+function ooToggleVocabExpand(vocabId) {
+  ooExpandedVocabId = (ooExpandedVocabId === vocabId) ? null : vocabId;
+  ooRender();
+}
+function ooSubmitInlineExample(vocabId) {
+  const krEl = document.getElementById("ooInlineKr_" + vocabId);
+  const zhEl = document.getElementById("ooInlineZh_" + vocabId);
+  const kr = krEl ? krEl.value.trim() : "";
+  if (!kr) { alert("請輸入韓文句子"); return; }
+  const zh = zhEl ? zhEl.value.trim() : "";
+  let source = "teacher";
+  document.getElementsByName("ooInlineSource_" + vocabId).forEach(r => { if (r.checked) source = r.value; });
+  ooAddExample(vocabId, source, kr, zh, ooCurrentSessionId);
+  ooRender();
+}
 
 /* ---- 畫面渲染 ---- */
-function ooGo(view) { ooView = view; ooCurrentSessionId = null; ooRender(); }
+function ooGo(view) { ooView = view; ooCurrentSessionId = null; ooExpandedVocabId = null; ooRender(); }
 function ooRender() {
   const root = document.getElementById("ooRoot");
   if (!root) return;
@@ -5242,10 +5258,27 @@ function ooRenderSessions(root) {
         </div>`).join("") : `<div class="empty-fox"><span class="ef-icon">🗂️</span>還沒有上課紀錄，按上面「＋ 新增上課紀錄」開始吧！</div>`}
     </div>`;
 }
-function ooOpenSessionDetail(id) { ooCurrentSessionId = id; ooView = "sessionDetail"; ooRender(); }
+function ooOpenSessionDetail(id) { ooCurrentSessionId = id; ooExpandedVocabId = null; ooView = "sessionDetail"; ooRender(); }
 function ooRenderSessionDetail(root) {
   const s = oneOnOne.sessions.find(x => x.id === ooCurrentSessionId);
   if (!s) { ooView = "sessions"; return ooRenderSessions(root); }
+  function vocabRowWithInline(item, isNew) {
+    const rowHtml = ooVocabRowHtml(item, `ooToggleVocabExpand('${item.id}')`, isNew ? "new" : "old");
+    if (ooExpandedVocabId !== item.id) return rowHtml;
+    const exs = (item.examples || []).filter(e => e.sessionId === s.id);
+    const exHtml = exs.map(e => `<div class="oo-inline-ex">${e.source === "ai" ? "🤖" : "👩‍🏫"} ${esc(e.korean)}${e.chinese ? `<span class="oo-item-zh">${esc(e.chinese)}</span>` : ""}</div>`).join("");
+    return rowHtml + `
+      <div class="oo-inline-panel">
+        ${exHtml}
+        <div class="oo-inline-source">
+          <label><input type="radio" name="ooInlineSource_${item.id}" value="teacher" checked> 👩‍🏫 老師造句</label>
+          <label><input type="radio" name="ooInlineSource_${item.id}" value="ai"> 🤖 AI造句</label>
+        </div>
+        <textarea id="ooInlineKr_${item.id}" class="oo-inline-textarea" rows="2" placeholder="韓文句子"></textarea>
+        <textarea id="ooInlineZh_${item.id}" class="oo-inline-textarea" rows="2" placeholder="中文翻譯（選填）"></textarea>
+        <button class="primary cute-btn" style="width:100%;" onclick="ooSubmitInlineExample('${item.id}')">💾 新增造句</button>
+      </div>`;
+  }
   function block(title, ids, newIds, masterArr, opts) {
     opts = opts || {};
     if (!ids.length) return "";
@@ -5255,7 +5288,7 @@ function ooRenderSessionDetail(root) {
         const item = masterArr.find(x => x.id === id);
         if (!item) return "";
         const isNew = newIds.includes(id);
-        if (opts.vocab) return ooVocabRowHtml(item, `ooOpenVocabDetail('${item.id}','sessionDetail','${s.id}')`, isNew ? "new" : "old");
+        if (opts.vocab) return vocabRowWithInline(item, isNew);
         return `<div class="oo-item-row">
           <span class="${isNew ? "oo-chip-new" : "oo-chip-old"}">${isNew ? "✨ 新增" : "🔁 已學過"}</span>
           <span class="oo-item-kr">${esc(item.kr)}</span>${item.zh ? `<span class="oo-item-zh">${esc(item.zh)}</span>` : ""}
@@ -9837,6 +9870,12 @@ function installHeroManager() {
     .oo-chip-new{background:#fff1d6;color:#a06b00;border-radius:10px;padding:3px 9px;font-size:12px;font-weight:900;white-space:nowrap;}
     .oo-chip-old{background:#e3f0d2;color:#4e8f24;border-radius:10px;padding:3px 9px;font-size:12px;font-weight:900;white-space:nowrap;}
     .oo-textarea{width:100%;border:1px solid var(--line);border-radius:14px;padding:10px 12px;font-family:inherit;font-size:14px;resize:vertical;}
+.oo-inline-panel{background:#f7fbf1;border:1px solid var(--line);border-top:none;border-radius:0 0 14px 14px;padding:14px 16px;margin:-10px 0 8px;}
+.oo-inline-ex{font-size:13px;margin-bottom:6px;}
+.oo-inline-ex .oo-item-zh{display:block;margin-left:22px;}
+.oo-inline-source{display:flex;gap:16px;margin-bottom:8px;}
+.oo-inline-source label{display:flex;align-items:center;gap:5px;font-size:13px;font-weight:900;cursor:pointer;color:#3f5634;}
+.oo-inline-textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-family:inherit;font-size:13px;resize:vertical;margin-bottom:8px;box-sizing:border-box;}
     .hero-add-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:14px;border-radius:20px;background:#f4faed;border:1px solid #d9ecc4;margin-bottom:14px}
     .hero-add-row input[type=file]{max-width:260px}
     .hero-add-row input[type=text]{min-width:220px;flex:1;border:1px solid #d9ecc4;border-radius:14px;padding:10px 12px;background:#fff}
