@@ -4962,55 +4962,53 @@ function ooUpdateEntryCard() {
   el.textContent = `單字 ${oneOnOne.vocab.length}・造句 ${ooTotalExamples()}・短句 ${oneOnOne.sentences.length}・文法 ${oneOnOne.grammar.length}・上課紀錄 ${oneOnOne.sessions.length}`;
 }
 
-/* 解析老師貼上的內容：每行一筆，可以只有韓文，也可以用「韓文｜中文」或「韓文|中文」或 Tab 分隔 */
-function ooParseLines(text) {
-  return (text || "").split("\n").map(l => l.trim()).filter(Boolean).map(line => {
-    let kr = line, zh = "";
-    if (line.includes("\t")) {
-      const i = line.indexOf("\t"); kr = line.slice(0, i); zh = line.slice(i + 1);
-    } else if (line.includes("｜")) {
-      const i = line.indexOf("｜"); kr = line.slice(0, i); zh = line.slice(i + 1);
-    } else if (line.includes("|")) {
-      const i = line.indexOf("|"); kr = line.slice(0, i); zh = line.slice(i + 1);
-    }
-    return { kr: kr.trim(), zh: zh.trim() };
-  });
-}
-
-/* 新增一次上課紀錄：已存在的資料只被「引用」，不會建立第二份 */
-function ooAddSession(dateStr, vocabText, sentenceText, grammarText) {
+/* 建立一次新的（空白）上課紀錄，之後在課程頁用卡片一個一個加內容 */
+function ooCreateEmptySession(dateStr) {
   const session = {
     id: ooId("sess"), date: dateStr || today(),
     vocabIds: [], sentenceIds: [], grammarIds: [],
     newVocabIds: [], newSentenceIds: [], newGrammarIds: [],
     createdAt: Date.now()
   };
-  const summary = { vocab: { new: [], existing: [] }, sentence: { new: [], existing: [] }, grammar: { new: [], existing: [] } };
-
-  function processCategory(text, masterArr, idsKey, newIdsKey, summaryKey, idPrefix, extraFields) {
-    ooParseLines(text).forEach(it => {
-      if (!it.kr) return;
-      const found = masterArr.find(x => x.kr === it.kr);
-      if (found) {
-        if (!session[idsKey].includes(found.id)) session[idsKey].push(found.id);
-        summary[summaryKey].existing.push(found.kr);
-      } else {
-        const entry = Object.assign({ id: ooId(idPrefix), kr: it.kr, zh: it.zh, firstSessionId: session.id, createdAt: Date.now() }, extraFields || {});
-        masterArr.push(entry);
-        session[idsKey].push(entry.id);
-        session[newIdsKey].push(entry.id);
-        summary[summaryKey].new.push(entry.kr);
-      }
-    });
-  }
-
-  processCategory(vocabText, oneOnOne.vocab, "vocabIds", "newVocabIds", "vocab", "oovoc", { examples: [] });
-  processCategory(sentenceText, oneOnOne.sentences, "sentenceIds", "newSentenceIds", "sentence", "oosen");
-  processCategory(grammarText, oneOnOne.grammar, "grammarIds", "newGrammarIds", "grammar", "oogram");
-
   oneOnOne.sessions.unshift(session);
   ooSave();
-  return { session, summary };
+  return session;
+}
+const OO_CATEGORY_KEYS = {
+  vocab: { idsKey: "vocabIds", newIdsKey: "newVocabIds", idPrefix: "oovoc" },
+  sentences: { idsKey: "sentenceIds", newIdsKey: "newSentenceIds", idPrefix: "oosen" },
+  grammar: { idsKey: "grammarIds", newIdsKey: "newGrammarIds", idPrefix: "oogram" }
+};
+/* 新增單一筆資料到某次上課紀錄：已存在的（用韓文比對）只加引用，不會建立第二份 */
+function ooAddItemToSession(category, values) {
+  const s = oneOnOne.sessions.find(x => x.id === ooCurrentSessionId);
+  if (!s) return null;
+  const conf = OO_CATEGORY_KEYS[category];
+  const masterArr = oneOnOne[category];
+  const found = masterArr.find(x => x.kr === values.kr);
+  let entry;
+  if (found) {
+    entry = found;
+    if (!s[conf.idsKey].includes(found.id)) s[conf.idsKey].push(found.id);
+  } else {
+    entry = Object.assign({ id: ooId(conf.idPrefix), firstSessionId: s.id, createdAt: Date.now() }, values, category === "vocab" ? { examples: [] } : {});
+    masterArr.push(entry);
+    s[conf.idsKey].push(entry.id);
+    s[conf.newIdsKey].push(entry.id);
+  }
+  ooSave();
+  if (typeof logActivity === "function") logActivity("oneOnOne", 1);
+  return entry;
+}
+/* 從這次上課紀錄移除一筆引用（不會刪掉題庫裡的主資料，其他次上課還是看得到） */
+function ooRemoveFromSession(category, itemId, sessionId) {
+  const s = oneOnOne.sessions.find(x => x.id === sessionId);
+  if (!s) return;
+  const conf = OO_CATEGORY_KEYS[category];
+  s[conf.idsKey] = s[conf.idsKey].filter(id => id !== itemId);
+  s[conf.newIdsKey] = s[conf.newIdsKey].filter(id => id !== itemId);
+  ooSave();
+  ooRender();
 }
 
 /* 造句：附屬於單字，每個單字自己保管一份 examples 陣列，不獨立成一個題型 */
@@ -5359,8 +5357,33 @@ function ooOpenSessionDetail(id) { ooCurrentSessionId = id; ooExpandedVocabId = 
 function ooRenderSessionDetail(root) {
   const s = oneOnOne.sessions.find(x => x.id === ooCurrentSessionId);
   if (!s) { ooView = "sessions"; return ooRenderSessions(root); }
+  function categoryHeader(category, title, count) {
+    return `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+      <div style="font-weight:1000;">${title}（${count}）</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="ghost" style="padding:5px 10px;font-size:12px;" onclick="ooOpenQuickAdd('${category}')">＋ 新增</button>
+        <button class="ghost" style="padding:5px 10px;font-size:12px;" onclick="ooOpenBankPicker('${category}')">📚 從題庫加入</button>
+      </div>
+    </div>`;
+  }
+  function rowActions(category, itemId) {
+    return `<div style="display:flex;align-items:center;gap:6px;">
+      <button class="ghost" style="padding:2px 8px;font-size:12px;" onclick="event.stopPropagation();ooOpenQuickAdd('${category}','${itemId}')">✏️</button>
+      <button class="ghost" style="padding:2px 8px;font-size:12px;" onclick="event.stopPropagation();ooRemoveFromSession('${category}','${itemId}','${s.id}')">🗑</button>
+    </div>`;
+  }
   function vocabRowWithInline(item, isNew) {
-    const rowHtml = ooVocabRowHtml(item, `ooToggleVocabExpand('${item.id}')`, isNew ? "new" : "old");
+    const count = (item.examples || []).length;
+    const chip = isNew ? `<span class="oo-chip-new">✨ 新增</span>` : `<span class="oo-chip-old">🔁 已學過</span>`;
+    const rowHtml = `<div class="oo-item-row" style="justify-content:space-between;cursor:pointer;" onclick="ooToggleVocabExpand('${item.id}')">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        ${chip}<span class="oo-item-kr">${esc(item.kr)}</span>${item.zh ? `<span class="oo-item-zh">${esc(item.zh)}</span>` : ""}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        ${count > 0 ? `<span class="oo-chip-old">📝 ${count}</span>` : ""}
+        ${rowActions("vocab", item.id)}
+      </div>
+    </div>`;
     if (ooExpandedVocabId !== item.id) return rowHtml;
     const exs = (item.examples || []).filter(e => e.sessionId === s.id);
     const exHtml = exs.map(e => ooExampleRowHtml(e)).join("");
@@ -5378,20 +5401,39 @@ function ooRenderSessionDetail(root) {
         <div style="text-align:right;margin-top:6px;"><span style="font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer;" onclick="ooOpenApiKeySettings()">⚙️ 設定AI金鑰</span></div>
       </div>`;
   }
-  function block(title, ids, newIds, masterArr, opts) {
-    opts = opts || {};
-    if (!ids.length) return "";
+  function sentenceRow(item, isNew) {
+    const chip = isNew ? `<span class="oo-chip-new">✨ 新增</span>` : `<span class="oo-chip-old">🔁 已學過</span>`;
+    return `<div class="oo-item-row" style="flex-direction:column;align-items:stretch;gap:6px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">${chip}<span class="oo-item-kr">${esc(item.kr)}</span>${item.zh ? `<span class="oo-item-zh">${esc(item.zh)}</span>` : ""}</div>
+        ${rowActions("sentences", item.id)}
+      </div>
+      ${item.teacherNote ? `<div style="font-size:12px;color:var(--muted);">👩‍🏫 ${esc(item.teacherNote)}</div>` : ""}
+      ${item.aiNote ? `<div style="font-size:12px;color:var(--muted);">🤖 ${esc(item.aiNote)}</div>` : ""}
+    </div>`;
+  }
+  function grammarRow(item, isNew) {
+    const chip = isNew ? `<span class="oo-chip-new">✨ 新增</span>` : `<span class="oo-chip-old">🔁 已學過</span>`;
+    return `<div class="oo-item-row" style="flex-direction:column;align-items:stretch;gap:6px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">${chip}<span class="oo-item-kr">${esc(item.kr)}</span>${item.zh ? `<span class="oo-item-zh">${esc(item.zh)}</span>` : ""}</div>
+        ${rowActions("grammar", item.id)}
+      </div>
+      ${item.note ? `<div style="font-size:12px;color:var(--muted);">📘 ${esc(item.note)}</div>` : ""}
+    </div>`;
+  }
+  function block(category, title, ids, newIds, masterArr) {
+    const header = categoryHeader(category, title, ids.length);
+    if (!ids.length) return `<div style="margin-bottom:18px;">${header}</div>`;
     return `<div style="margin-bottom:18px;">
-      <div style="font-weight:1000;margin-bottom:8px;">${title}（${ids.length}）</div>
+      ${header}
       ${ids.map(id => {
         const item = masterArr.find(x => x.id === id);
         if (!item) return "";
         const isNew = newIds.includes(id);
-        if (opts.vocab) return vocabRowWithInline(item, isNew);
-        return `<div class="oo-item-row">
-          <span class="${isNew ? "oo-chip-new" : "oo-chip-old"}">${isNew ? "✨ 新增" : "🔁 已學過"}</span>
-          <span class="oo-item-kr">${esc(item.kr)}</span>${item.zh ? `<span class="oo-item-zh">${esc(item.zh)}</span>` : ""}
-        </div>`;
+        if (category === "vocab") return vocabRowWithInline(item, isNew);
+        if (category === "sentences") return sentenceRow(item, isNew);
+        return grammarRow(item, isNew);
       }).join("")}
     </div>`;
   }
@@ -5420,96 +5462,174 @@ function ooRenderSessionDetail(root) {
       📊 到這次上課為止，累計：單字 ${ooCumulativeAt(s, "vocab")}・造句 ${ooExamplesCumulativeAt(s)}・短句 ${ooCumulativeAt(s, "sentences")}・文法 ${ooCumulativeAt(s, "grammar")}
     </div>
     <div style="height:14px;"></div>
-    ${block("🟩 單字", s.vocabIds, s.newVocabIds, oneOnOne.vocab, { vocab: true })}
+    ${block("vocab", "🟩 單字", s.vocabIds, s.newVocabIds, oneOnOne.vocab)}
     ${compositionsBlock()}
-    ${block("🟨 短句", s.sentenceIds, s.newSentenceIds, oneOnOne.sentences)}
-    ${block("📘 文法", s.grammarIds, s.newGrammarIds, oneOnOne.grammar)}
+    ${block("sentences", "🟨 短句", s.sentenceIds, s.newSentenceIds, oneOnOne.sentences)}
+    ${block("grammar", "📘 文法", s.grammarIds, s.newGrammarIds, oneOnOne.grammar)}
     ${empty ? `<div class="empty-fox"><span class="ef-icon">🌱</span>這次上課還沒有內容</div>` : ""}`;
 }
 
-/* ---- 新增上課紀錄的彈窗（單字／短句／文法；造句改為附屬在單字裡新增） ---- */
-function ooEnsureAddModal() {
-  if (document.getElementById("ooAddMask")) return;
+/* ---- 新增上課紀錄：先選日期（卡片式），再進到課程頁用「＋新增」「📚從題庫加入」逐項加內容 ---- */
+function ooEnsureDatePickerModal() {
+  if (document.getElementById("ooDatePickerMask")) return;
   const modal = document.createElement("div");
-  modal.id = "ooAddMask";
+  modal.id = "ooDatePickerMask";
   modal.className = "hero-modal-mask";
   modal.innerHTML = `
-    <div class="hero-modal" style="width:min(640px,100%);max-height:88vh;overflow:auto;">
+    <div class="hero-modal" style="width:min(360px,100%);">
       <div class="hero-modal-head">
-        <div class="hero-modal-title">🗂️ 新增上課紀錄</div>
-        <button class="hero-modal-close" type="button" onclick="ooCloseAddSession()">關閉</button>
+        <div class="hero-modal-title">📅 新增上課紀錄</div>
+        <button class="hero-modal-close" type="button" onclick="ooCloseDatePicker()">關閉</button>
       </div>
-      <label style="font-weight:900;color:#4e8f24;">📅 上課日期</label>
-      <input type="date" id="ooAddDate" class="cute-input" style="margin:6px 0 16px;width:100%;">
-
-      <label style="font-weight:900;color:#4e8f24;">🟩 單字（每行一個，可用「韓文｜中文」）</label>
-      <textarea id="ooAddVocab" class="oo-textarea" rows="5" placeholder="먹다｜吃&#10;학교｜學校" style="margin:6px 0 16px;"></textarea>
-
-      <label style="font-weight:900;color:#4e8f24;">🟨 短句（每行一句）</label>
-      <textarea id="ooAddSentence" class="oo-textarea" rows="4" placeholder="오늘 뭐 했어요?｜今天做了什麼？" style="margin:6px 0 16px;"></textarea>
-
-      <label style="font-weight:900;color:#4e8f24;">📘 文法（每行一個）</label>
-      <textarea id="ooAddGrammar" class="oo-textarea" rows="3" placeholder="-았/었어요｜過去式" style="margin:6px 0 16px;"></textarea>
-
-      <div style="font-size:12px;color:var(--muted);font-weight:800;margin-bottom:10px;">💬 造句要新增的話，儲存後點進單字裡的「＋ 新增造句」即可，會自動歸在這次上課。</div>
-
-      <button class="primary cute-btn" style="width:100%;" onclick="ooSubmitAddSession()">💾 儲存上課紀錄</button>
+      <label style="font-weight:900;color:#4e8f24;">上課日期</label>
+      <input type="date" id="ooNewSessionDate" class="cute-input" style="margin:6px 0 18px;width:100%;box-sizing:border-box;">
+      <button class="primary cute-btn" style="width:100%;" onclick="ooCreateSessionAndOpen()">建立上課紀錄</button>
     </div>`;
   document.body.appendChild(modal);
 }
 function ooOpenAddSession() {
-  ooEnsureAddModal();
-  document.getElementById("ooAddDate").value = new Date().toISOString().slice(0, 10);
-  document.getElementById("ooAddVocab").value = "";
-  document.getElementById("ooAddSentence").value = "";
-  document.getElementById("ooAddGrammar").value = "";
-  document.getElementById("ooAddMask").classList.add("show");
+  ooEnsureDatePickerModal();
+  document.getElementById("ooNewSessionDate").value = new Date().toISOString().slice(0, 10);
+  document.getElementById("ooDatePickerMask").classList.add("show");
 }
-function ooCloseAddSession() {
-  const m = document.getElementById("ooAddMask");
+function ooCloseDatePicker() {
+  const m = document.getElementById("ooDatePickerMask");
   if (m) m.classList.remove("show");
 }
-function ooSubmitAddSession() {
-  const raw = document.getElementById("ooAddDate").value;
+function ooCreateSessionAndOpen() {
+  const raw = document.getElementById("ooNewSessionDate").value;
   const date = raw ? raw.replaceAll("-", "/") : today();
-  const vocabText = document.getElementById("ooAddVocab").value;
-  const sentenceText = document.getElementById("ooAddSentence").value;
-  const grammarText = document.getElementById("ooAddGrammar").value;
-  if (!vocabText.trim() && !sentenceText.trim() && !grammarText.trim()) {
-    alert("請至少輸入一項內容（單字／短句／文法）");
-    return;
-  }
-  const { session, summary } = ooAddSession(date, vocabText, sentenceText, grammarText);
-  ooCloseAddSession();
-  ooShowSummary(summary);
+  const session = ooCreateEmptySession(date);
+  ooCloseDatePicker();
   ooCurrentSessionId = session.id;
+  ooExpandedVocabId = null;
   ooView = "sessionDetail";
   ooRender();
-  if (typeof logActivity === "function") logActivity("oneOnOne", session.vocabIds.length + session.sentenceIds.length + session.grammarIds.length);
 }
-function ooShowSummary(summary) {
-  const parts = [];
-  [["vocab", "🟩 單字"], ["sentence", "🟨 短句"], ["grammar", "📘 文法"]].forEach(([key, label]) => {
-    const s = summary[key];
-    if (!s.new.length && !s.existing.length) return;
-    parts.push(`
-      <div style="margin-bottom:14px;">
-        <div style="font-weight:1000;margin-bottom:6px;">${label}　新增：${s.new.length}　已存在：${s.existing.length}</div>
-        ${s.new.length ? `<div style="font-size:13px;color:#4e8f24;font-weight:800;">✨ 新增：${s.new.map(esc).join("、")}</div>` : ""}
-        ${s.existing.length ? `<div style="font-size:13px;color:var(--muted);font-weight:800;margin-top:4px;">🔁 已存在：${s.existing.map(esc).join("、")}</div>` : ""}
-      </div>`);
-  });
+
+/* 每個分類（單字／短句／文法）共用的「新增／編輯」小卡片彈窗，取代原本的大段 textarea */
+const OO_FIELD_CONFIG = {
+  vocab: { title: "🟩 新增單字", fields: [
+    { key: "kr", label: "韓文", required: true },
+    { key: "zh", label: "中文", required: false }
+  ] },
+  sentences: { title: "🟨 新增短句", fields: [
+    { key: "kr", label: "韓文", required: true },
+    { key: "zh", label: "中文", required: false },
+    { key: "teacherNote", label: "老師補充（可空白）", required: false },
+    { key: "aiNote", label: "AI解析（可空白）", required: false }
+  ] },
+  grammar: { title: "📘 新增文法", fields: [
+    { key: "kr", label: "文法", required: true },
+    { key: "zh", label: "中文", required: false },
+    { key: "note", label: "說明（可空白）", required: false }
+  ] }
+};
+let ooQuickAddCategory = null;
+let ooQuickAddEditId = null;
+function ooEnsureQuickAddModal() {
+  if (document.getElementById("ooQuickAddMask")) return;
   const modal = document.createElement("div");
-  modal.className = "hero-modal-mask show";
+  modal.id = "ooQuickAddMask";
+  modal.className = "hero-modal-mask";
   modal.innerHTML = `
-    <div class="hero-modal" style="width:min(560px,100%);max-height:80vh;overflow:auto;">
+    <div class="hero-modal" style="width:min(480px,100%);max-height:85vh;overflow:auto;">
       <div class="hero-modal-head">
-        <div class="hero-modal-title">✅ 上課紀錄已儲存</div>
-        <button class="hero-modal-close" type="button" onclick="this.closest('.hero-modal-mask').remove()">關閉</button>
+        <div class="hero-modal-title" id="ooQuickAddTitle"></div>
+        <button class="hero-modal-close" type="button" onclick="ooCloseQuickAdd()">關閉</button>
       </div>
-      ${parts.join("") || `<div class="empty">這次沒有新增任何內容。</div>`}
+      <div id="ooQuickAddFields"></div>
+      <button class="primary cute-btn" style="width:100%;" onclick="ooSubmitQuickAdd()">💾 儲存</button>
     </div>`;
   document.body.appendChild(modal);
+}
+function ooOpenQuickAdd(category, editId) {
+  ooEnsureQuickAddModal();
+  ooQuickAddCategory = category;
+  ooQuickAddEditId = editId || null;
+  const cfg = OO_FIELD_CONFIG[category];
+  const existing = editId ? oneOnOne[category].find(x => x.id === editId) : null;
+  document.getElementById("ooQuickAddTitle").textContent = editId ? "✏️ 編輯" : cfg.title;
+  document.getElementById("ooQuickAddFields").innerHTML = cfg.fields.map(f => `
+    <label style="font-weight:900;color:#4e8f24;">${f.label}</label>
+    <input type="text" id="ooQF_${f.key}" class="cute-input" style="margin:6px 0 14px;width:100%;box-sizing:border-box;" value="${existing ? esc(existing[f.key] || "") : ""}">
+  `).join("");
+  document.getElementById("ooQuickAddMask").classList.add("show");
+}
+function ooCloseQuickAdd() {
+  const m = document.getElementById("ooQuickAddMask");
+  if (m) m.classList.remove("show");
+}
+function ooSubmitQuickAdd() {
+  const cfg = OO_FIELD_CONFIG[ooQuickAddCategory];
+  const values = {};
+  cfg.fields.forEach(f => { values[f.key] = document.getElementById("ooQF_" + f.key).value.trim(); });
+  if (!values.kr) { alert("請輸入" + cfg.fields[0].label); return; }
+  if (ooQuickAddEditId) {
+    const item = oneOnOne[ooQuickAddCategory].find(x => x.id === ooQuickAddEditId);
+    if (item) Object.assign(item, values);
+    ooSave();
+  } else {
+    ooAddItemToSession(ooQuickAddCategory, values);
+  }
+  ooCloseQuickAdd();
+  ooRender();
+}
+
+/* 「📚 從題庫加入」：把已經存在的單字／短句／文法直接引用進這次上課紀錄，不會重複建立 */
+let ooPickerCategory = null;
+function ooEnsurePickerModal() {
+  if (document.getElementById("ooPickerMask")) return;
+  const modal = document.createElement("div");
+  modal.id = "ooPickerMask";
+  modal.className = "hero-modal-mask";
+  modal.innerHTML = `
+    <div class="hero-modal" style="width:min(480px,100%);max-height:80vh;overflow:auto;">
+      <div class="hero-modal-head">
+        <div class="hero-modal-title">📚 從題庫加入</div>
+        <button class="hero-modal-close" type="button" onclick="ooClosePicker()">關閉</button>
+      </div>
+      <input class="folder-search-input" id="ooPickerSearch" placeholder="🔍 搜尋..." oninput="ooRenderPickerList(this.value)" style="margin-bottom:10px;">
+      <div id="ooPickerList"></div>
+      <button class="primary cute-btn" style="width:100%;margin-top:12px;" onclick="ooSubmitPicker()">加入</button>
+    </div>`;
+  document.body.appendChild(modal);
+}
+function ooOpenBankPicker(category) {
+  ooPickerCategory = category;
+  ooEnsurePickerModal();
+  document.getElementById("ooPickerSearch").value = "";
+  ooRenderPickerList("");
+  document.getElementById("ooPickerMask").classList.add("show");
+}
+function ooClosePicker() {
+  const m = document.getElementById("ooPickerMask");
+  if (m) m.classList.remove("show");
+}
+function ooRenderPickerList(q) {
+  const s = oneOnOne.sessions.find(x => x.id === ooCurrentSessionId);
+  const wrap = document.getElementById("ooPickerList");
+  if (!s || !wrap) return;
+  const idsKey = OO_CATEGORY_KEYS[ooPickerCategory].idsKey;
+  const already = new Set(s[idsKey]);
+  q = (q || "").trim().toLowerCase();
+  const list = oneOnOne[ooPickerCategory].filter(it => !already.has(it.id) && (!q || it.kr.toLowerCase().includes(q) || (it.zh || "").toLowerCase().includes(q)));
+  wrap.innerHTML = list.length ? list.slice().reverse().map(it => `
+    <label style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--line);cursor:pointer;">
+      <input type="checkbox" value="${it.id}" class="ooPickerCheck">
+      <span class="oo-item-kr">${esc(it.kr)}</span>${it.zh ? `<span class="oo-item-zh">${esc(it.zh)}</span>` : ""}
+    </label>`).join("") : `<div class="empty-fox"><span class="ef-icon">🌱</span>沒有可以加入的資料了</div>`;
+}
+function ooSubmitPicker() {
+  const s = oneOnOne.sessions.find(x => x.id === ooCurrentSessionId);
+  if (!s) return;
+  const idsKey = OO_CATEGORY_KEYS[ooPickerCategory].idsKey;
+  const checked = Array.from(document.querySelectorAll(".ooPickerCheck:checked")).map(el => el.value);
+  checked.forEach(id => { if (!s[idsKey].includes(id)) s[idsKey].push(id); });
+  ooSave();
+  if (typeof logActivity === "function" && checked.length) logActivity("oneOnOne", checked.length);
+  ooClosePicker();
+  ooRender();
 }
 
 
