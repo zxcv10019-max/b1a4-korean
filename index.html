@@ -5134,6 +5134,64 @@ function ooRemoveFromSession(category, itemId, sessionId) {
   ooSave();
   ooRender();
 }
+/* 拖曳排序：按住 ⠿ 就能直接拖到想要的位置，滑鼠、觸控都適用 */
+let ooDrag = null;
+function ooDragHandlePointerDown(e, category, itemId) {
+  e.preventDefault();
+  const handle = e.currentTarget;
+  const row = handle.closest(".oo-drag-row");
+  if (!row) return;
+  const list = row.parentElement;
+  ooDrag = { category, itemId, row, list, startY: e.clientY, pointerId: e.pointerId };
+  row.classList.add("oo-dragging");
+  try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+  document.addEventListener("pointermove", ooDragPointerMove);
+  document.addEventListener("pointerup", ooDragPointerUp);
+  document.addEventListener("pointercancel", ooDragPointerUp);
+}
+function ooDragPointerMove(e) {
+  if (!ooDrag) return;
+  const dy = e.clientY - ooDrag.startY;
+  ooDrag.row.style.transform = `translateY(${dy}px)`;
+  const siblings = Array.from(ooDrag.list.children).filter(c => c.classList.contains("oo-drag-row") && c !== ooDrag.row);
+  for (const sib of siblings) {
+    const rect = sib.getBoundingClientRect();
+    const midY = rect.top + rect.height / 2;
+    const sibIsAfter = !!(ooDrag.row.compareDocumentPosition(sib) & Node.DOCUMENT_POSITION_FOLLOWING);
+    if (sibIsAfter && e.clientY > midY) {
+      ooDrag.list.insertBefore(ooDrag.row, sib.nextSibling);
+      ooDrag.startY = e.clientY;
+      ooDrag.row.style.transform = "";
+      break;
+    } else if (!sibIsAfter && e.clientY < midY) {
+      ooDrag.list.insertBefore(ooDrag.row, sib);
+      ooDrag.startY = e.clientY;
+      ooDrag.row.style.transform = "";
+      break;
+    }
+  }
+}
+function ooDragPointerUp() {
+  if (!ooDrag) return;
+  document.removeEventListener("pointermove", ooDragPointerMove);
+  document.removeEventListener("pointerup", ooDragPointerUp);
+  document.removeEventListener("pointercancel", ooDragPointerUp);
+  ooDrag.row.style.transform = "";
+  ooDrag.row.classList.remove("oo-dragging");
+  const list = ooDrag.list;
+  const category = ooDrag.category;
+  const newOrder = Array.from(list.children).filter(c => c.classList.contains("oo-drag-row")).map(c => c.dataset.itemId);
+  ooDrag = null;
+  ooApplyDragOrder(category, newOrder);
+}
+function ooApplyDragOrder(category, newOrder) {
+  const s = oneOnOne.sessions.find(x => x.id === ooCurrentSessionId);
+  if (!s) return;
+  const conf = OO_CATEGORY_KEYS[category];
+  s[conf.idsKey] = newOrder;
+  ooSave();
+  ooRender();
+}
 
 /* 短句「編輯短句」彈窗共用主題庫的整套元件（AI翻譯／整句解析／單字解析／文法解析／補充說明），
    這裡只負責存檔的目的地換成 oneOnOne.sentences，並且引用（不重複建立）到目前這次上課紀錄 */
@@ -5168,6 +5226,38 @@ async function ooAiAnalyzeAllSentences(sessionId, btnEl) {
   if (typeof showSaveToast === "function") showSaveToast();
   alert(`完成！成功解析 ${done} 句${failed ? `，${failed} 句失敗（可以到單句的✏️編輯裡再按一次 AI 按鈕重試）` : ""}。`);
 }
+/* 一次對這次上課的「所有單字」各生成一句 AI 造句，不用一個一個展開點 */
+async function ooAiExampleAllVocab(sessionId, btnEl) {
+  const s = oneOnOne.sessions.find(x => x.id === sessionId);
+  if (!s) return;
+  const targets = s.vocabIds
+    .map(id => oneOnOne.vocab.find(x => x.id === id))
+    .filter(Boolean)
+    .filter(v => !(v.examples || []).some(e => e.source === "ai"));
+  if (!targets.length) { alert("這次上課的單字都已經有 AI 造句了！"); return; }
+  if (!confirm(`要用 AI 幫這次上課還沒有 AI 造句的 ${targets.length} 個單字，各生成一句例句嗎？`)) return;
+  const originalText = btnEl ? btnEl.textContent : "";
+  if (btnEl) btnEl.disabled = true;
+  let done = 0, failed = 0;
+  for (const v of targets) {
+    if (btnEl) btnEl.textContent = `⏳ 造句中（${done + failed + 1}/${targets.length}）`;
+    try {
+      const result = await ooGenerateAiSentence(v.kr, v.zh);
+      if (result && result.korean) {
+        ooAddExample(v.id, "ai", result.korean, result.chinese || "", sessionId);
+        done++;
+      } else {
+        failed++;
+      }
+    } catch (e) {
+      console.warn("AI造句失敗：", v.kr, e);
+      failed++;
+    }
+  }
+  if (btnEl) { btnEl.disabled = false; btnEl.textContent = originalText; }
+  ooRender();
+  alert(`完成！成功幫 ${done} 個單字造句${failed ? `，${failed} 個失敗（可以到單字裡的✨AI幫我造句重試）` : ""}。`);
+}
 function ooSaveSentenceFromEditor(values) {
   const sessionId = sentenceEditorContext && sentenceEditorContext.sessionId;
   const s = oneOnOne.sessions.find(x => x.id === sessionId);
@@ -5201,10 +5291,11 @@ function ooMakeSentenceCardHtml(s, sessionId, isNew) {
   const grammarHtml = grammarList.length ? grammarList.map(g => sentenceGrammarCardHtml(g)).join("") : `<div class="empty" style="padding:8px 0;">尚無文法解析</div>`;
   const chip = isNew ? `<span class="oo-chip-new">✨ 新增</span>` : `<span class="oo-chip-old">🔁 已學過</span>`;
   return `
-    <div class="card sentence-card">
+    <div class="card sentence-card oo-drag-row" data-item-id="${s.id}">
       <div class="sen-head">
         <div class="sen-kr">${chip} 🇰🇷 ${esc(s.kr)}</div>
         <div class="btns">
+          <span class="oo-drag-handle" onpointerdown="ooDragHandlePointerDown(event,'sentences','${s.id}')" title="按住拖曳調整順序">⠿</span>
           <button class="gram-icon-btn" onclick="openSentenceEditor('${s.id}', {oo:true, sessionId:'${sessionId}'})" title="編輯／單字解析／AI">✏️</button>
           <button class="gram-icon-btn" onclick="ooRemoveFromSession('sentences','${s.id}','${sessionId}')" title="從這次上課移除">🗑</button>
         </div>
@@ -5588,6 +5679,8 @@ function ooRenderSessionDetail(root) {
       : `<button class="ghost" style="padding:5px 10px;font-size:12px;" onclick="ooOpenQuickAdd('${category}')">＋ 新增</button>`;
     const aiAllBtn = category === "sentences" && count > 0
       ? `<button class="ghost" style="padding:5px 10px;font-size:12px;" onclick="ooAiAnalyzeAllSentences('${s.id}', this)">✨ AI一次完成翻譯＋解析＋單字＋文法</button>`
+      : category === "vocab" && count > 0
+      ? `<button class="ghost" style="padding:5px 10px;font-size:12px;" onclick="ooAiExampleAllVocab('${s.id}', this)">✨ 一鍵AI造句</button>`
       : "";
     return `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
       <div style="font-weight:1000;">${title}（${count}）</div>
@@ -5599,7 +5692,8 @@ function ooRenderSessionDetail(root) {
     </div>`;
   }
   function rowActions(category, itemId) {
-    return `<div style="display:flex;align-items:center;gap:6px;">
+    return `<div style="display:flex;align-items:center;gap:4px;">
+      <span class="oo-drag-handle" onpointerdown="ooDragHandlePointerDown(event,'${category}','${itemId}')" title="按住拖曳調整順序">⠿</span>
       <button class="ghost" style="padding:2px 8px;font-size:12px;" onclick="event.stopPropagation();ooOpenQuickAdd('${category}','${itemId}')">✏️</button>
       <button class="ghost" style="padding:2px 8px;font-size:12px;" onclick="event.stopPropagation();ooRemoveFromSession('${category}','${itemId}','${s.id}')">🗑</button>
     </div>`;
@@ -5616,12 +5710,12 @@ function ooRenderSessionDetail(root) {
         ${rowActions("vocab", item.id)}
       </div>
     </div>`;
-    if (ooExpandedVocabId !== item.id) return rowHtml;
-    return rowHtml + `<div class="oo-inline-panel">${ooExampleTabsHtml(item.id, item.examples || [], s.id)}</div>`;
+    const panelHtml = ooExpandedVocabId === item.id ? `<div class="oo-inline-panel">${ooExampleTabsHtml(item.id, item.examples || [], s.id)}</div>` : "";
+    return `<div class="oo-drag-row" data-item-id="${item.id}">${rowHtml}${panelHtml}</div>`;
   }
   function grammarRow(item, isNew) {
     const chip = isNew ? `<span class="oo-chip-new">✨ 新增</span>` : `<span class="oo-chip-old">🔁 已學過</span>`;
-    return `<div class="oo-item-row" style="flex-direction:column;align-items:stretch;gap:6px;">
+    return `<div class="oo-item-row oo-drag-row" data-item-id="${item.id}" style="flex-direction:column;align-items:stretch;gap:6px;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">${chip}<span class="oo-item-kr">${esc(item.kr)}</span>${item.zh ? `<span class="oo-item-zh">${esc(item.zh)}</span>` : ""}</div>
         ${rowActions("grammar", item.id)}
@@ -5634,15 +5728,31 @@ function ooRenderSessionDetail(root) {
     if (!ids.length) return `<div style="margin-bottom:18px;">${header}</div>`;
     return `<div style="margin-bottom:18px;">
       ${header}
-      ${ids.map(id => {
-        const item = masterArr.find(x => x.id === id);
-        if (!item) return "";
-        const isNew = newIds.includes(id);
-        if (category === "vocab") return vocabRowWithInline(item, isNew);
-        if (category === "sentences") return ooMakeSentenceCardHtml(item, s.id, isNew);
-        return grammarRow(item, isNew);
-      }).join("")}
+      <div class="oo-drag-list">
+        ${ids.map(id => {
+          const item = masterArr.find(x => x.id === id);
+          if (!item) return "";
+          const isNew = newIds.includes(id);
+          if (category === "vocab") return vocabRowWithInline(item, isNew);
+          if (category === "sentences") return ooMakeSentenceCardHtml(item, s.id, isNew);
+          return grammarRow(item, isNew);
+        }).join("")}
+      </div>
     </div>`;
+  }
+  function ooExampleInlineHtml(vocabId, ex, sessionId) {
+    const favIcon = ex.favorite ? "⭐" : "☆";
+    const sourceLabel = ex.source === "ai" ? "🤖 AI造句" : "👨‍🏫 老師造句";
+    return `<div style="font-size:11px;color:var(--muted);font-weight:900;margin-bottom:4px;">${sourceLabel}</div>
+      <div class="oo-item-kr">${esc(ex.korean)}</div>
+      ${ex.chinese ? `<div class="oo-item-zh">${esc(ex.chinese)}</div>` : ""}
+      <div class="btns" style="justify-content:flex-start;flex-wrap:wrap;margin-top:6px;">
+        <button class="ghost" style="padding:3px 8px;font-size:12px;" onclick="speakKorean('${jsAttr(ex.korean)}')">🔊 發音</button>
+        <button class="ghost" style="padding:3px 8px;font-size:12px;" onclick="ooCopyExample('${jsAttr(ex.korean)}','${jsAttr(ex.chinese || "")}')">📋 複製</button>
+        <button class="ghost" style="padding:3px 8px;font-size:12px;" onclick="ooToggleExampleFavorite('${vocabId}','${ex.id}')">${favIcon} 收藏</button>
+        <button class="ghost" style="padding:3px 8px;font-size:12px;" onclick="ooOpenEditExample('${vocabId}','${ex.id}','${sessionId || ""}')">✏️ 編輯</button>
+        <button class="ghost" style="padding:3px 8px;font-size:12px;" onclick="ooDeleteExample('${vocabId}','${ex.id}')">🗑 刪除</button>
+      </div>`;
   }
   function compositionsBlock() {
     const groups = ooExamplesForSession(s.id);
@@ -5651,11 +5761,12 @@ function ooRenderSessionDetail(root) {
     return `<div style="margin-bottom:18px;">
       <div style="font-weight:1000;margin-bottom:8px;">💬 造句（${total}）</div>
       ${groups.map(g => `
-        <div class="oo-item-row" style="cursor:pointer;" onclick="ooOpenVocabDetail('${g.vocab.id}','sessionDetail','${s.id}')">
-          <span class="oo-chip-old">💬</span>
-          <span class="oo-item-kr">${esc(g.vocab.kr)}</span>${g.vocab.zh ? `<span class="oo-item-zh">${esc(g.vocab.zh)}</span>` : ""}
-        </div>
-        ${g.examples.map(ex => ooExampleCardHtml(g.vocab.id, ex, s.id)).join("")}`).join("")}
+        <div class="card" style="padding:16px;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;cursor:pointer;margin-bottom:10px;" onclick="ooOpenVocabDetail('${g.vocab.id}','sessionDetail','${s.id}')">
+            <span class="oo-item-kr">${esc(g.vocab.kr)}</span>${g.vocab.zh ? `<span class="oo-item-zh">${esc(g.vocab.zh)}</span>` : ""}
+          </div>
+          ${g.examples.map((ex, i) => `<div style="${i > 0 ? "border-top:1px dashed var(--line);padding-top:10px;margin-top:10px;" : ""}">${ooExampleInlineHtml(g.vocab.id, ex, s.id)}</div>`).join("")}
+        </div>`).join("")}
     </div>`;
   }
   const examplesCount = ooExamplesForSession(s.id).reduce((sum, g) => sum + g.examples.length, 0);
@@ -10328,6 +10439,9 @@ function installHeroManager() {
     .oo-chip-ai{background:#f3e8ff;color:#7a3fa0;border-radius:10px;padding:3px 9px;font-size:12px;font-weight:900;white-space:nowrap;}
     .oo-textarea{width:100%;border:1px solid var(--line);border-radius:14px;padding:10px 12px;font-family:inherit;font-size:14px;resize:vertical;}
 .oo-inline-panel{background:#f7fbf1;border:1px solid var(--line);border-top:none;border-radius:0 0 14px 14px;padding:14px 16px;margin:-10px 0 8px;}
+.oo-drag-handle{touch-action:none;cursor:grab;padding:2px 8px;font-size:16px;color:var(--muted);user-select:none;}
+.oo-drag-row{position:relative;}
+.oo-dragging{opacity:.6;box-shadow:0 10px 24px rgba(20,30,10,.18);z-index:50;}
 .oo-inline-source{display:flex;gap:16px;margin-bottom:8px;}
 .oo-inline-source label{display:flex;align-items:center;gap:5px;font-size:13px;font-weight:900;cursor:pointer;color:#3f5634;}
 .oo-inline-textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-family:inherit;font-size:13px;resize:vertical;margin-bottom:8px;box-sizing:border-box;}
