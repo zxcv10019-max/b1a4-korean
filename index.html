@@ -2604,6 +2604,13 @@ textarea {
   background:linear-gradient(135deg,#9bc95d,#6fae37); color:#fff; font-size:24px; cursor:pointer;
   box-shadow:0 10px 22px rgba(72,108,39,.3);
 }
+.oo-vocab-fab {
+  position:fixed; left:18px; bottom:86px; z-index:9400; border:0; border-radius:999px; width:52px; height:52px;
+  background:linear-gradient(135deg,#9bc95d,#6fae37); color:#fff; font-size:24px; cursor:pointer;
+  box-shadow:0 10px 22px rgba(72,108,39,.3);
+}
+body.overlay-open .oo-vocab-fab { display:none !important; }
+@media (max-width:680px){ .oo-vocab-fab { bottom:78px; left:14px; } }
 
 /* ===== 題庫編輯區：森林可愛化 ===== */
 .forest-editor .forest-card-editor {
@@ -5720,10 +5727,14 @@ function ooRenderSessionDetail(root) {
       : category === "vocab" && count > 0
       ? `<button class="ghost" style="padding:5px 10px;font-size:12px;" onclick="ooAiExampleAllVocab('${s.id}', this)">✨ 一鍵AI造句</button>`
       : "";
+    const batchBtn = (category === "vocab" || category === "grammar")
+      ? `<button class="ghost" style="padding:5px 10px;font-size:12px;" onclick="ooOpenBatchPaste('${category}')">📋 批次貼上</button>`
+      : "";
     return `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
       <div style="font-weight:1000;">${title}（${count}）</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         ${addBtn}
+        ${batchBtn}
         <button class="ghost" style="padding:5px 10px;font-size:12px;" onclick="ooOpenBankPicker('${category}')">📚 從題庫加入</button>
         ${aiAllBtn}
       </div>
@@ -5847,7 +5858,8 @@ function ooRenderSessionDetail(root) {
     </div>
     ${stepsHtml}
     <button class="ghost" style="width:100%;margin-bottom:10px;" onclick="ooToggleContentPanel()">${ooContentPanelOpen ? "▾" : "▸"} ✏️ 管理這堂課內容</button>
-    ${contentHtml}`;
+    ${contentHtml}
+    ${ooContentPanelOpen ? `<button type="button" class="oo-vocab-fab" onclick="ooOpenQuickAdd('vocab')" title="新增單字">➕</button>` : ""}`;
 }
 
 /* ---- 新增上課紀錄：先選日期（卡片式），再進到課程頁用「＋新增」「📚從題庫加入」逐項加內容 ---- */
@@ -5956,6 +5968,83 @@ function ooSubmitQuickAdd() {
   }
   ooCloseQuickAdd();
   ooRender();
+}
+
+/* 「📋 批次貼上」：仿照題庫的批次貼上，一次貼多行「韓文＋中文」直接同步整個分類的內容，
+   不用一筆一筆點「＋新增」。文字框會預先帶入這次上課目前的內容，方便直接編輯／刪除／新增。 */
+let ooBatchPasteCategory = "vocab";
+const OO_BATCH_TITLE = { vocab: "📋 批次貼上單字", grammar: "📋 批次貼上文法" };
+function ooEnsureBatchPasteModal() {
+  if (document.getElementById("ooBatchPasteMask")) return;
+  const modal = document.createElement("div");
+  modal.id = "ooBatchPasteMask";
+  modal.className = "hero-modal-mask";
+  modal.innerHTML = `
+    <div class="hero-modal" style="width:min(520px,100%);max-height:85vh;overflow:auto;">
+      <div class="hero-modal-head">
+        <div class="hero-modal-title" id="ooBatchPasteTitle">📋 批次貼上</div>
+        <button class="hero-modal-close" type="button" onclick="ooCloseBatchPaste()">關閉</button>
+      </div>
+      <div class="hero-help" style="margin-bottom:10px;">每行一筆，韓文和中文可以用 Tab、逗號或空白隔開，例如：<br>인형　玩偶<br>손받이，托恩<br>直接刪掉某一行文字，儲存後這次上課就會移除該筆內容（題庫本身的資料不會被刪除）。</div>
+      <textarea id="ooBatchPasteText" class="cute-input" style="width:100%;box-sizing:border-box;min-height:280px;font-family:inherit;line-height:1.7;" placeholder="인형  玩偶&#10;손받이  托恩"></textarea>
+      <button class="primary cute-btn" style="width:100%;margin-top:12px;" onclick="ooSubmitBatchPaste()">💾 儲存</button>
+    </div>`;
+  document.body.appendChild(modal);
+}
+function ooOpenBatchPaste(category) {
+  ooEnsureBatchPasteModal();
+  ooBatchPasteCategory = category || "vocab";
+  document.getElementById("ooBatchPasteTitle").textContent = OO_BATCH_TITLE[ooBatchPasteCategory] || "📋 批次貼上";
+  const s = oneOnOne.sessions.find(x => x.id === ooCurrentSessionId);
+  const conf = OO_CATEGORY_KEYS[ooBatchPasteCategory];
+  const masterArr = oneOnOne[ooBatchPasteCategory];
+  const lines = s ? s[conf.idsKey].map(id => {
+    const item = masterArr.find(x => x.id === id);
+    return item ? `${item.kr}\t${item.zh || ""}` : "";
+  }).filter(Boolean) : [];
+  document.getElementById("ooBatchPasteText").value = lines.join("\n");
+  document.getElementById("ooBatchPasteMask").classList.add("show");
+}
+function ooCloseBatchPaste() {
+  const m = document.getElementById("ooBatchPasteMask");
+  if (m) m.classList.remove("show");
+}
+function ooSubmitBatchPaste() {
+  const text = document.getElementById("ooBatchPasteText").value;
+  ooApplyBatchPaste(ooBatchPasteCategory, text);
+  ooCloseBatchPaste();
+  ooRender();
+}
+function ooApplyBatchPaste(category, text) {
+  const s = oneOnOne.sessions.find(x => x.id === ooCurrentSessionId);
+  if (!s) return;
+  const conf = OO_CATEGORY_KEYS[category];
+  const masterArr = oneOnOne[category];
+  const lines = parseRawLinesLenient(text);
+  const finalIds = [];
+  const addedIds = [];
+  lines.forEach(line => {
+    const kr = line.term;
+    if (!kr) return;
+    const zh = line.definition;
+    let entry = masterArr.find(x => x.kr === kr);
+    if (entry) {
+      if (zh && entry.zh !== zh) entry.zh = zh;
+    } else {
+      entry = Object.assign(
+        { id: ooId(conf.idPrefix), firstSessionId: s.id, createdAt: Date.now(), kr, zh },
+        category === "vocab" ? { examples: [] } : {}
+      );
+      masterArr.push(entry);
+    }
+    if (!finalIds.includes(entry.id)) finalIds.push(entry.id);
+    if (!s[conf.idsKey].includes(entry.id)) addedIds.push(entry.id);
+  });
+  const preservedNewIds = s[conf.newIdsKey].filter(id => finalIds.includes(id));
+  s[conf.newIdsKey] = Array.from(new Set([...preservedNewIds, ...addedIds]));
+  s[conf.idsKey] = finalIds;
+  ooSave();
+  if (typeof logActivity === "function" && addedIds.length) logActivity("oneOnOne", addedIds.length);
 }
 
 /* 「📚 從題庫加入」：把已經存在的單字／短句／文法直接引用進這次上課紀錄，不會重複建立 */
