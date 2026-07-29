@@ -4781,6 +4781,7 @@ function updateSyncUI(text, badge, loggedIn) {
 function initFirebaseSync() {
   if (!isFirebaseConfigured()) {
     updateSyncUI("尚未填入 Firebase 設定，目前題庫只會存在這台裝置。", "待設定", false);
+    if (typeof ooSyncPracticeFolders === "function") ooSyncPracticeFolders();
     return;
   }
   try {
@@ -4793,6 +4794,7 @@ function initFirebaseSync() {
       if (!user) {
         cloudDocRef = null;
         updateSyncUI("未登入，目前題庫只儲存在這台裝置。", "本機模式", false);
+        if (typeof ooSyncPracticeFolders === "function") ooSyncPracticeFolders();
         return;
       }
       cloudDocRef = firebaseDb.collection(CLOUD_COLLECTION).doc(user.uid);
@@ -4802,6 +4804,7 @@ function initFirebaseSync() {
 });
   } catch (err) {
     updateSyncUI("Firebase 初始化失敗，請確認設定是否正確。", "設定錯誤", false);
+    if (typeof ooSyncPracticeFolders === "function") ooSyncPracticeFolders();
     console.error(err);
   }
 }
@@ -5227,6 +5230,10 @@ async function ooAiAnalyzeAllSentences(sessionId, btnEl) {
   if (!s) return;
   const targets = s.sentenceIds.map(id => oneOnOne.sentences.find(x => x.id === id)).filter(Boolean);
   if (!targets.length) { alert("這次上課還沒有短句"); return; }
+  if (!getOpenAiKey()) {
+    alert("這個裝置還沒有設定 AI 金鑰（金鑰不會跟著雲端同步，每個裝置要各自設定一次）。請先到「我的」頁面貼上 OpenAI API 金鑰，再回來用這個功能，不然要一句一句手動貼上 AI 回覆會很累。");
+    return;
+  }
   if (!confirm(`要用 AI 一次解析這次上課的 ${targets.length} 句短句嗎？（會覆蓋原本的翻譯／整句解析／單字解析／文法解析）`)) return;
   const originalText = btnEl ? btnEl.textContent : "";
   if (btnEl) btnEl.disabled = true;
@@ -5261,6 +5268,10 @@ async function ooAiExampleAllVocab(sessionId, btnEl) {
     .filter(Boolean)
     .filter(v => !(v.examples || []).some(e => e.source === "ai"));
   if (!targets.length) { alert("這次上課的單字都已經有 AI 造句了！"); return; }
+  if (!getOpenAiKey()) {
+    alert("這個裝置還沒有設定 AI 金鑰（金鑰不會跟著雲端同步，每個裝置要各自設定一次）。請先到「我的」頁面貼上 OpenAI API 金鑰，再回來用這個功能，不然要一個一個手動貼上 AI 回覆會很累。");
+    return;
+  }
   if (!confirm(`要用 AI 幫這次上課還沒有 AI 造句的 ${targets.length} 個單字，各生成一句例句嗎？`)) return;
   const originalText = btnEl ? btnEl.textContent : "";
   if (btnEl) btnEl.disabled = true;
@@ -5545,6 +5556,7 @@ function ooGo(view) { ooView = view; ooCurrentSessionId = null; ooExpandedVocabI
 function ooRender() {
   const root = document.getElementById("ooRoot");
   if (!root) return;
+  try { localStorage.setItem("b1a4_last_oo_state", JSON.stringify({ view: ooView, sessionId: ooCurrentSessionId })); } catch (e) {}
   if (ooView === "vocab") return ooRenderVocabList(root);
   if (ooView === "vocabDetail") return ooRenderVocabDetail(root);
   if (ooView === "sentence") return ooRenderSimpleList(root, "sentences", "🟦 短句");
@@ -6544,6 +6556,7 @@ function goPage(id) {
   const prevId = prevActive ? prevActive.id : null;
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.getElementById(id).classList.add("active");
+  try { localStorage.setItem("b1a4_last_page", id); } catch (e) {}
   if (VOCAB_PAGES.includes(id)) current_vocab_page = id;
   updateBottomNav(id);
   syncDropdowns();
@@ -14406,12 +14419,31 @@ setupHeroCarousel();
 setupFlashSwipe();
 
 initFirebaseSync();
-ooSyncPracticeFolders();
 renderFolders();
 ooUpdateEntryCard();
 renderOoHomeCard();
 renderDashboard();
-try { history.replaceState({ page: "home" }, ""); } catch (e) {}
+let ooRestorePageId = "home";
+try {
+  const lastPage = localStorage.getItem("b1a4_last_page");
+  if (lastPage && lastPage !== "home" && document.getElementById(lastPage)) {
+    isRestoringNav = true;
+    goPage(lastPage);
+    if (lastPage === "oneOnOne") {
+      const savedOo = JSON.parse(localStorage.getItem("b1a4_last_oo_state") || "null");
+      if (savedOo && savedOo.sessionId && oneOnOne.sessions.some(s => s.id === savedOo.sessionId)) {
+        ooCurrentSessionId = savedOo.sessionId;
+        ooView = savedOo.view || "main";
+      } else if (savedOo && savedOo.view && savedOo.view !== "sessionDetail" && savedOo.view !== "vocabDetail") {
+        ooView = savedOo.view;
+      }
+      ooRender();
+    }
+    isRestoringNav = false;
+    ooRestorePageId = lastPage;
+  }
+} catch (e) {}
+try { history.replaceState({ page: ooRestorePageId }, ""); } catch (e) {}
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
