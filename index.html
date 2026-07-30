@@ -5387,8 +5387,14 @@ function ooAddExample(vocabId, source, korean, chinese, sessionId) {
   return ex;
 }
 function ooExamplesCumulativeAt(session) {
+  const validIds = ooSessionsUpToAndIncluding(session);
   let count = 0;
-  oneOnOne.vocab.forEach(v => { (v.examples || []).forEach(ex => { if (ex.createdAt <= session.createdAt) count++; }); });
+  oneOnOne.vocab.forEach(v => {
+    (v.examples || []).forEach(ex => {
+      const ok = validIds ? validIds.has(ex.sessionId) : ex.createdAt <= session.createdAt;
+      if (ok) count++;
+    });
+  });
   return count;
 }
 function ooExamplesForSession(sessionId) {
@@ -5701,10 +5707,21 @@ function ooFilterList(arrKey, q) {
   const wrap = document.getElementById("ooListWrap");
   if (wrap) wrap.innerHTML = ooListHtml(list);
 }
-/* 累計統計：以「這次上課當下」為基準，自動從主資料庫算出累計量，不需要手動輸入 */
+/* 累計統計：以「這次上課當下」為基準，自動從主資料庫算出累計量，不需要手動輸入
+   注意：不能用 createdAt 時間戳記比較，因為單字通常是「先建立這堂課，再把單字加進這堂課」，
+   單字的 createdAt 幾乎一定晚於 session.createdAt，會把當堂課才新增的單字排除掉。
+   改成：依照上課日期排序，找出「這堂課以及更早的課」，再看每個單字是不是在那些課裡第一次學到的（firstSessionId）。 */
+function ooSessionsUpToAndIncluding(session) {
+  const ordered = ooSortedSessionsAsc();
+  const idx = ordered.findIndex(x => x.id === session.id);
+  if (idx === -1) return null; // 找不到就回傳 null，呼叫端會 fallback
+  return new Set(ordered.slice(0, idx + 1).map(x => x.id));
+}
 function ooCumulativeAt(session, key) {
   const arr = oneOnOne[key] || [];
-  return arr.filter(x => x.createdAt <= session.createdAt).length;
+  const validIds = ooSessionsUpToAndIncluding(session);
+  if (!validIds) return arr.filter(x => x.createdAt <= session.createdAt).length;
+  return arr.filter(x => validIds.has(x.firstSessionId)).length;
 }
 function ooDeleteSession(sessionId) {
   const s = oneOnOne.sessions.find(x => x.id === sessionId);
