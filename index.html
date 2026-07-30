@@ -5509,6 +5509,21 @@ function ooCopyExample(kr, zh) {
     navigator.clipboard.writeText(text).then(() => { if (typeof showSaveToast === "function") showSaveToast(); });
   }
 }
+/* 一鍵複製「1對1上課」單字庫裡的所有單字（韓文＋中文，用 Tab 分隔，方便貼到 Excel／記事本） */
+function ooCopyAllVocab() {
+  const list = oneOnOne.vocab || [];
+  if (!list.length) { alert("目前還沒有單字可以複製喔！"); return; }
+  const text = list.map(v => `${v.kr}\t${v.zh || ""}`).join("\n");
+  const done = () => {
+    if (typeof showSaveToast === "function") showSaveToast();
+    else alert(`已複製 ${list.length} 個單字！`);
+  };
+  if (typeof copyTextToClipboard === "function") {
+    copyTextToClipboard(text, done);
+  } else if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => alert("複製失敗，請手動選取複製。"));
+  }
+}
 function ooToggleExampleFavorite(vocabId, exampleId) {
   const v = oneOnOne.vocab.find(x => x.id === vocabId);
   const ex = v && (v.examples || []).find(e => e.id === exampleId);
@@ -5596,7 +5611,10 @@ function ooRenderMain(root) {
       <div style="font-size:13px;color:var(--muted);font-weight:800;margin-bottom:14px;">上完課按下面「＋ 新增上課紀錄」，記下老師今天教了什麼</div>
     </div>`;
   const historyHtml = oneOnOne.sessions.length ? `
-    <div style="font-weight:1000;margin:18px 0 8px;">🗂️ 所有上課紀錄</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:18px 0 8px;">
+      <div style="font-weight:1000;">🗂️ 所有上課紀錄</div>
+      <button class="ghost" style="padding:5px 10px;font-size:12px;" onclick="ooCopyAllVocab()">📋 一鍵複製所有單字</button>
+    </div>
     ${ooSortedSessionsDesc().map(s => `
       <div class="oo-session-row" onclick="ooOpenSessionDetail('${s.id}')">
         <div class="oo-session-date">${s.completedAt ? "✅" : "📅"} ${esc(s.date)}</div>
