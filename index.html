@@ -5648,8 +5648,45 @@ function ooVocabRowHtml(v, onclickCall, chip) {
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
       ${chipHtml}<span class="oo-item-kr">${esc(v.kr)}</span>${v.zh ? `<span class="oo-item-zh">${esc(v.zh)}</span>` : ""}
     </div>
-    ${count > 0 ? `<span class="oo-chip-old">📝 ${count}</span>` : ""}
+    <div style="display:flex;align-items:center;gap:8px;">
+      ${count > 0 ? `<span class="oo-chip-old">📝 ${count}</span>` : ""}
+      <button class="ghost" style="padding:2px 8px;font-size:12px;" onclick="event.stopPropagation();ooDeleteVocabEntirely('${v.id}')" title="從單字庫永久刪除">🗑</button>
+    </div>
   </div>`;
+}
+/* 從單字庫「永久刪除」一個單字：連同它在所有上課紀錄裡的引用一起清掉。
+   （以前每堂課旁邊的 🗑 只是 ooRemoveFromSession，只會移除那一堂課的引用，
+   單字本身還留在 oneOnOne.vocab 主資料庫裡，導致「單字總數」對不起來。這裡才是真的刪除。） */
+function ooDeleteVocabEntirely(vocabId) {
+  const v = oneOnOne.vocab.find(x => x.id === vocabId);
+  if (!v) return;
+  if (!confirm(`確定要把「${v.kr}」從單字庫永久刪除嗎？\n（所有上課紀錄裡的這個單字也會一併移除，無法復原）`)) return;
+  oneOnOne.vocab = oneOnOne.vocab.filter(x => x.id !== vocabId);
+  oneOnOne.sessions.forEach(s => {
+    s.vocabIds = (s.vocabIds || []).filter(id => id !== vocabId);
+    s.newVocabIds = (s.newVocabIds || []).filter(id => id !== vocabId);
+  });
+  ooSave();
+  ooRender();
+}
+/* 清理「孤兒單字」：以前用每堂課旁邊的 🗑（ooRemoveFromSession）移除單字時，
+   單字本身沒有被刪掉，只是不再被任何一堂課引用，變成看不到、但還算在總數裡的孤兒資料。
+   這個函式會找出這些孤兒單字並讓使用者確認後整批清掉，藉此修正「單字總數對不起來」的問題。 */
+function ooFindOrphanVocabIds() {
+  const referenced = new Set();
+  oneOnOne.sessions.forEach(s => (s.vocabIds || []).forEach(id => referenced.add(id)));
+  return oneOnOne.vocab.filter(v => !referenced.has(v.id)).map(v => v.id);
+}
+function ooCleanupOrphanVocab() {
+  const orphanIds = ooFindOrphanVocabIds();
+  if (!orphanIds.length) { alert("檢查過了，沒有發現孤兒單字，單字庫的總數是正確的！"); return; }
+  const preview = orphanIds.slice(0, 5).map(id => { const v = oneOnOne.vocab.find(x => x.id === id); return v ? v.kr : ""; }).filter(Boolean).join("、");
+  if (!confirm(`發現 ${orphanIds.length} 個單字目前沒有被任何一堂課使用（例如：${preview}${orphanIds.length > 5 ? "…" : ""}）。\n這通常是之前從某堂課移除後留下的舊資料，確定要清掉嗎？\n（清掉後單字庫總數會減少，無法復原）`)) return;
+  const orphanSet = new Set(orphanIds);
+  oneOnOne.vocab = oneOnOne.vocab.filter(v => !orphanSet.has(v.id));
+  ooSave();
+  ooRender();
+  alert(`已清除 ${orphanIds.length} 個孤兒單字！`);
 }
 function ooVocabListHtml(list) {
   if (!list.length) return `<div class="empty-fox"><span class="ef-icon">🌱</span>還沒有資料，從「上課紀錄」新增一次上課內容吧！</div>`;
@@ -5661,6 +5698,7 @@ function ooRenderVocabList(root) {
     <div class="topbar">
       <button class="ghost" onclick="ooGo('main')">‹ 返回</button>
       <h2>🟩 單字（${list.length}）</h2>
+      <button class="ghost" style="padding:5px 10px;font-size:12px;" onclick="ooCleanupOrphanVocab()" title="清掉已經不在任何一堂課裡、但還算在總數裡的舊資料">🧹 清理孤兒單字</button>
     </div>
     <input class="folder-search-input" placeholder="🔍 搜尋..." oninput="ooFilterVocabList(this.value)">
     <div id="ooVocabListWrap">${ooVocabListHtml(list)}</div>`;
