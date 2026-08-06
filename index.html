@@ -4841,7 +4841,16 @@ async function loadCloudData() {
   if (!cloudDocRef) return;
   try {
     const snap = await cloudDocRef.get();
-    const hasLocalData = (folders && folders.length) || (groups && groups.length) || ((stats && stats.practice) || 0) > 0;
+    const hasLocalActivity = activityLog && Object.keys(activityLog).length > 0;
+    const hasLocalOneOnOne = oneOnOne && (
+      (oneOnOne.sessions && oneOnOne.sessions.length) ||
+      (oneOnOne.vocab && oneOnOne.vocab.length) ||
+      (oneOnOne.sentences && oneOnOne.sentences.length) ||
+      (oneOnOne.grammar && oneOnOne.grammar.length)
+    );
+    const hasLocalData = (folders && folders.length) || (groups && groups.length) || ((stats && stats.practice) || 0) > 0
+      || hasLocalActivity || hasLocalOneOnOne
+      || (categories && categories.length) || (dialogueCategories && dialogueCategories.length);
     if (snap.exists) {
       const data = snap.data() || {};
 
