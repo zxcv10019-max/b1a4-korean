@@ -4150,6 +4150,19 @@ body.overlay-open .fab-wrap { display:none !important; }
         </div>
 
         <div class="card" style="padding:22px;margin-bottom:18px;">
+          <div class="account-title">📦 資料備份</div>
+          <div style="font-size:13px;color:var(--muted);font-weight:800;line-height:1.7;margin:8px 0 14px;">
+            匯出一份包含所有單字、短句、文法、1對1上課紀錄、歌詞、收藏等資料的備份檔，存到手機或電腦裡。就算沒有登入 Google 同步，也可以用這個檔案在其他裝置上還原，或是單純多留一份保險。
+          </div>
+          <div id="backupLastAt" style="font-size:12px;color:var(--muted);font-weight:800;margin-bottom:10px;"></div>
+          <div class="btns" style="flex-wrap:wrap;">
+            <button type="button" class="primary cute-btn" style="flex:1;min-width:160px;" onclick="exportFullBackup()">📤 匯出備份檔</button>
+            <button type="button" class="ghost" style="flex:1;min-width:160px;" onclick="triggerFullBackupImport()">📥 匯入備份檔</button>
+          </div>
+          <input id="fullBackupImportFile" type="file" accept="application/json" style="display:none" onchange="importFullBackup(this.files[0])">
+        </div>
+
+        <div class="card" style="padding:22px;margin-bottom:18px;">
           <div style="font-weight:1000;font-size:18px;margin-bottom:4px;">💚 我的收藏</div>
           <div id="favoritesDetailWrap"></div>
         </div>
@@ -4837,6 +4850,147 @@ function getCloudPayload() {
     updatedAt: new Date().toISOString()
   };
 }
+
+/* ===== 📦 本機備份：把 getCloudPayload() 的完整資料匯出成一個 JSON 檔，或從檔案還原回來，
+   不用登入 Google 也能有一份保險備份，也能拿這個檔案在裝置之間搬資料。 ===== */
+const BACKUP_LAST_AT_KEY = "b1a4LastBackupAt";
+function updateBackupStatusUI() {
+  const el = document.getElementById("backupLastAt");
+  if (!el) return;
+  let last = "";
+  try { last = localStorage.getItem(BACKUP_LAST_AT_KEY) || ""; } catch (e) {}
+  if (!last) { el.textContent = "還沒有匯出過備份檔"; return; }
+  try {
+    const d = new Date(last);
+    el.textContent = `上次匯出備份：${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  } catch (e) { el.textContent = ""; }
+}
+function exportFullBackup() {
+  try {
+    const payload = getCloudPayload();
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const stamp = new Date().toISOString().slice(0, 10);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `BANAForest-備份-${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    try { localStorage.setItem(BACKUP_LAST_AT_KEY, new Date().toISOString()); } catch (e) {}
+    updateBackupStatusUI();
+    if (typeof showSaveToast === "function") showSaveToast();
+  } catch (e) {
+    console.error("匯出備份失敗：", e);
+    alert("匯出備份失敗，請稍後再試一次。");
+  }
+}
+function triggerFullBackupImport() {
+  const el = document.getElementById("fullBackupImportFile");
+  if (el) el.click();
+}
+function importFullBackup(file) {
+  if (!file) return;
+  const inputEl = document.getElementById("fullBackupImportFile");
+  if (!confirm("匯入備份檔會覆蓋這台裝置目前所有的單字、短句、文法、上課紀錄等資料，且無法復原，確定要繼續嗎？\n\n建議先按「📤 匯出備份檔」，留一份目前的資料再匯入。")) {
+    if (inputEl) inputEl.value = "";
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      applyFullBackupData(data);
+      alert("備份已還原完成！");
+    } catch (err) {
+      console.error("匯入備份失敗：", err);
+      alert("這個檔案看起來不是有效的備份檔，請確認選到的是「匯出備份檔」產生的 .json 檔。");
+    }
+    if (inputEl) inputEl.value = "";
+  };
+  reader.onerror = () => {
+    alert("讀取檔案失敗，請再試一次。");
+    if (inputEl) inputEl.value = "";
+  };
+  reader.readAsText(file, "utf-8");
+}
+function applyFullBackupData(data) {
+  if (!data || typeof data !== "object") throw new Error("備份檔格式不正確");
+
+  folders = Array.isArray(data.folders) ? data.folders : folders;
+  groups = Array.isArray(data.groups) ? data.groups : groups;
+  categories = Array.isArray(data.categories) ? data.categories : categories;
+  stats = (data.stats && typeof data.stats === "object") ? data.stats : stats;
+  collapsedGroups = Array.isArray(data.collapsedGroups) ? data.collapsedGroups : collapsedGroups;
+  collapsedCategories = Array.isArray(data.collapsedCategories) ? data.collapsedCategories : collapsedCategories;
+  masteryData = (data.masteryData && typeof data.masteryData === "object") ? data.masteryData : masteryData;
+  wrongBookData = (data.wrongBookData && typeof data.wrongBookData === "object") ? data.wrongBookData : wrongBookData;
+  graduationData = (data.graduationData && typeof data.graduationData === "object") ? data.graduationData : graduationData;
+  folderPracticeStats = (data.folderPracticeStats && typeof data.folderPracticeStats === "object") ? data.folderPracticeStats : folderPracticeStats;
+  flashSeenData = (data.flashSeenData && typeof data.flashSeenData === "object") ? data.flashSeenData : flashSeenData;
+  voiceSpeed = (typeof data.voiceSpeed === "number" && data.voiceSpeed > 0) ? data.voiceSpeed : voiceSpeed;
+  activityLog = (data.activityLog && typeof data.activityLog === "object") ? data.activityLog : activityLog;
+  lyricsSongs = Array.isArray(data.lyricsSongs) ? data.lyricsSongs : lyricsSongs;
+  favorites = (data.favorites && typeof data.favorites === "object") ? data.favorites : favorites;
+  grammarPoints = Array.isArray(data.grammarPoints) ? data.grammarPoints : grammarPoints;
+  grammarCategories = Array.isArray(data.grammarCategories) ? data.grammarCategories : grammarCategories;
+  sentenceEntries = Array.isArray(data.sentenceEntries) ? data.sentenceEntries : sentenceEntries;
+  novels = Array.isArray(data.novels) ? data.novels : novels;
+  novelChapters = Array.isArray(data.novelChapters) ? data.novelChapters : novelChapters;
+  dialogues = Array.isArray(data.dialogues) ? data.dialogues : dialogues;
+  dialogueCategories = Array.isArray(data.dialogueCategories) ? data.dialogueCategories : dialogueCategories;
+  if (data.oneOnOne && typeof data.oneOnOne === "object") {
+    oneOnOne = {
+      vocab: Array.isArray(data.oneOnOne.vocab) ? data.oneOnOne.vocab : [],
+      sentences: Array.isArray(data.oneOnOne.sentences) ? data.oneOnOne.sentences : [],
+      grammar: Array.isArray(data.oneOnOne.grammar) ? data.oneOnOne.grammar : [],
+      sessions: Array.isArray(data.oneOnOne.sessions) ? data.oneOnOne.sessions : []
+    };
+  }
+
+  // 全部寫回 localStorage，這台裝置離線也不會遺失剛還原的資料
+  try {
+    writeLocalOnly();
+    localStorage.setItem("b1a4MasteryData", JSON.stringify(masteryData));
+    localStorage.setItem("b1a4WrongBookData", JSON.stringify(wrongBookData));
+    localStorage.setItem("b1a4GraduationData", JSON.stringify(graduationData));
+    localStorage.setItem("b1a4FolderPracticeStats", JSON.stringify(folderPracticeStats));
+    localStorage.setItem("b1a4FlashSeenData", JSON.stringify(flashSeenData));
+    localStorage.setItem("b1a4VoiceSpeed", String(voiceSpeed || 0.65));
+    localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(activityLog));
+    localStorage.setItem(LYRICS_STORAGE_KEY, JSON.stringify(lyricsSongs));
+    localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
+    localStorage.setItem(GRAMMAR_STORAGE_KEY, JSON.stringify(grammarPoints));
+    localStorage.setItem(GRAMMAR_CATEGORY_KEY, JSON.stringify(grammarCategories));
+    localStorage.setItem(SENTENCE_STORAGE_KEY, JSON.stringify(sentenceEntries));
+    localStorage.setItem(NOVEL_STORAGE_KEY, JSON.stringify(novels));
+    localStorage.setItem(CHAPTER_STORAGE_KEY, JSON.stringify(novelChapters));
+    localStorage.setItem(DIALOGUE_STORAGE_KEY, JSON.stringify(dialogues));
+    localStorage.setItem(DIALOGUE_CATEGORY_KEY, JSON.stringify(dialogueCategories));
+    localStorage.setItem(OO_STORAGE_KEY, JSON.stringify(oneOnOne));
+    localStorage.setItem("b1a4LastLocalChangeAt", new Date().toISOString());
+  } catch (e) { console.warn("備份還原後寫入本機儲存失敗：", e); }
+
+  // 重新畫面所有相關頁面
+  try { renderFolders(); } catch (e) {}
+  try { renderDashboard(); } catch (e) {}
+  try { renderLyricsSongGrid(); } catch (e) {}
+  try { renderFavoritesSummary(); } catch (e) {}
+  try { renderFavoritesDetail(); } catch (e) {}
+  try { renderGrammarList(); } catch (e) {}
+  try { renderSentenceList(); } catch (e) {}
+  try { renderDialogueList(); } catch (e) {}
+  try { ooUpdateEntryCard(); } catch (e) {}
+  try { renderOoHomeCard(); } catch (e) {}
+  try { ooRender(); } catch (e) {}
+  try { if (typeof renderLearningCalendar === "function") renderLearningCalendar(); } catch (e) {}
+  try { if (typeof updateHeroStats === "function") updateHeroStats(); } catch (e) {}
+  try { if (typeof renderHomeQuestDesign === "function") renderHomeQuestDesign(); } catch (e) {}
+
+  // 如果這台裝置有登入雲端同步，順便把還原後的資料上傳，維持跟雲端一致
+  try { if (typeof scheduleCloudSave === "function") scheduleCloudSave(); } catch (e) {}
+}
 async function loadCloudData() {
   if (!cloudDocRef) return;
   try {
@@ -5274,6 +5428,51 @@ async function ooAiAnalyzeAllSentences(sessionId, btnEl) {
   ooRender();
   if (typeof showSaveToast === "function") showSaveToast();
   alert(`完成！成功解析 ${done} 句${failed ? `，${failed} 句失敗（可以到單句的✏️編輯裡再按一次 AI 按鈕重試）` : ""}。`);
+}
+/* 一次幫這次上課「還沒有中文意思」的單字，用 AI 一鍵補上翻譯，不用一個一個手動打 */
+function buildVocabBatchTranslatePrompt(words) {
+  return `你是韓文老師，請幫下面每一個韓文單字或詞語，寫出最常用、最口語的繁體中文意思，簡短就好（通常2～6個字），不要加註解、詞性或例句。
+只輸出 JSON 陣列，不要有其他文字、不要用 Markdown，格式如下：
+[{"kr":"韓文原文","zh":"繁體中文意思"}]
+
+韓文單字清單：
+${words.map(w => `- ${w}`).join("\n")}`;
+}
+async function ooAiTranslateAllVocab(sessionId, btnEl) {
+  const s = oneOnOne.sessions.find(x => x.id === sessionId);
+  if (!s) return;
+  const targets = s.vocabIds
+    .map(id => oneOnOne.vocab.find(x => x.id === id))
+    .filter(Boolean)
+    .filter(v => !v.zh || !v.zh.trim());
+  if (!targets.length) { alert("這次上課的單字都已經有中文意思了！"); return; }
+  if (!getOpenAiKey()) {
+    alert("這個裝置還沒有設定 AI 金鑰（金鑰不會跟著雲端同步，每個裝置要各自設定一次）。請先到「我的」頁面貼上 OpenAI API 金鑰，再回來用這個功能。");
+    return;
+  }
+  if (!confirm(`要用 AI 幫這次上課還沒有中文意思的 ${targets.length} 個單字，一鍵補上翻譯嗎？`)) return;
+  const originalText = btnEl ? btnEl.textContent : "";
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = "⏳ 翻譯中..."; }
+  try {
+    const raw = await callAI(buildVocabBatchTranslatePrompt(targets.map(v => v.kr)));
+    const data = parseAiJson(raw);
+    const list = Array.isArray(data) ? data : (Array.isArray(data.words) ? data.words : []);
+    let done = 0;
+    targets.forEach((v, i) => {
+      const match = list.find(x => x && x.kr === v.kr) || list[i];
+      const zh = match && (match.zh || match.definition || match.meaning);
+      if (zh) { v.zh = String(zh).trim(); done++; }
+    });
+    ooSave();
+    ooRender();
+    if (typeof showSaveToast === "function") showSaveToast();
+    alert(`完成！成功翻譯 ${done} / ${targets.length} 個單字${done < targets.length ? "，沒翻到的可以再按一次，或到✏️編輯裡手動補上" : ""}。`);
+  } catch (e) {
+    console.warn("AI 批次翻譯單字失敗：", e);
+    alert("AI 翻譯失敗，請確認金鑰或稍後再試一次。\n" + (e && e.message ? e.message : ""));
+  } finally {
+    if (btnEl) { btnEl.disabled = false; btnEl.textContent = originalText; }
+  }
 }
 /* 一次對這次上課的「所有單字」各生成一句 AI 造句，不用一個一個展開點 */
 async function ooAiExampleAllVocab(sessionId, btnEl) {
@@ -5809,6 +6008,9 @@ function ooRenderSessionDetail(root) {
       : category === "vocab" && count > 0
       ? `<button class="ghost" style="padding:5px 10px;font-size:12px;" onclick="ooAiExampleAllVocab('${s.id}', this)">✨ 一鍵AI造句</button>`
       : "";
+    const translateBtn = category === "vocab" && count > 0
+      ? `<button class="ghost" style="padding:5px 10px;font-size:12px;" onclick="ooAiTranslateAllVocab('${s.id}', this)">🌐 一鍵AI翻譯</button>`
+      : "";
     const batchBtn = (category === "vocab" || category === "grammar" || category === "sentences")
       ? `<button class="ghost" style="padding:5px 10px;font-size:12px;" onclick="ooOpenBatchPaste('${category}')">📋 批次貼上</button>`
       : "";
@@ -5818,6 +6020,7 @@ function ooRenderSessionDetail(root) {
         ${addBtn}
         ${batchBtn}
         <button class="ghost" style="padding:5px 10px;font-size:12px;" onclick="ooOpenBankPicker('${category}')">📚 從題庫加入</button>
+        ${translateBtn}
         ${aiAllBtn}
       </div>
     </div>`;
@@ -14591,6 +14794,7 @@ function initFavoritesAndLyrics() {
   renderDialogueList();
   const keyInput = document.getElementById("openAiKeyInput");
   if (keyInput && getOpenAiKey()) keyInput.placeholder = "已設定金鑰（●●●●●●●●）";
+  updateBackupStatusUI();
 }
 initFavoritesAndLyrics();
 
