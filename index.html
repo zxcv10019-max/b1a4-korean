@@ -7524,7 +7524,15 @@ function parseRawLinesLenient(t) {
     else if (/\s{2,}/.test(line)) p = line.split(/\s{2,}/);
     else {
       const scriptSplit = splitKoreanChineseBoundary(line);
-      p = scriptSplit || line.split(/\s+/);
+      if (scriptSplit) {
+        p = scriptSplit;
+      } else if (/[\u4E00-\u9FFF]|[A-Za-z]/.test(line)) {
+        // 這行混雜中文／英文，才用單一空白切分成「韓文＋翻譯」
+        p = line.split(/\s+/);
+      } else {
+        // 整行只有韓文（單字間本來就會有空白），不要誤切，整行都當韓文
+        p = [line];
+      }
     }
     return { term:(p[0] || "").trim(), definition:(p.slice(1).join(" ") || "").trim() };
   });
