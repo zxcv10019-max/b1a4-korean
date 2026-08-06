@@ -2493,14 +2493,14 @@ textarea {
 }
 .ffc-mini-progress { display:none; }
 
-/* 分組標題精簡化：只留一顆 ⋮ */
-.group-header .group-kebab-wrap { position:relative; flex:0 0 auto; }
-.group-header .group-kebab-btn {
+/* 分組標題精簡化：只留一顆 ⋮（分類標題 .category-header 也共用這組樣式） */
+.group-header .group-kebab-wrap, .category-header .group-kebab-wrap { position:relative; flex:0 0 auto; }
+.group-header .group-kebab-btn, .category-header .group-kebab-btn {
   border:1.5px solid #cfe0b8; background:#fff; color:#4e8f24; font-size:20px; font-weight:900;
   width:40px; height:40px; min-width:40px; min-height:40px; border-radius:10px; cursor:pointer; line-height:1;
   display:flex; align-items:center; justify-content:center;
 }
-.group-header .group-kebab-btn:hover { background:#f0f8e8; }
+.group-header .group-kebab-btn:hover, .category-header .group-kebab-btn:hover { background:#f0f8e8; }
 .group-kebab-menu {
   display:none; position:absolute; right:0; top:44px; z-index:20;
   background:#fff; border:1px solid var(--line); border-radius:12px;
