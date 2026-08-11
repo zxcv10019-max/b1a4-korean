@@ -7131,7 +7131,6 @@ function makeForestFolderCard(f, i) {
   const cardCount = folderCards.length;
   const gStats = getGraduationStats(i);
   const status = getFolderStatusInfo(gStats);
-  const icon = (f.icon && f.icon.trim()) ? f.icon.trim() : FOLDER_MASCOTS[i % FOLDER_MASCOTS.length];
   const menuId = "ffcMenu_" + i;
   d.innerHTML = `
     <div class="ffc-head cat-card-top">
@@ -7139,7 +7138,6 @@ function makeForestFolderCard(f, i) {
       <div class="ffc-kebab-wrap" onclick="event.stopPropagation()">
         <button type="button" class="ffc-kebab-btn" title="更多" onclick="toggleFfcKebab('${menuId}')">⋮</button>
         <div class="ffc-kebab-menu" id="${menuId}">
-          <button type="button" onclick="closeAllFfcKebabs();wlChangeIcon(${i})">🎨 更換圖示</button>
           <button type="button" onclick="closeAllFfcKebabs();editFolderFromCard(${i})">⚙️ 題庫設定</button>
           <button type="button" onclick="closeAllFfcKebabs();moveFolder(${i},-1)">↑ 上移</button>
           <button type="button" onclick="closeAllFfcKebabs();moveFolder(${i},1)">↓ 下移</button>
@@ -7148,7 +7146,6 @@ function makeForestFolderCard(f, i) {
       </div>
     </div>
     <div class="cat-status-pill ${status.cls}">${status.label}</div>
-    <div class="cat-emoji">${esc(icon)}</div>
     <div class="cat-progress-track"><div class="cat-progress-fill ${status.cls === "done" ? "done" : ""}" style="width:${gStats.flashPercent}%"></div></div>
     <div class="cat-count">${gStats.viewedCount}/${gStats.total || cardCount}</div>`;
   d.onclick = () => openWordList(i);
