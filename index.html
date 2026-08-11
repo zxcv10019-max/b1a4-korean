@@ -6714,6 +6714,7 @@ let folderPracticeStats = JSON.parse(localStorage.getItem("b1a4FolderPracticeSta
 let voiceSpeed = Number(localStorage.getItem("b1a4VoiceSpeed") || 0.65);
 let graduationConfettiShown = {};
 let firstSel = null, secondSel = null, matchDone = 0;
+let lastActiveGroupId = null; // 記住使用者最後展開/瀏覽的分組，讓「新增單字」快速鍵知道該加到哪裡
 
 function saveStorage() {
   writeLocalOnly();
@@ -6765,8 +6766,28 @@ function fabNewGroup() {
 function fabNewWord() {
   closeFab();
   if (!folders.length) { fabNewFolder(); return; }
-  const idx = (current !== null && folders[current]) ? current : 0;
   goPage("library");
+
+  // 優先使用「使用者最後展開/瀏覽的分組」，而不是隨便沿用上次編輯過的題庫，
+  // 這樣在別的分組按「新增單字」才不會跳去不相關的舊題庫。
+  if (lastActiveGroupId) {
+    const groupFolderIdx = folders.findIndex(f => f.groupId === lastActiveGroupId);
+    if (groupFolderIdx > -1) {
+      editFolderFromCard(groupFolderIdx);
+      addEditorCard();
+      return;
+    }
+    // 該分組目前還沒有任何題庫：先在這個分組底下建立一個新題庫，再加單字進去
+    const grp = groups.find(g => g.id === lastActiveGroupId);
+    folders.push({ name: grp ? grp.name : "新增題庫", direction: "termToDefinition", color: "#c6e09c", content: "", updated: today(), practice: 0, groupId: lastActiveGroupId });
+    current = folders.length - 1;
+    saveStorage();
+    editFolderFromCard(current);
+    addEditorCard();
+    return;
+  }
+
+  const idx = (current !== null && folders[current]) ? current : 0;
   editFolderFromCard(idx);
   addEditorCard();
 }
@@ -7327,6 +7348,7 @@ function editFolderFromCard(i) {
   wlCardExpandState = {};
   wlEditMode = true;
   current = i;
+  lastActiveGroupId = folders[i].groupId || null;
   loadFolder(i);
   renderWordList();
   document.getElementById("wordListOverlay")?.classList.add("show");
@@ -10709,6 +10731,7 @@ function toggleGroup(id, headerEl) {
   if (body) body.classList.toggle("collapsed");
   if (collapsedGroups.includes(id)) {
     collapsedGroups = collapsedGroups.filter(x => x !== id);
+    lastActiveGroupId = id; // 展開時記住這是使用者目前在看的分組
   } else {
     collapsedGroups.push(id);
   }
