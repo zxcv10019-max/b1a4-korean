@@ -728,6 +728,50 @@ textarea {
   background: #f4f6f0;
   border-style: dashed;
 }
+.subfolder-section {
+  margin: 10px 0 14px 6px;
+  padding-left: 12px;
+  border-left: 3px solid #e4d9b8;
+}
+.subfolder-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 9px 14px;
+  background: #fbf3de;
+  border-radius: 14px;
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 10px;
+  border: 1.5px solid #ecdfb6;
+}
+.subfolder-header:hover { background: #f7ecd0; }
+.subfolder-header .subfolder-toggle {
+  font-size: 15px;
+  transition: transform 0.25s;
+  display: inline-block;
+  width: 18px;
+  flex: 0 0 auto;
+}
+.subfolder-header.collapsed .subfolder-toggle { transform: rotate(-90deg); }
+.subfolder-header .subfolder-name {
+  font-weight: 900;
+  font-size: 15px;
+  color: #7a5c1f;
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.subfolder-body { padding-left: 4px; transition: all .25s; }
+.subfolder-body.collapsed { display: none; }
+@media (max-width: 600px) {
+  .subfolder-section { margin-left: 2px; padding-left: 8px; }
+  .subfolder-header { padding: 8px 12px; }
+  .subfolder-header .subfolder-name { font-size: 14px; }
+}
 .group-selector {
   margin-top: 10px;
 }
@@ -4297,8 +4341,19 @@ body.overlay-open .fab-wrap { display:none !important; }
             <div>
               <label>所屬分組</label>
               <div class="group-selector">
-                <select id="folderGroup">
+                <select id="folderGroup" onchange="syncSubfolderSelector()">
                   <option value="">── 未分組 ──</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="field-row-2">
+            <div>
+              <label>所屬資料夾（選填，分組底下可再細分）</label>
+              <div class="group-selector">
+                <select id="folderSubfolder">
+                  <option value="">── 不放資料夾 ──</option>
                 </select>
               </div>
             </div>
@@ -4845,6 +4900,7 @@ async function logoutAccount() {
 function getCloudPayload() {
   return {
     folders, groups, categories, stats, collapsedGroups, collapsedCategories,
+    subfolders, collapsedSubfolders,
     masteryData, wrongBookData, graduationData,
     folderPracticeStats, flashSeenData, voiceSpeed,
     activityLog,
@@ -4927,6 +4983,8 @@ function applyFullBackupData(data) {
   stats = (data.stats && typeof data.stats === "object") ? data.stats : stats;
   collapsedGroups = Array.isArray(data.collapsedGroups) ? data.collapsedGroups : collapsedGroups;
   collapsedCategories = Array.isArray(data.collapsedCategories) ? data.collapsedCategories : collapsedCategories;
+  subfolders = Array.isArray(data.subfolders) ? data.subfolders : subfolders;
+  collapsedSubfolders = Array.isArray(data.collapsedSubfolders) ? data.collapsedSubfolders : collapsedSubfolders;
   masteryData = (data.masteryData && typeof data.masteryData === "object") ? data.masteryData : masteryData;
   wrongBookData = (data.wrongBookData && typeof data.wrongBookData === "object") ? data.wrongBookData : wrongBookData;
   graduationData = (data.graduationData && typeof data.graduationData === "object") ? data.graduationData : graduationData;
@@ -5027,6 +5085,8 @@ async function loadCloudData() {
       stats = data.stats || { practice:0 };
       collapsedGroups = Array.isArray(data.collapsedGroups) ? data.collapsedGroups : [];
       collapsedCategories = Array.isArray(data.collapsedCategories) ? data.collapsedCategories : (collapsedCategories || []);
+      subfolders = Array.isArray(data.subfolders) ? data.subfolders : (subfolders || []);
+      collapsedSubfolders = Array.isArray(data.collapsedSubfolders) ? data.collapsedSubfolders : (collapsedSubfolders || []);
       masteryData = data.masteryData || masteryData || {};
       wrongBookData = data.wrongBookData || wrongBookData || {};
       graduationData = data.graduationData || graduationData || {};
@@ -5103,6 +5163,8 @@ function writeLocalOnly() {
   localStorage.setItem("b1a4_categories_v1", JSON.stringify(categories));
   localStorage.setItem("b1a4_collapsed_groups", JSON.stringify(collapsedGroups));
   localStorage.setItem("b1a4_collapsed_categories", JSON.stringify(collapsedCategories));
+  localStorage.setItem("b1a4_subfolders_v1", JSON.stringify(subfolders));
+  localStorage.setItem("b1a4_collapsed_subfolders", JSON.stringify(collapsedSubfolders));
 }
 function scheduleCloudSave() {
   localStorage.setItem("b1a4LastLocalChangeAt", new Date().toISOString());
@@ -5126,6 +5188,8 @@ let folders = JSON.parse(localStorage.getItem("b1a4_green_study_empty_v3") || "[
 let groups = JSON.parse(localStorage.getItem("b1a4_groups_v1") || "[]");
 let categories = JSON.parse(localStorage.getItem("b1a4_categories_v1") || "[]");
 let collapsedCategories = JSON.parse(localStorage.getItem("b1a4_collapsed_categories") || "[]");
+let subfolders = JSON.parse(localStorage.getItem("b1a4_subfolders_v1") || "[]"); // 分組底下的巢狀資料夾（分組 → 資料夾 → 題庫）
+let collapsedSubfolders = JSON.parse(localStorage.getItem("b1a4_collapsed_subfolders") || "[]");
 let stats = JSON.parse(localStorage.getItem("b1a4_green_study_stats_v3") || "{\"practice\":0}");
 
 /* ===== 📁 1對1上課：單字／短句／文法「只留一份」＋上課紀錄只做引用 ===== */
@@ -7412,7 +7476,11 @@ function moveGroup(groupId, direction) {
 
 function buildGroupSection(grp) {
   const listMode = libraryViewMode === "list";
-  const grpFolders = sortFolderEntries(folders.map((f,i) => ({f,i})).filter(({f}) => f.groupId === grp.id));
+  // 直接掛在分組底下、沒有再放進資料夾的題庫
+  const grpFolders = sortFolderEntries(folders.map((f,i) => ({f,i})).filter(({f}) => f.groupId === grp.id && !f.subfolderId));
+  const grpSubfolders = subfolders.filter(sf => sf.groupId === grp.id);
+  const totalCount = grpFolders.length + subfolders.filter(sf => sf.groupId === grp.id)
+    .reduce((sum, sf) => sum + folders.filter(f => f.groupId === grp.id && f.subfolderId === sf.id).length, 0);
   const isCollapsed = collapsedGroups.includes(grp.id);
 
   const section = document.createElement("div");
@@ -7423,11 +7491,12 @@ function buildGroupSection(grp) {
   header.className = "group-header" + (isCollapsed ? " collapsed" : "");
   header.innerHTML = `
     <span class="group-toggle">▾</span>
-    <span class="group-name">📁 ${esc(grp.name)}（${grpFolders.length}）</span>
+    <span class="group-name">📁 ${esc(grp.name)}（${totalCount}）</span>
     ${groupProgressBar(grpFolders)}
     <div class="group-kebab-wrap">
       <button type="button" class="group-kebab-btn" title="更多" onclick="event.stopPropagation();toggleFfcKebab('${menuId}')">⋮</button>
       <div class="group-kebab-menu" id="${menuId}">
+        <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();newSubfolder('${grp.id}')">📂 新增資料夾</button>
         <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();moveGroup('${grp.id}',-1)">↑ 上移</button>
         <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();moveGroup('${grp.id}',1)">↓ 下移</button>
         <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();openCategoryPicker('${grp.id}')">🗃️ 移到分類</button>
@@ -7441,18 +7510,120 @@ function buildGroupSection(grp) {
   body.className = "group-body" + (isCollapsed ? " collapsed" : "");
   body.id = "grpbody_" + grp.id;
 
+  grpSubfolders.forEach(sf => body.appendChild(buildSubfolderSection(sf, grp.id)));
+
   if (grpFolders.length) {
     const grid = document.createElement("div");
     grid.className = "folder-card-grid" + (listMode ? " list-mode" : "");
     grpFolders.forEach(({f,i}) => grid.appendChild(makeForestFolderCard(f,i)));
     body.appendChild(grid);
-  } else {
+  } else if (!grpSubfolders.length) {
     body.innerHTML = `<div class="empty" style="padding:18px 10px;font-size:14px">此分組尚無題庫</div>`;
   }
 
   section.appendChild(header);
   section.appendChild(body);
   return section;
+}
+
+function buildSubfolderSection(sf, groupId) {
+  const listMode = libraryViewMode === "list";
+  const sfFolders = sortFolderEntries(folders.map((f,i) => ({f,i})).filter(({f}) => f.groupId === groupId && f.subfolderId === sf.id));
+  const isCollapsed = collapsedSubfolders.includes(sf.id);
+
+  const section = document.createElement("div");
+  section.className = "subfolder-section";
+
+  const menuId = "subMenu_" + sf.id;
+  const header = document.createElement("div");
+  header.className = "subfolder-header" + (isCollapsed ? " collapsed" : "");
+  header.innerHTML = `
+    <span class="subfolder-toggle">▾</span>
+    <span class="subfolder-name">📂 ${esc(sf.name)}（${sfFolders.length}）</span>
+    <div class="group-kebab-wrap">
+      <button type="button" class="group-kebab-btn" title="更多" onclick="event.stopPropagation();toggleFfcKebab('${menuId}')">⋮</button>
+      <div class="group-kebab-menu" id="${menuId}">
+        <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();newFolderInSubfolder('${sf.id}','${groupId}')">➕ 新增題庫</button>
+        <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();moveSubfolder('${sf.id}',-1)">↑ 上移</button>
+        <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();moveSubfolder('${sf.id}',1)">↓ 下移</button>
+        <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();renameSubfolder('${sf.id}')">✏️ 改名</button>
+        <button type="button" class="danger" onclick="event.stopPropagation();closeAllFfcKebabs();deleteSubfolder('${sf.id}')">🗑 刪除</button>
+      </div>
+    </div>`;
+  header.onclick = () => toggleSubfolder(sf.id, header);
+
+  const body = document.createElement("div");
+  body.className = "subfolder-body" + (isCollapsed ? " collapsed" : "");
+  body.id = "subbody_" + sf.id;
+
+  if (sfFolders.length) {
+    const grid = document.createElement("div");
+    grid.className = "folder-card-grid" + (listMode ? " list-mode" : "");
+    sfFolders.forEach(({f,i}) => grid.appendChild(makeForestFolderCard(f,i)));
+    body.appendChild(grid);
+  } else {
+    body.innerHTML = `<div class="empty" style="padding:14px 10px;font-size:13px">這個資料夾還沒有題庫，可以按上面「⋮」選「➕ 新增題庫」</div>`;
+  }
+
+  section.appendChild(header);
+  section.appendChild(body);
+  return section;
+}
+
+/* ===== 分組下的巢狀資料夾 CRUD ===== */
+function newSubfolder(groupId) {
+  const name = prompt("輸入新資料夾的名稱：", "新資料夾");
+  if (!name || !name.trim()) return;
+  subfolders.push({ id: "sf" + Date.now() + Math.floor(Math.random()*1000), name: name.trim(), groupId });
+  saveStorage();
+  renderFolders();
+}
+function renameSubfolder(id) {
+  const sf = subfolders.find(s => s.id === id);
+  if (!sf) return;
+  const name = prompt("輸入新的資料夾名稱：", sf.name);
+  if (!name || !name.trim()) return;
+  sf.name = name.trim();
+  saveStorage();
+  renderFolders();
+}
+function deleteSubfolder(id) {
+  if (!confirm("刪除此資料夾？（裡面的題庫不會被刪除，只會移回分組底下）")) return;
+  subfolders = subfolders.filter(s => s.id !== id);
+  folders.forEach(f => { if (f.subfolderId === id) f.subfolderId = ""; });
+  saveStorage();
+  renderFolders();
+}
+function moveSubfolder(id, direction) {
+  const sf = subfolders.find(s => s.id === id);
+  if (!sf) return;
+  const siblings = subfolders.filter(s => s.groupId === sf.groupId);
+  const pos = siblings.indexOf(sf);
+  const swapPos = pos + direction;
+  if (swapPos < 0 || swapPos >= siblings.length) return;
+  const globalPosA = subfolders.indexOf(sf);
+  const globalPosB = subfolders.indexOf(siblings[swapPos]);
+  [subfolders[globalPosA], subfolders[globalPosB]] = [subfolders[globalPosB], subfolders[globalPosA]];
+  saveStorage();
+  renderFolders();
+}
+function toggleSubfolder(id, headerEl) {
+  headerEl.classList.toggle("collapsed");
+  const body = document.getElementById("subbody_" + id);
+  if (body) body.classList.toggle("collapsed");
+  if (collapsedSubfolders.includes(id)) {
+    collapsedSubfolders = collapsedSubfolders.filter(x => x !== id);
+  } else {
+    collapsedSubfolders.push(id);
+  }
+  saveStorage();
+}
+function newFolderInSubfolder(subfolderId, groupId) {
+  folders.push({ name:"新增題庫", direction:"termToDefinition", color:"#c6e09c", content:"", updated:today(), practice:0, groupId, subfolderId });
+  current = folders.length - 1;
+  lastActiveGroupId = groupId;
+  saveStorage();
+  editFolderFromCard(current);
 }
 
 function renderFolders() {
@@ -8632,6 +8803,7 @@ function saveFolder() {
   folders[current].updated = today();
   folders[current].practice = folders[current].practice || 0;
   folders[current].groupId = document.getElementById("folderGroup").value || "";
+  folders[current].subfolderId = document.getElementById("folderSubfolder")?.value || "";
   saveStorage();
   loadFolder(current);
   showSaveToast();
@@ -10744,6 +10916,24 @@ function syncGroupSelector() {
   const curVal = current !== null && folders[current] ? (folders[current].groupId || "") : "";
   sel.innerHTML = `<option value="">── 未分組 ──</option>` +
     groups.map(g => `<option value="${g.id}" ${curVal === g.id ? "selected" : ""}>${esc(g.name)}</option>`).join("");
+  syncSubfolderSelector();
+}
+
+function syncSubfolderSelector() {
+  const sel = document.getElementById("folderSubfolder");
+  const groupSel = document.getElementById("folderGroup");
+  if (!sel || !groupSel) return;
+  const chosenGroupId = groupSel.value || "";
+  const curVal = current !== null && folders[current] ? (folders[current].subfolderId || "") : "";
+  const opts = subfolders.filter(sf => sf.groupId === chosenGroupId);
+  if (!chosenGroupId) {
+    sel.innerHTML = `<option value="">── 不放資料夾 ──</option>`;
+    sel.disabled = true;
+    return;
+  }
+  sel.disabled = false;
+  sel.innerHTML = `<option value="">── 不放資料夾 ──</option>` +
+    opts.map(sf => `<option value="${sf.id}" ${curVal === sf.id ? "selected" : ""}>📂 ${esc(sf.name)}</option>`).join("");
 }
 
 
