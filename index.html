@@ -2659,7 +2659,6 @@ body.overlay-open .oo-vocab-fab { display:none !important; }
 /* ===== 題庫編輯區：森林可愛化 ===== */
 .forest-editor .forest-card-editor {
   position:relative;
-  overflow:hidden;
   background-image:radial-gradient(rgba(131,184,66,.09) 2px, transparent 2px);
   background-size:22px 22px;
 }
@@ -2689,6 +2688,10 @@ body.overlay-open .oo-vocab-fab { display:none !important; }
   margin-bottom:18px;
 }
 .mascot-tip span { font-size:22px; }
+#editorMascotTip {
+  position:sticky; top:0; z-index:5;
+  box-shadow:0 6px 14px rgba(72,108,39,.12);
+}
 
 .cute-input, input.cute-input, #folderName {
   border:2px solid #e3f0d2 !important;
