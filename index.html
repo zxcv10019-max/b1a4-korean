@@ -4384,7 +4384,7 @@ body.overlay-open .fab-wrap { display:none !important; }
               <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="aiCheckFolderTypos(this)">✨ AI檢查錯字</button>
               <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="aiGenerateFolderExamples(this)">📝 AI造句</button>
               <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="checkDuplicateWords()">🔁 檢查重複</button>
-              <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="toggleBatchPaste()" id="batchPasteToggleBtn">📋 批次貼上</button>
+              <button type="button" class="ghost batch-paste-toggle-btn" style="font-size:12px;padding:6px 12px;" onclick="toggleBatchPaste()" id="batchPasteToggleBtn">📋 批次貼上</button>
             </span>
           </label>
 
@@ -4409,7 +4409,16 @@ body.overlay-open .fab-wrap { display:none !important; }
             <button type="button" class="primary cute-btn" style="margin-top:10px;width:100%;" onclick="applyBatchPaste()">✅ 套用並返回小卡</button>
           </div>
 
-          <div class="btns" style="margin-top:18px;">
+          <div class="btns" style="flex-wrap:wrap;margin-top:14px;">
+            <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="fixMergedKrZhCards()">🔧 修正黏在一起的中文</button>
+            <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="aiTranslateFolderCards(this)">🌐 AI翻譯</button>
+            <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="aiCheckFolderTypos(this)">✨ AI檢查錯字</button>
+            <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="aiGenerateFolderExamples(this)">📝 AI造句</button>
+            <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="checkDuplicateWords()">🔁 檢查重複</button>
+            <button type="button" class="ghost batch-paste-toggle-btn" style="font-size:12px;padding:6px 12px;" onclick="toggleBatchPaste()">📋 批次貼上</button>
+          </div>
+
+          <div class="btns" style="margin-top:8px;">
             <button class="primary cute-btn" onclick="saveFolder()">🌱 儲存</button>
             <button class="ghost cute-btn" onclick="deleteFolder()">🗑 放進回收桶</button>
           </div>
@@ -8743,17 +8752,17 @@ function deleteEditorCard(id) {
 function toggleBatchPaste() {
   const cardWrap = document.getElementById("cardEditorWrap");
   const batchWrap = document.getElementById("batchPasteWrap");
-  const btn = document.getElementById("batchPasteToggleBtn");
+  const btns = document.querySelectorAll(".batch-paste-toggle-btn");
   const showingBatch = batchWrap.style.display !== "none";
   if (showingBatch) {
     cardWrap.style.display = "block";
     batchWrap.style.display = "none";
-    btn.textContent = "📋 批次貼上";
+    btns.forEach(b => b.textContent = "📋 批次貼上");
   } else {
     serializeEditorCards();
     cardWrap.style.display = "none";
     batchWrap.style.display = "block";
-    btn.textContent = "🍀 卡片模式";
+    btns.forEach(b => b.textContent = "🍀 卡片模式");
   }
 }
 
