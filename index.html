@@ -4385,9 +4385,10 @@ body.overlay-open .fab-wrap { display:none !important; }
               <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="aiGenerateFolderExamples(this)">📝 AI造句</button>
               <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="checkDuplicateWords()">🔁 檢查重複</button>
               <button type="button" class="ghost" style="font-size:12px;padding:6px 12px;" onclick="toggleBatchPaste()" id="batchPasteToggleBtn">📋 批次貼上</button>
-              <button type="button" class="primary cute-btn" style="font-size:12px;padding:6px 12px;" onclick="saveFolder()">🌱 儲存</button>
             </span>
           </label>
+
+          <button type="button" class="primary cute-btn" style="width:100%;margin-bottom:8px;" onclick="saveFolder()">🌱 儲存</button>
 
           <label style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
             <span style="font-size:12.5px;color:#74816c;">已選 <span id="editorSelectionCount">0</span> 個單字</span>
@@ -4412,6 +4413,7 @@ body.overlay-open .fab-wrap { display:none !important; }
             <button class="primary cute-btn" onclick="saveFolder()">🌱 儲存</button>
             <button class="ghost cute-btn" onclick="deleteFolder()">🗑 放進回收桶</button>
           </div>
+
         </div>
 
         <div class="card editor">
