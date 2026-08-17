@@ -4486,7 +4486,7 @@ body.overlay-open .fab-wrap { display:none !important; }
   <nav class="bottom-nav">
     <button data-tab="home" class="active" onclick="goBottomTab('home')"><span class="bn-ico">🏠</span>首頁</button>
     <button data-tab="libraryHub" onclick="goBottomTab('libraryHub')"><span class="bn-ico">📚</span>題庫</button>
-    <button data-tab="oneOnOne" onclick="goBottomTab('oneOnOne')"><span class="bn-ico">📁</span>1對1</button>
+    <button data-tab="pinned" onclick="openPinnedShortcut()"><span class="bn-ico" id="pinnedNavIcon">📕</span><span id="pinnedNavLabel">捷徑</span></button>
     <button data-tab="practiceHub" onclick="goBottomTab('practiceHub')"><span class="bn-ico">🎮</span>學習</button>
     <button data-tab="progressHub" onclick="goBottomTab('progressHub')"><span class="bn-ico">📈</span>進度</button>
     <button data-tab="profile" onclick="goBottomTab('profile')"><span class="bn-ico">👤</span>我的</button>
@@ -5206,6 +5206,85 @@ let collapsedCategories = JSON.parse(localStorage.getItem("b1a4_collapsed_catego
 let subfolders = JSON.parse(localStorage.getItem("b1a4_subfolders_v1") || "[]"); // 分組底下的巢狀資料夾（分組 → 資料夾 → 題庫）
 let collapsedSubfolders = JSON.parse(localStorage.getItem("b1a4_collapsed_subfolders") || "[]");
 let stats = JSON.parse(localStorage.getItem("b1a4_green_study_stats_v3") || "{\"practice\":0}");
+
+/* ===== 📌 底部導覽捷徑：快速開啟指定的分類/分組 ===== */
+let pinnedShortcut = JSON.parse(localStorage.getItem("b1a4_pinned_shortcut") || "null");
+function savePinnedShortcut() {
+  localStorage.setItem("b1a4_pinned_shortcut", JSON.stringify(pinnedShortcut));
+}
+function pinCategoryToNav(catId) {
+  const cat = categories.find(c => c.id === catId);
+  if (!cat) return;
+  pinnedShortcut = { type: "category", id: catId };
+  savePinnedShortcut();
+  updatePinnedNavButton();
+  alert(`已將「${cat.name}」設為底部導覽捷徑！`);
+}
+function pinGroupToNav(groupId) {
+  const grp = groups.find(g => g.id === groupId);
+  if (!grp) return;
+  pinnedShortcut = { type: "group", id: groupId };
+  savePinnedShortcut();
+  updatePinnedNavButton();
+  alert(`已將「${grp.name}」設為底部導覽捷徑！`);
+}
+function resolvePinnedShortcut() {
+  if (pinnedShortcut && pinnedShortcut.type === "category") {
+    const cat = categories.find(c => c.id === pinnedShortcut.id);
+    if (cat) return { type: "category", item: cat };
+  }
+  if (pinnedShortcut && pinnedShortcut.type === "group") {
+    const grp = groups.find(g => g.id === pinnedShortcut.id);
+    if (grp) return { type: "group", item: grp };
+  }
+  // 尚未設定，或設定的項目已被刪除：退回找一個名稱相符的分類（第一次使用時的預設值）
+  const fallbackCat = categories.find(c => (c.name || "").includes("Korean Picture Dictionary")) || categories[0];
+  if (fallbackCat) return { type: "category", item: fallbackCat };
+  return null;
+}
+function updatePinnedNavButton() {
+  const iconEl = document.getElementById("pinnedNavIcon");
+  const labelEl = document.getElementById("pinnedNavLabel");
+  if (!iconEl || !labelEl) return;
+  const resolved = resolvePinnedShortcut();
+  if (!resolved) {
+    iconEl.textContent = "📌";
+    labelEl.textContent = "捷徑";
+    return;
+  }
+  iconEl.textContent = resolved.type === "category" ? "📕" : "📁";
+  labelEl.textContent = resolved.item.name;
+}
+function openPinnedShortcut() {
+  const resolved = resolvePinnedShortcut();
+  if (!resolved) { goPage("libraryHub"); return; }
+  goPage("libraryHub");
+  setTimeout(() => {
+    let targetEl = null;
+    if (resolved.type === "category") {
+      const idx = collapsedCategories.indexOf(resolved.item.id);
+      if (idx !== -1) collapsedCategories.splice(idx, 1);
+      saveStorage();
+      renderFolders();
+      targetEl = document.getElementById("catbody_" + resolved.item.id)?.closest(".category-section");
+    } else if (resolved.type === "group") {
+      const idx = collapsedGroups.indexOf(resolved.item.id);
+      if (idx !== -1) collapsedGroups.splice(idx, 1);
+      lastActiveGroupId = resolved.item.id;
+      saveStorage();
+      renderFolders();
+      targetEl = document.getElementById("grpbody_" + resolved.item.id)?.closest(".group-section");
+    }
+    setTimeout(() => {
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        targetEl.style.transition = "box-shadow .3s";
+        targetEl.style.boxShadow = "0 0 0 3px #6fbf73";
+        setTimeout(() => { targetEl.style.boxShadow = ""; }, 1200);
+      }
+    }, 60);
+  }, 60);
+}
 
 /* ===== 📁 1對1上課：單字／短句／文法「只留一份」＋上課紀錄只做引用 ===== */
 const OO_STORAGE_KEY = "bana_oneOnOne_v1";
@@ -7508,6 +7587,7 @@ function buildGroupSection(grp) {
     <div class="group-kebab-wrap">
       <button type="button" class="group-kebab-btn" title="更多" onclick="event.stopPropagation();toggleFfcKebab('${menuId}')">⋮</button>
       <div class="group-kebab-menu" id="${menuId}">
+        <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();pinGroupToNav('${grp.id}')">📌 釘選到底部導覽</button>
         <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();newSubfolder('${grp.id}')">📂 新增資料夾</button>
         <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();openBatchSubfolderModal('${grp.id}')">📂 批量新增資料夾</button>
         <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();moveGroup('${grp.id}',-1)">↑ 上移</button>
@@ -7731,6 +7811,7 @@ function renderFolders() {
       <div class="group-kebab-wrap">
         <button type="button" class="group-kebab-btn" title="更多" onclick="event.stopPropagation();toggleFfcKebab('${catMenuId}')">⋮</button>
         <div class="group-kebab-menu" id="${catMenuId}">
+          <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();pinCategoryToNav('${cat.id}')">📌 釘選到底部導覽</button>
           <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();moveCategory('${cat.id}',-1)">↑ 上移</button>
           <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();moveCategory('${cat.id}',1)">↓ 下移</button>
           <button type="button" onclick="event.stopPropagation();closeAllFfcKebabs();renameCategory('${cat.id}')">✏️ 改名</button>
@@ -7802,6 +7883,7 @@ function renderFolders() {
   decorateMasteryBadges();
   renderFolderStatsPanel();
   filterFolderCards(document.getElementById("folderSearchInput")?.value || "");
+  updatePinnedNavButton();
 }
 
 
