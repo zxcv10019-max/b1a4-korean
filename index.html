@@ -7531,7 +7531,9 @@ function buildGroupSection(grp) {
     grpFolders.forEach(({f,i}) => grid.appendChild(makeForestFolderCard(f,i)));
     body.appendChild(grid);
   } else if (!grpSubfolders.length) {
-    body.innerHTML = `<div class="empty" style="padding:18px 10px;font-size:14px">此分組尚無題庫</div>`;
+    body.innerHTML = `<div class="empty" style="padding:18px 10px;font-size:14px">此分組尚無題庫<br>
+      <button type="button" class="add-word-btn" style="margin-top:10px;" onclick="newFolderInGroup('${grp.id}')">➕ 新增題庫</button>
+    </div>`;
   }
 
   section.appendChild(header);
@@ -7680,6 +7682,17 @@ function toggleSubfolder(id, headerEl) {
 }
 function newFolderInSubfolder(subfolderId, groupId) {
   folders.push({ name:"新增題庫", direction:"termToDefinition", color:"#c6e09c", content:"", updated:today(), practice:0, groupId, subfolderId });
+  current = folders.length - 1;
+  lastActiveGroupId = groupId;
+  saveStorage();
+  editFolderFromCard(current);
+}
+function newFolderInGroup(groupId) {
+  const grp = groups.find(g => g.id === groupId);
+  // 這個分組底下還沒有任何題庫時，第一個題庫直接沿用分組名稱，省得使用者重複打字
+  const isFirstInGroup = !folders.some(f => f.groupId === groupId) && !subfolders.some(sf => sf.groupId === groupId);
+  const name = (isFirstInGroup && grp) ? grp.name : "新增題庫";
+  folders.push({ name, direction:"termToDefinition", color:"#c6e09c", content:"", updated:today(), practice:0, groupId });
   current = folders.length - 1;
   lastActiveGroupId = groupId;
   saveStorage();
