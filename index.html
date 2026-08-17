@@ -7681,7 +7681,11 @@ function toggleSubfolder(id, headerEl) {
   saveStorage();
 }
 function newFolderInSubfolder(subfolderId, groupId) {
-  folders.push({ name:"新增題庫", direction:"termToDefinition", color:"#c6e09c", content:"", updated:today(), practice:0, groupId, subfolderId });
+  const sf = subfolders.find(s => s.id === subfolderId);
+  // 這個資料夾底下還沒有任何題庫時，第一個題庫直接沿用資料夾名稱
+  const isFirstInSubfolder = sf && !folders.some(f => f.subfolderId === subfolderId);
+  const name = (isFirstInSubfolder) ? sf.name : "新增題庫";
+  folders.push({ name, direction:"termToDefinition", color:"#c6e09c", content:"", updated:today(), practice:0, groupId, subfolderId });
   current = folders.length - 1;
   lastActiveGroupId = groupId;
   saveStorage();
@@ -7967,7 +7971,11 @@ function selectFromDropdown(v) {
   setTimeout(decorateSpeakButtons, 50);
 }
 function newFolder() {
-  folders.push({ name:"新增題庫", direction:"termToDefinition", color:"#c6e09c", content:"", updated:today(), practice:0 });
+  // 如果使用者目前展開/瀏覽的分組還沒有任何題庫，第一個題庫直接沿用分組名稱
+  const grp = lastActiveGroupId ? groups.find(g => g.id === lastActiveGroupId) : null;
+  const isFirstInGroup = grp && !folders.some(f => f.groupId === grp.id) && !subfolders.some(sf => sf.groupId === grp.id);
+  const name = (isFirstInGroup) ? grp.name : "新增題庫";
+  folders.push({ name, direction:"termToDefinition", color:"#c6e09c", content:"", updated:today(), practice:0, groupId: grp ? grp.id : "" });
   current = folders.length - 1;
   saveStorage();
   editFolderFromCard(current);
