@@ -5257,8 +5257,8 @@ function updatePinnedNavButton() {
 }
 function openPinnedShortcut() {
   const resolved = resolvePinnedShortcut();
-  if (!resolved) { goPage("libraryHub"); return; }
-  goPage("libraryHub");
+  if (!resolved) { goPage("library"); return; }
+  goPage("library");
   setTimeout(() => {
     let targetEl = null;
     if (resolved.type === "category") {
