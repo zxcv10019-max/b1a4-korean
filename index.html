@@ -3646,7 +3646,8 @@ button{font-family:inherit;transition:background-color .16s,box-shadow .16s}butt
 #library .folder-search-input{background:#fffaf0;border:1px solid #e7ddc9;border-radius:17px;padding:14px 16px}
 @media(max-width:640px){#library .folder-area{padding:19px 14px}#library .category-header{padding:17px 12px;gap:8px}#library .category-name{font-size:15px}#library .category-body{padding-left:11px;margin-left:8px}#library .group-header{padding:15px 11px;gap:8px}#library .group-name{font-size:14px}#library .group-toggle,#library .category-toggle{width:23px;height:23px;font-size:12px}#library .group-count{font-size:10px;padding:4px 6px}#library .subfolder-section{padding-left:10px;margin-left:5px}#library .subfolder-header{padding:12px 10px;gap:7px}#library .subfolder-name{font-size:13px}}
 </style>
-</head>
+<style id="bana-explorer-theme">#banaExplorerSource{display:none!important}.bana-explorer-toolbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;scroll-margin-top:90px;margin:0 0 12px}.bana-explorer-toolbar button{padding:9px 12px;background:#edf2e2;color:#506b45;border:1px solid #d9e2c9;border-radius:13px}.bana-crumbs{display:flex;align-items:center;gap:5px;flex:1;flex-wrap:wrap}.bana-crumbs button{background:transparent;border:0;padding:7px 5px;font-size:13px}.bana-manage{margin-left:auto;white-space:nowrap}.bana-explorer-note{font-size:12px;color:#7d876f;margin-bottom:17px}.bana-category-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:20px}.bana-category-tile{position:relative;border:1px solid #dae2ca;border-radius:22px;box-shadow:0 5px 0 #e9ebdf;background:#eff3e5;min-width:0}.bana-category-tile.tone-1{background:#f9ede9;border-color:#ebdcd4}.bana-category-tile.tone-2{background:#edf2f7;border-color:#dce4ed}.bana-category-tile.tone-3{background:#faf3df;border-color:#ece0c5}.bana-category-open{display:flex;align-items:flex-start;flex-direction:column;gap:9px;width:100%;padding:23px 19px;background:transparent;text-align:left;color:#4c6243;min-height:175px}.bana-category-open strong{font-size:16px;line-height:1.5;overflow-wrap:anywhere}.bana-category-open small{color:#7c856e;font-size:12px;font-weight:600}.bana-tile-icon{font-size:30px;line-height:1.2}.bana-tile-enter{font-size:11px;color:#738565;margin-top:auto}.bana-tile-menu{position:absolute!important;right:10px;top:10px;margin:0!important}.bana-explorer:not(.is-managing) .group-kebab-wrap,.bana-explorer:not(.is-managing) .ffc-kebab-wrap{display:none!important}.bana-explorer-empty{padding:35px 16px;text-align:center;border:1px dashed #d8dfc8;border-radius:20px;color:#7d876f}.bana-explorer-empty button{display:block;margin:15px auto 0;background:#ebf1e0;color:#5b7449}.bana-category-open:hover{background:#ffffff40}.bana-category-open:focus-visible{outline:3px solid #a6bd8a;outline-offset:3px}.bana-category-tile:has(.group-kebab-menu.show){z-index:50}#library .folder-search-input{position:sticky;top:8px;z-index:55;box-shadow:0 4px 12px #66744c12}@media(min-width:1200px){.bana-category-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}@media(max-width:640px){.bana-category-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.bana-category-open{padding:19px 13px;min-height:164px}.bana-category-open strong{font-size:14px}.bana-category-open small{font-size:11px}.bana-tile-icon{font-size:26px}.bana-crumbs{order:3;flex-basis:100%}.bana-explorer-toolbar{scroll-margin-top:85px}}
+</style></head>
 <body>
 <div class="app">
   <main class="main">
@@ -15314,5 +15315,60 @@ if ("serviceWorker" in navigator) {
   });
 }
 </script>
-</body>
+<script id="bana-explorer-script">/* Folder explorer: presentation/navigation only; delegates data edits and study to original app. */
+(function(){
+let path=[],manage=false,busy=false;
+const legacyRender=renderFolders,legacyFilter=filterFolderCards;
+function nodes(cats,grps,sfs,fs,p,q){
+ const query=String(q||'').trim().toLowerCase();
+ const entries=fs.map((f,i)=>({f,i}));
+ if(query)return{tiles:[],entries:entries.filter(({f})=>[f.name,f.content,grps.find(g=>g.id===f.groupId)?.name,sfs.find(g=>g.id===f.subfolderId)?.name].join(' ').toLowerCase().includes(query))};
+ const last=p[p.length-1];let tiles=[],selected=[];
+ const validGroup=f=>grps.some(g=>g.id===f.groupId);
+ if(!last){tiles=cats.map(x=>({...x,kind:'cat'})).concat(grps.filter(g=>!cats.some(c=>c.id===g.categoryId)).map(x=>({...x,kind:'grp'})));selected=entries.filter(({f})=>!validGroup(f));}
+ else if(last.kind==='cat'){tiles=grps.filter(g=>g.categoryId===last.id).map(x=>({...x,kind:'grp'}));}
+ else if(last.kind==='grp'){tiles=sfs.filter(g=>g.groupId===last.id).map(x=>({...x,kind:'sub'}));selected=entries.filter(({f})=>f.groupId===last.id&&!sfs.some(sf=>sf.id===f.subfolderId&&sf.groupId===last.id));}
+ else selected=entries.filter(({f})=>f.subfolderId===last.id&&f.groupId===last.groupId);
+ return{tiles,entries:selected};
+}
+window.banaExplorerModel=nodes;
+function go(p){path=p;const input=document.getElementById('folderSearchInput');if(input)input.value='';if(p.some(x=>x.kind==='grp'))lastActiveGroupId=p.find(x=>x.kind==='grp').id;renderFolders();document.getElementById('banaExplorerToolbar')?.scrollIntoView({block:'start',behavior:'smooth'});}
+function crumb(name,fn){const b=document.createElement('button');b.type='button';b.textContent=name;b.onclick=fn;return b;}
+function draw(){
+ const g=document.getElementById('folderGrid');if(!g)return;
+ path=path.filter((x,i)=>{const arr=x.kind==='cat'?categories:x.kind==='grp'?groups:subfolders;return arr.some(v=>v.id===x.id)&&(i===0||path.slice(0,i).every(y=>(y.kind==='cat'?categories:y.kind==='grp'?groups:subfolders).some(v=>v.id===y.id)));});
+ const source=document.createElement('div');source.hidden=true;source.id='banaExplorerSource';while(g.firstChild)source.appendChild(g.firstChild);g.appendChild(source);
+ const view=document.createElement('div');view.className='bana-explorer '+(manage?'is-managing':'');g.appendChild(view);
+ const bar=document.createElement('div');bar.id='banaExplorerToolbar';bar.className='bana-explorer-toolbar';
+ if(path.length)bar.appendChild(crumb('← 返回',()=>go(path.slice(0,-1))));
+ const crumbs=document.createElement('nav');crumbs.className='bana-crumbs';crumbs.setAttribute('aria-label','題庫分類路徑');crumbs.appendChild(crumb('所有分類',()=>go([])));
+ path.forEach((x,i)=>{const sep=document.createElement('span');sep.textContent='›';crumbs.appendChild(sep);const obj=(x.kind==='cat'?categories:x.kind==='grp'?groups:subfolders).find(v=>v.id===x.id);crumbs.appendChild(crumb(obj?.name||'分類',()=>go(path.slice(0,i+1))));});bar.appendChild(crumbs);
+ const m=crumb(manage?'✓ 完成管理':'⚙ 管理',()=>{manage=!manage;renderFolders()});m.className='bana-manage';m.setAttribute('aria-pressed',String(manage));bar.appendChild(m); const currentNode=path[path.length-1]; if(currentNode){const menuId=(currentNode.kind==='cat'?'catMenu_':currentNode.kind==='grp'?'grpMenu_':'subMenu_')+currentNode.id; const ownMenu=document.getElementById(menuId)?.closest('.group-kebab-wrap');if(ownMenu)bar.appendChild(ownMenu);} view.appendChild(bar);
+ const q=document.getElementById('folderSearchInput')?.value||'';const model=nodes(categories,groups,subfolders,folders,path,q);
+ const note=document.createElement('div');note.className='bana-explorer-note';note.textContent=q.trim()?`搜尋結果：${model.entries.length} 個題庫（跨所有分類）`:`${model.tiles.length} 個分類・${model.entries.length} 個題庫`;view.appendChild(note);
+ const grid=document.createElement('div');grid.className='bana-category-grid';view.appendChild(grid);
+ model.tiles.forEach((t,i)=>{
+  const card=document.createElement('div');card.className='bana-category-tile tone-'+i%4;
+  const b=document.createElement('button');b.type='button';b.className='bana-category-open';b.onclick=()=>go(path.concat([{kind:t.kind,id:t.id,groupId:t.groupId}]));
+  const inside=folders.filter(f=>t.kind==='cat'?groups.some(gr=>gr.categoryId===t.id&&gr.id===f.groupId):t.kind==='grp'?f.groupId===t.id:f.groupId===t.groupId&&f.subfolderId===t.id);
+  const childCount=t.kind==='cat'?groups.filter(gr=>gr.categoryId===t.id).length:t.kind==='grp'?subfolders.filter(sf=>sf.groupId===t.id).length:0;
+  b.innerHTML=`<span class="bana-tile-icon">${t.kind==='cat'?'📚':t.kind==='grp'?'🌷':'📂'}</span><strong>${esc(t.name)}</strong><small>${inside.length} 個題庫${childCount?'・'+childCount+' 個分類':''}</small><span class="bana-tile-enter">進入 ›</span>`;card.appendChild(b);
+  const menuId=(t.kind==='cat'?'catMenu_':t.kind==='grp'?'grpMenu_':'subMenu_')+t.id;
+  const menu=document.getElementById(menuId)?.closest('.group-kebab-wrap');if(menu){menu.classList.add('bana-tile-menu');card.appendChild(menu)}grid.appendChild(card);
+ });
+ const fg=document.createElement('div');fg.className='folder-card-grid'+(libraryViewMode==='list'?' list-mode':'');view.appendChild(fg);
+ const sorted=typeof sortFolderEntries==='function'?sortFolderEntries(model.entries):model.entries;
+ sorted.forEach(({f,i})=>{let card=document.getElementById('ffcMenu_'+i)?.closest('.forest-folder-card');if(!card)card=makeForestFolderCard(f,i);card.style.display='';fg.appendChild(card);});
+ if(!model.tiles.length&&!model.entries.length){const e=document.createElement('div');e.className='bana-explorer-empty';e.textContent=q.trim()?'找不到符合的題庫，試試中文、韓文或單字。':'這裡還沒有題庫。';if(!q.trim()){const last=path[path.length-1];const add=last?.kind==='sub'?()=>newFolderInSubfolder(last.id,last.groupId):last?.kind==='grp'?()=>newFolderInGroup(last.id):last?.kind==='cat'?null:()=>newFolder();if(add)e.appendChild(crumb('＋ 建立題庫',add));else e.appendChild(crumb('⚙ 開啟管理',()=>{manage=true;renderFolders()}));}view.appendChild(e);}
+ const empty=document.getElementById('folderSearchEmpty');if(empty)empty.style.display='none';
+}
+renderFolders=function(){busy=true;try{legacyRender();draw()}finally{busy=false}};
+filterFolderCards=function(q){if(busy)return legacyFilter(q);renderFolders()};
+const oldCategory=toggleCategory,oldGroup=toggleGroup,oldSub=toggleSubfolder;
+toggleCategory=function(id,el){if(el?.closest('#folderGrid'))return go([{kind:'cat',id}]);return oldCategory(id,el)};
+toggleGroup=function(id,el){if(el?.closest('#folderGrid')&&id!=='ungrouped'){const gr=groups.find(g=>g.id===id);const cat=categories.find(c=>c.id===gr?.categoryId);return go((cat?[{kind:'cat',id:cat.id}]:[]).concat([{kind:'grp',id}]))}return oldGroup(id,el)};
+toggleSubfolder=function(id,el){if(el?.closest('#folderGrid')){const sf=subfolders.find(s=>s.id===id),gr=groups.find(g=>g.id===sf?.groupId),cat=categories.find(c=>c.id===gr?.categoryId);return go((cat?[{kind:'cat',id:cat.id}]:[]).concat([{kind:'grp',id:gr.id},{kind:'sub',id,groupId:gr.id}]))}return oldSub(id,el)};
+renderFolders();
+})();
+</script></body>
 </html>
