@@ -3614,6 +3614,38 @@ button{font-family:inherit;transition:background-color .16s,box-shadow .16s}butt
 .storybook-welcome>span{position:absolute;top:20px;left:20px;padding:9px 15px;border-radius:16px;background:#fffbeddd;color:#5b7550;font-size:15px;font-weight:900}
 @media(max-width:640px){.storybook-welcome>img{height:210px;object-position:73% center}.storybook-welcome>span{top:12px;left:12px;font-size:12px}.home-action-card .storybook-character{width:56px;height:63px!important}}
 </style>
+
+<style id="bana-collection-redesign">
+/* Library collection book: scoped visual redesign; original data and handlers retained. */
+#library .folder-area{background:#fffdf7;border:1px solid #e5dfcb;box-shadow:0 6px 0 #eee8d8;padding:28px}
+#library .category-section{position:relative;margin:25px 0 30px;padding-top:10px}
+#library .category-header{position:relative;background:#e8efdb;border:2px solid #d3dfbf;border-radius:12px 24px 24px 24px;padding:21px 20px;gap:12px;box-shadow:0 5px 0 #dae3cb;margin-bottom:20px;overflow:visible}
+#library .category-header::before{content:"BANA COLLECTION";position:absolute;left:20px;top:-17px;padding:5px 12px;background:#d3dfbf;color:#62774f;border:1px solid #c6d4b0;border-bottom:0;border-radius:10px 10px 0 0;font-size:9px;font-weight:900;letter-spacing:.12em;pointer-events:none}
+#library .category-header::after{content:"✿";position:absolute;right:68px;top:-17px;width:30px;height:30px;color:#ce9caa;background:#fff8ef;border:1px solid #e8d8c6;border-radius:50%;display:grid;place-items:center;font-size:20px;transform:rotate(12deg);pointer-events:none}
+#library .category-name{font-size:17px;color:#455a3b;white-space:normal;line-height:1.6}
+#library .category-body{border-left:2px dashed #d9dfc9;padding-left:18px;margin-left:17px}
+#library .group-section{margin-bottom:17px}
+#library .group-header{position:relative;flex-wrap:nowrap;background:#fffdf8;border:1px solid #e4dfcf;border-radius:19px;padding:18px 17px;box-shadow:0 4px 0 #eeebdf;gap:12px;margin-bottom:15px;transition:background .18s,box-shadow .18s}
+#library .category-body>.group-section:nth-child(4n+1)>.group-header{background:#f4f5e8;border-color:#dfe3cd}
+#library .category-body>.group-section:nth-child(4n+2)>.group-header{background:#faf0ed;border-color:#eadbd5}
+#library .category-body>.group-section:nth-child(4n+3)>.group-header{background:#eff3f7;border-color:#dce3ea}
+#library .category-body>.group-section:nth-child(4n+4)>.group-header{background:#faf4e4;border-color:#ece2c8}
+#library .group-header:hover{box-shadow:0 5px 0 #e5e7d6;background:#edf2e2}
+#library .group-name{font-size:15px;line-height:1.55;white-space:normal;color:#4f6047}
+#library .group-toggle,#library .category-toggle,#library .subfolder-toggle{display:grid;place-items:center;flex:0 0 auto;width:27px;height:27px;border-radius:10px;background:#fffdf8;color:#809468;font-size:14px;border:1px solid #dfe4d2}
+#library .group-header.collapsed .group-toggle,#library .category-header.collapsed .category-toggle,#library .subfolder-header.collapsed .subfolder-toggle{transform:rotate(-90deg)}
+#library .group-count{font-size:11px;font-weight:800;color:#7e886f;background:#fffdf7;border:1px solid #e2e6d4;padding:5px 9px;white-space:nowrap}
+#library .group-body{padding-left:10px}
+#library .subfolder-section{margin:12px 0 16px 10px;padding-left:15px;border-left:2px dashed #e5d7c1}
+#library .subfolder-header{background:#fff9ed;border:1px solid #e9dec8;border-radius:16px;padding:13px 15px;box-shadow:0 3px 0 #f1ebdc;flex-wrap:nowrap}
+#library .subfolder-name{font-size:14px;white-space:normal;line-height:1.6;color:#826e50}
+#library .group-kebab-btn{width:32px;height:32px;min-width:32px;border-radius:12px;background:#fffdf7;border:1px solid #dfe4d2;color:#7d9265;box-shadow:0 2px 0 #e6e8da;font-size:18px;padding:0}
+#library .group-kebab-wrap{margin-left:auto;flex-shrink:0}
+#library .group-kebab-menu{border-radius:17px;background:#fffdf7;border-color:#e0e5d2;box-shadow:0 12px 30px #66744c22}
+#library .group-ungrouped .group-header{border-style:dashed;background:#f8f7f0}
+#library .folder-search-input{background:#fffaf0;border:1px solid #e7ddc9;border-radius:17px;padding:14px 16px}
+@media(max-width:640px){#library .folder-area{padding:19px 14px}#library .category-header{padding:17px 12px;gap:8px}#library .category-name{font-size:15px}#library .category-body{padding-left:11px;margin-left:8px}#library .group-header{padding:15px 11px;gap:8px}#library .group-name{font-size:14px}#library .group-toggle,#library .category-toggle{width:23px;height:23px;font-size:12px}#library .group-count{font-size:10px;padding:4px 6px}#library .subfolder-section{padding-left:10px;margin-left:5px}#library .subfolder-header{padding:12px 10px;gap:7px}#library .subfolder-name{font-size:13px}}
+</style>
 </head>
 <body>
 <div class="app">
