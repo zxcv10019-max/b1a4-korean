@@ -3647,7 +3647,7 @@ button{font-family:inherit;transition:background-color .16s,box-shadow .16s}butt
 @media(max-width:640px){#library .folder-area{padding:19px 14px}#library .category-header{padding:17px 12px;gap:8px}#library .category-name{font-size:15px}#library .category-body{padding-left:11px;margin-left:8px}#library .group-header{padding:15px 11px;gap:8px}#library .group-name{font-size:14px}#library .group-toggle,#library .category-toggle{width:23px;height:23px;font-size:12px}#library .group-count{font-size:10px;padding:4px 6px}#library .subfolder-section{padding-left:10px;margin-left:5px}#library .subfolder-header{padding:12px 10px;gap:7px}#library .subfolder-name{font-size:13px}}
 </style>
 <style id="bana-explorer-theme">#banaExplorerSource{display:none!important}.bana-explorer-toolbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;scroll-margin-top:90px;margin:0 0 12px}.bana-explorer-toolbar button{padding:9px 12px;background:#edf2e2;color:#506b45;border:1px solid #d9e2c9;border-radius:13px}.bana-crumbs{display:flex;align-items:center;gap:5px;flex:1;flex-wrap:wrap}.bana-crumbs button{background:transparent;border:0;padding:7px 5px;font-size:13px}.bana-manage{margin-left:auto;white-space:nowrap}.bana-explorer-note{font-size:12px;color:#7d876f;margin-bottom:17px}.bana-category-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:20px}.bana-category-tile{position:relative;border:1px solid #dae2ca;border-radius:22px;box-shadow:0 5px 0 #e9ebdf;background:#eff3e5;min-width:0}.bana-category-tile.tone-1{background:#f9ede9;border-color:#ebdcd4}.bana-category-tile.tone-2{background:#edf2f7;border-color:#dce4ed}.bana-category-tile.tone-3{background:#faf3df;border-color:#ece0c5}.bana-category-open{display:flex;align-items:flex-start;flex-direction:column;gap:9px;width:100%;padding:23px 19px;background:transparent;text-align:left;color:#4c6243;min-height:175px}.bana-category-open strong{font-size:16px;line-height:1.5;overflow-wrap:anywhere}.bana-category-open small{color:#7c856e;font-size:12px;font-weight:600}.bana-tile-icon{font-size:30px;line-height:1.2}.bana-tile-enter{font-size:11px;color:#738565;margin-top:auto}.bana-tile-menu{position:absolute!important;right:10px;top:10px;margin:0!important}.bana-explorer:not(.is-managing) .group-kebab-wrap,.bana-explorer:not(.is-managing) .ffc-kebab-wrap{display:none!important}.bana-explorer-empty{padding:35px 16px;text-align:center;border:1px dashed #d8dfc8;border-radius:20px;color:#7d876f}.bana-explorer-empty button{display:block;margin:15px auto 0;background:#ebf1e0;color:#5b7449}.bana-category-open:hover{background:#ffffff40}.bana-category-open:focus-visible{outline:3px solid #a6bd8a;outline-offset:3px}.bana-category-tile:has(.group-kebab-menu.show){z-index:50}#library .folder-search-input{position:sticky;top:8px;z-index:55;box-shadow:0 4px 12px #66744c12}@media(min-width:1200px){.bana-category-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}@media(max-width:640px){.bana-category-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.bana-category-open{padding:19px 13px;min-height:164px}.bana-category-open strong{font-size:14px}.bana-category-open small{font-size:11px}.bana-tile-icon{font-size:26px}.bana-crumbs{order:3;flex-basis:100%}.bana-explorer-toolbar{scroll-margin-top:85px}}
-</style></head>
+</style><style id="bana-browse-memory-style">#pinnedNavLabel{display:flex;flex-direction:column;gap:3px;align-items:center;max-width:78px}#pinnedNavLabel>span{font-size:11px;white-space:nowrap}#pinnedNavLabel small{font-size:9px;line-height:1.4;max-width:74px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#7b876b;font-weight:600}.bottom-nav button[data-tab="pinned"]{border:1px solid #dce4ce;background:#f7f8ef}</style></head>
 <body>
 <div class="app">
   <main class="main">
@@ -15318,6 +15318,31 @@ if ("serviceWorker" in navigator) {
 <script id="bana-explorer-script">/* Folder explorer: presentation/navigation only; delegates data edits and study to original app. */
 (function(){
 let path=[],manage=false,busy=false;
+const browseKey='bana_last_browse_path_v1';
+let remembered=[];
+try{const saved=JSON.parse(localStorage.getItem(browseKey)||'[]');if(Array.isArray(saved))remembered=saved;}catch(e){}
+function resolveBrowsePath(saved,cats,grps,sfs){
+ for(let i=saved.length-1;i>=0;i--){
+  const n=saved[i];if(!n||typeof n.id!=='string')continue;
+  if(n.kind==='cat'){const c=cats.find(x=>x.id===n.id);if(c)return[{kind:'cat',id:c.id}];}
+  const sf=n.kind==='sub'?sfs.find(x=>x.id===n.id):null;
+  const gr=grps.find(x=>x.id===(sf?sf.groupId:n.kind==='grp'?n.id:null));
+  if(gr){const c=cats.find(x=>x.id===gr.categoryId);const p=(c?[{kind:'cat',id:c.id}]:[]).concat([{kind:'grp',id:gr.id}]);if(sf)p.push({kind:'sub',id:sf.id,groupId:gr.id});return p;}
+ }
+ return[];
+}
+window.banaResolveBrowsePath=resolveBrowsePath;
+function resolvedMemory(){return resolveBrowsePath(remembered,categories,groups,subfolders)}
+updatePinnedNavButton=function(){
+ const icon=document.getElementById('pinnedNavIcon'),label=document.getElementById('pinnedNavLabel');if(!icon||!label)return;
+ const p=resolvedMemory(),last=p[p.length-1];const item=last?(last.kind==='cat'?categories:last.kind==='grp'?groups:subfolders).find(x=>x.id===last.id):null;
+ icon.textContent='🕘';label.replaceChildren();const title=document.createElement('span');title.textContent='上次瀏覽';label.appendChild(title);const sub=document.createElement('small');sub.textContent=item?.name||'尚無紀錄';label.appendChild(sub);
+ const b=label.closest('button');if(b){b.title=item?'回到 '+p.map(x=>(x.kind==='cat'?categories:x.kind==='grp'?groups:subfolders).find(v=>v.id===x.id)?.name).join(' › '):'尚無紀錄，前往題庫';b.setAttribute('aria-label',b.title);}
+};
+openPinnedShortcut=function(){const p=resolvedMemory();goPage('library');go(p);};
+const previousBottomTab=goBottomTab;
+goBottomTab=function(tab){if(tab==='libraryHub'||tab==='library'){path=[];const input=document.getElementById('folderSearchInput');if(input)input.value='';goPage('library');renderFolders();return;}return previousBottomTab(tab);};
+
 const legacyRender=renderFolders,legacyFilter=filterFolderCards;
 function nodes(cats,grps,sfs,fs,p,q){
  const query=String(q||'').trim().toLowerCase();
@@ -15332,7 +15357,7 @@ function nodes(cats,grps,sfs,fs,p,q){
  return{tiles,entries:selected};
 }
 window.banaExplorerModel=nodes;
-function go(p){path=p;const input=document.getElementById('folderSearchInput');if(input)input.value='';if(p.some(x=>x.kind==='grp'))lastActiveGroupId=p.find(x=>x.kind==='grp').id;renderFolders();document.getElementById('banaExplorerToolbar')?.scrollIntoView({block:'start',behavior:'smooth'});}
+function go(p){path=p;if(p.length){remembered=p.map(x=>({...x}));try{localStorage.setItem(browseKey,JSON.stringify(remembered))}catch(e){}}updatePinnedNavButton();const input=document.getElementById('folderSearchInput');if(input)input.value='';if(p.some(x=>x.kind==='grp'))lastActiveGroupId=p.find(x=>x.kind==='grp').id;renderFolders();document.getElementById('banaExplorerToolbar')?.scrollIntoView({block:'start',behavior:'smooth'});}
 function crumb(name,fn){const b=document.createElement('button');b.type='button';b.textContent=name;b.onclick=fn;return b;}
 function draw(){
  const g=document.getElementById('folderGrid');if(!g)return;
