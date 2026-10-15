@@ -3698,6 +3698,7 @@ button{font-family:inherit;transition:background-color .16s,box-shadow .16s}butt
 @media(max-width:600px){#wlStudyView{padding:0 12px 88px}#wlStudyView #graduationPanel{gap:8px;grid-template-columns:1fr;padding:12px}#wlStudyView .graduation-row{display:grid;grid-template-columns:48px minmax(0,1fr) 36px}.bana-word-toolbar{gap:10px}.bana-word-search{width:100%}.bana-word-search input{flex:1;min-width:0}.bana-word-pages{width:100%;justify-content:flex-end}.bana-word-pages>span:first-child{margin-right:auto}#wlBody{gap:8px}#wlBody .word-card-v2{padding:10px}#wlBody .wc-term{font-size:16px}}
 @media(max-width:340px){#wlBody{grid-template-columns:1fr}}
 </style>
+<style id="bana-add-folder-style">.bana-explorer-toolbar .bana-add-folder{white-space:nowrap;background:#7fa850;color:#fff;border:1px solid #7fa850}.bana-explorer-toolbar .bana-add-folder:hover{background:#6e9642}</style>
 </head>
 <body>
 <div class="app">
@@ -15452,7 +15453,16 @@ function draw(){
  if(path.length)bar.appendChild(crumb('← 返回',()=>go(path.slice(0,-1))));
  const crumbs=document.createElement('nav');crumbs.className='bana-crumbs';crumbs.setAttribute('aria-label','題庫分類路徑');crumbs.appendChild(crumb('所有分類',()=>go([])));
  path.forEach((x,i)=>{const sep=document.createElement('span');sep.textContent='›';crumbs.appendChild(sep);const obj=(x.kind==='cat'?categories:x.kind==='grp'?groups:subfolders).find(v=>v.id===x.id);crumbs.appendChild(crumb(obj?.name||'分類',()=>go(path.slice(0,i+1))));});bar.appendChild(crumbs);
- const m=crumb(manage?'✓ 完成管理':'⚙ 管理',()=>{manage=!manage;renderFolders()});m.className='bana-manage';m.setAttribute('aria-pressed',String(manage));bar.appendChild(m); const currentNode=path[path.length-1]; if(currentNode){const menuId=(currentNode.kind==='cat'?'catMenu_':currentNode.kind==='grp'?'grpMenu_':'subMenu_')+currentNode.id; const ownMenu=document.getElementById(menuId)?.closest('.group-kebab-wrap');if(ownMenu)bar.appendChild(ownMenu);} view.appendChild(bar);
+ const m=crumb(manage?'✓ 完成管理':'⚙ 管理',()=>{manage=!manage;renderFolders()});m.className='bana-manage';m.setAttribute('aria-pressed',String(manage));bar.appendChild(m); const currentNode=path[path.length-1];
+ if(!currentNode||currentNode.kind!=='cat'){
+  const add=crumb('＋ 新增題庫',()=>{
+   if(currentNode?.kind==='sub')return newFolderInSubfolder(currentNode.id,currentNode.groupId);
+   if(currentNode?.kind==='grp')return newFolderInGroup(currentNode.id);
+   lastActiveGroupId=null;return newFolder();
+  });
+  add.className='bana-add-folder';bar.appendChild(add);
+ }
+ if(currentNode){const menuId=(currentNode.kind==='cat'?'catMenu_':currentNode.kind==='grp'?'grpMenu_':'subMenu_')+currentNode.id; const ownMenu=document.getElementById(menuId)?.closest('.group-kebab-wrap');if(ownMenu)bar.appendChild(ownMenu);} view.appendChild(bar);
  const q=document.getElementById('folderSearchInput')?.value||'';const model=nodes(categories,groups,subfolders,folders,path,q);
  const note=document.createElement('div');note.className='bana-explorer-note';note.textContent=q.trim()?`搜尋結果：${model.entries.length} 個題庫（跨所有分類）`:`${model.tiles.length} 個分類・${model.entries.length} 個題庫`;view.appendChild(note);
  const grid=document.createElement('div');grid.className='bana-category-grid';view.appendChild(grid);const ooEntry=document.getElementById('banaOneOnOneEntry');if(ooEntry&&!path.length&&!q.trim()){grid.appendChild(ooEntry);if(typeof ooUpdateEntryCard==='function')ooUpdateEntryCard();}
