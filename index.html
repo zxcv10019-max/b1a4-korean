@@ -3824,6 +3824,11 @@ button:focus-visible,[onclick]:focus-visible,input:focus-visible,select:focus-vi
 .bana-folder-language-actions,.bana-bank-language-actions{display:flex;gap:8px;flex-wrap:wrap}.bana-category-tile>.bana-folder-language-actions,.forest-folder-card>.bana-bank-language-actions{padding:0 14px 14px}.bana-folder-language-actions button,.bana-bank-language-actions button{border:1px solid #d9e3ce;background:#ffffffb0;color:#5f7950;border-radius:10px;padding:8px 12px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer}#banaExplorerToolbar>.bana-folder-language-actions{margin-left:auto}.bana-folder-grammar-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.bana-folder-language-empty{padding:36px 18px;text-align:center;border:1px dashed #d9e3cf;border-radius:18px;color:#8a9a7b}.bana-save-location{padding:11px 14px;border-radius:12px;background:#edf4e4;color:#6b8654;font-size:13px}.bana-hide-book-field{display:none!important}.bana-folder-bound .bl-page-actions button[onclick="newGrammarCategory()"],.bana-folder-bound .bl-page-actions button[onclick="newDialogueCategory()"]{display:none}
 @media(max-width:650px){.bana-folder-grammar-grid{grid-template-columns:1fr}}
 </style>
+<style id="bana-four-action-fab-style">
+body.overlay-open:has(#wordListOverlay.show) #fabWrap{display:flex!important;right:18px;bottom:18px}
+body.overlay-open:has(#wordListOverlay.show) #wlAddFab{display:none!important}
+#fabMenu .fab-menu-item{min-width:138px;justify-content:flex-start}
+</style>
 </head>
 <body>
 <div class="app">
@@ -4724,13 +4729,11 @@ button:focus-visible,[onclick]:focus-visible,input:focus-visible,select:focus-vi
   <div id="fabWrap" class="fab-wrap">
     <div id="fabMenu" class="fab-menu">
       <button type="button" class="fab-menu-item" onclick="fabNewFolder()"><span>📁</span>新增題庫</button>
-      <button type="button" class="fab-menu-item" onclick="fabNewCategory()"><span>🗃️</span>新增分類</button>
-      <button type="button" class="fab-menu-item" onclick="fabNewGroup()"><span>🗂️</span>新增分組</button>
       <button type="button" class="fab-menu-item" onclick="fabNewWord()"><span>🍀</span>新增單字</button>
-      <button type="button" class="fab-menu-item" onclick="fabAiAnalyze()"><span>✨</span>AI解析</button>
-      <button type="button" class="fab-menu-item" onclick="triggerExcelImport()"><span>📊</span>匯入Excel</button>
+      <button type="button" class="fab-menu-item" onclick="banaFabNewLanguage('grammar')"><span>📖</span>新增文法</button>
+      <button type="button" class="fab-menu-item" onclick="banaFabNewLanguage('dialogue')"><span>💬</span>新增對話</button>
     </div>
-    <button type="button" id="fabMainBtn" class="fab-main-btn" onclick="toggleFab()">＋</button>
+    <button type="button" id="fabMainBtn" class="fab-main-btn" onclick="toggleFab()" aria-label="新增內容" aria-controls="fabMenu" aria-expanded="false">＋</button>
   </div>
   <input type="file" id="excelImportInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleExcelImport(this.files[0])">
 
@@ -15858,8 +15861,24 @@ function decorate(){
 }
 const oldRender=renderFolders;renderFolders=function(){const r=oldRender.apply(this,arguments);decorate();return r};
 const oldWordList=renderWordList;renderWordList=function(){const r=oldWordList.apply(this,arguments);const toolbar=document.getElementById('banaWordToolbar');if(toolbar&&!toolbar.querySelector('.bana-bank-language-actions')){const line=document.createElement('div');line.className='bana-bank-language-actions';for(const type of ['grammar','dialogue']){const b=document.createElement('button');b.type='button';b.textContent=type==='grammar'?'這個題庫的文法':'這個題庫的對話';b.onclick=()=>{const i=wlCurrentFolder;closeWordList();openBank(i,type)};line.appendChild(b)}toolbar.appendChild(line)}return r};
+window.banaFabNewLanguage=function(type){
+ closeFab();
+ const create=()=>type==='grammar'?openGrammarEditor(null):openDialogueEditor(null);
+ if(location&&document.querySelector('#grammar.active,#dialogue.active')){create();return;}
+ if(document.getElementById('wordListOverlay')?.classList.contains('show')&&wlCurrentFolder!==null){const i=wlCurrentFolder;closeWordList();openBank(i,type);create();return;}
+ const view=document.getElementById('library')?.classList.contains('active')?document.querySelector('#folderGrid .bana-explorer'):null;
+ if(view?.dataset.banaLanguageKind){banaOpenFolderLanguage(view.dataset.banaLanguageKind,view.dataset.banaLanguageId,view.dataset.banaScopeName,type);create();return;}
+ openFolderPicker(i=>{openBank(i,type);create()});
+};
 renderFolders();
 })();
 </script>
+<script id="bana-four-action-fab-script">(function(){
+const oldNewWord=fabNewWord;
+fabNewWord=function(){if(document.getElementById('wordListOverlay')?.classList.contains('show')&&wlCurrentFolder!==null){closeFab();wlQuickAddWord();return;}return oldNewWord.apply(this,arguments)};
+const oldToggle=toggleFab,oldClose=closeFab;
+function updateFab(){document.getElementById('fabMainBtn')?.setAttribute('aria-expanded',String(document.getElementById('fabWrap')?.classList.contains('open')))}
+toggleFab=function(){const r=oldToggle.apply(this,arguments);updateFab();return r};closeFab=function(){const r=oldClose.apply(this,arguments);updateFab();return r};
+})();</script>
 </body>
 </html>
