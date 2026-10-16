@@ -3747,6 +3747,26 @@ button:focus-visible,[onclick]:focus-visible,input:focus-visible,select:focus-vi
 @media(prefers-reduced-motion:reduce){button,#library .bana-category-tile{transition:none}}
 </style>
 
+<style id="bana-alphabet-and-aligned-width">#banaAlphaOverlay{position:fixed;inset:0;z-index:1600;background:#fbfaf4;color:#405335;overflow:auto;overscroll-behavior:contain;font-family:inherit}
+#banaAlphaOverlay *{box-sizing:border-box}
+.ba-shell{max-width:1080px;margin:0 auto;padding:24px 24px 80px}.ba-header{display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:1px solid #dce4d0;padding-bottom:20px}.ba-header small{color:#879275;font-size:12px}.ba-header h2{margin:6px 0 0;font-size:25px;letter-spacing:1px}
+#banaAlphaOverlay button{font-family:inherit;cursor:pointer;border:1px solid #dce4d0;border-radius:12px;padding:9px 14px;background:#fff;color:#527244;font-weight:700}#banaAlphaOverlay button:disabled{cursor:default;opacity:.45}#banaAlphaOverlay button:focus-visible,#banaAlphaOverlay select:focus-visible{outline:3px solid #accb89;outline-offset:3px}
+.ba-content{padding-top:24px}.ba-setup{border:1px solid #dce4d0;background:#f0f4e7;border-radius:22px;padding:28px}.ba-setup h3{margin:0 0 10px;font-size:21px}.ba-setup p,.ba-day-head p{font-size:13px;line-height:1.8;color:#7b876c}.ba-fields{display:flex;gap:20px;margin:24px 0;flex-wrap:wrap}.ba-fields label{display:grid;gap:8px;min-width:170px;flex:1;font-size:13px;font-weight:700}#banaAlphaOverlay select{background:white;border:1px solid #d4dfc6;border-radius:10px;padding:10px;font:inherit;color:#405335;max-width:100%}
+#banaAlphaOverlay .ba-primary{background:#789e50;color:white;border-color:#789e50;padding:12px 20px}.ba-day{background:#fffef9;border:1px solid #dce4d0;border-radius:22px;padding:24px}.ba-day-head{display:flex;align-items:center;gap:16px;margin-bottom:20px}.ba-day-head h3{font-size:17px;margin:0}.ba-day-head p{margin:5px 0 0}.ba-day-head>button{margin-left:auto;white-space:nowrap}.ba-initial{display:grid;place-items:center;width:62px;height:62px;flex:0 0 62px;border-radius:20px;background:#eaf1dd;font-size:35px;color:#668543}.ba-word-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 34px}.ba-word{display:grid;grid-template-columns:24px minmax(70px,1fr) minmax(70px,1.2fr) 20px;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid #e9ecdf;min-width:0}.ba-number{font-size:10px;color:#a5ae98;font-variant-numeric:tabular-nums}#banaAlphaOverlay .ba-term{background:transparent;border:0;padding:4px 0;text-align:left;font-size:17px;overflow-wrap:anywhere;line-height:1.5;color:#344b2b}.ba-term small{color:#a0af8d;font-size:11px}.ba-meaning{font-size:13px;color:#7d876e;line-height:1.6;overflow-wrap:anywhere}.ba-hide-meaning .ba-meaning{visibility:hidden}.ba-word input{accent-color:#789e50;width:18px;height:18px;cursor:pointer}.ba-footer{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-top:24px;font-size:13px;color:#6e825d}.ba-history{margin-top:22px;font-size:13px;text-align:right}.ba-history select{margin-left:10px}.bana-explorer-toolbar .bana-alpha-entry{white-space:nowrap;background:#edf3e3;color:#527244;border:1px solid #d4e0c5}
+@media(max-width:650px){.ba-shell{padding:18px 14px 60px}.ba-header h2{font-size:21px}.ba-setup{padding:20px}.ba-day{padding:16px}.ba-word-list{grid-template-columns:1fr}.ba-day-head{flex-wrap:wrap;gap:12px}.ba-day-head>button{margin-left:0}.ba-initial{width:48px;height:48px;flex-basis:48px;font-size:29px}.ba-day-head h3{font-size:15px}.ba-footer{flex-wrap:wrap}.ba-history{text-align:left}.ba-fields{gap:12px}.ba-fields label{min-width:120px}}
+
+/* Share the same outer container and responsive inner edges. */
+.main>.content{width:100%;max-width:1280px;box-sizing:border-box;margin-left:auto;margin-right:auto;padding-left:36px;padding-right:36px}
+.main>.hero{box-sizing:border-box;width:calc(100% - 72px);max-width:1208px;margin-left:auto;margin-right:auto}
+@media(max-width:800px){.main>.content{padding-left:22px;padding-right:22px}.main>.hero{width:calc(100% - 44px)}}
+@media(max-width:600px){.main>.content{padding-left:16px;padding-right:16px}.main>.hero{width:calc(100% - 32px)}}
+</style>
+<style id="bana-word-header-aligned">
+#wordListOverlay>.wl-header{width:100%;max-width:1280px;box-sizing:border-box;margin-left:auto;margin-right:auto;display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;gap:10px;padding:10px 20px;flex-shrink:0}
+#wordListOverlay>.wl-header .wl-title{margin:0;min-width:0;text-align:center}
+#wordListOverlay>.wl-header .wl-back,#wordListOverlay>.wl-header .wl-settings-btn{width:44px;height:44px;padding:0;border-radius:12px;background:#f1f5e9;display:grid;place-items:center}
+@media(max-width:600px){#wordListOverlay>.wl-header{padding:8px 12px;gap:8px}#wordListOverlay>.wl-header .wl-title{font-size:14px}}
+</style>
 </head>
 <body>
 <div class="app">
@@ -15544,5 +15564,80 @@ window.banaShowProgressTab=function(tab){const keys=['Overview','Calendar','Reco
 window.banaFilterProgressRecords=function(value){const q=String(value||'').trim().toLowerCase(),rows=Array.from(document.querySelectorAll('#progressFolderPerformance .folder-stat-item'));let visible=0;rows.forEach(row=>{const hit=!q||row.textContent.toLowerCase().includes(q);row.hidden=!hit;if(hit)visible++;});document.getElementById('progressRecordsCount').textContent=visible+' / '+rows.length+' 個題庫';let noMatch=document.getElementById('progressRecordsNoMatch');if(!noMatch){noMatch=document.createElement('p');noMatch.id='progressRecordsNoMatch';noMatch.textContent='找不到符合的題庫。';document.getElementById('progressFolderPerformance').appendChild(noMatch);}noMatch.hidden=!q||visible>0;};
 try{renderFavoritesDetail();renderDetailedStats();}catch(e){console.warn('Compact page refresh:',e)}
 })();
-</script></body>
+</script><script id="bana-alphabet-daily-script">(function(){
+'use strict';
+const KEY='bana_alphabet_daily_v1';
+const INITIALS=['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+let state;try{state=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){}
+if(!state||typeof state!=='object')state={};
+state.learned=Array.isArray(state.learned)?state.learned:[];
+state.sessions=Array.isArray(state.sessions)?state.sessions:[];
+state.size=[20,25,30].includes(state.size)?state.size:20;
+state.scope=typeof state.scope==='string'?state.scope:'';
+let hideMeaning=false, viewedSession=null;
+function dateKey(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));return true}catch(e){alert('進度無法儲存，請確認瀏覽器允許儲存資料後再試。');return false}}
+function initial(term){const ch=String(term||'').normalize('NFC').trim().match(/[가-힣]/)?.[0];return ch?INITIALS[Math.floor((ch.charCodeAt(0)-0xAC00)/588)]:null}
+function catalog(scope){
+ const found=new Map();
+ folders.forEach(f=>{
+  if(scope&&!groups.some(g=>g.id===f.groupId&&g.categoryId===scope))return;
+  parseCards(f.content||'').forEach(c=>{
+   const term=String(c.term||'').normalize('NFC').trim(), head=initial(term);
+   if(!term||!head)return;
+   const definition=String(c.definition||'').trim();
+   if(!found.has(term))found.set(term,{key:term,term,head,definitions:[]});
+   const item=found.get(term);if(definition&&!item.definitions.includes(definition))item.definitions.push(definition);
+  });
+ });
+ return Array.from(found.values()).sort((a,b)=>INITIALS.indexOf(a.head)-INITIALS.indexOf(b.head)||a.term.localeCompare(b.term,'ko'));
+}
+function nextBatch(items,learned,size){const done=new Set(learned),remaining=items.filter(x=>!done.has(x.key));if(!remaining.length)return[];return remaining.filter(x=>x.head===remaining[0].head).slice(0,size)}
+function currentSession(){return state.sessions.find(x=>x.date===dateKey())||null}
+function getSession(){return viewedSession===null?currentSession():state.sessions[viewedSession]}
+function close(){document.getElementById('banaAlphaOverlay')?.remove();viewedSession=null;refreshEntries()}
+function open(){viewedSession=null;hideMeaning=false;render()}
+function start(){
+ if(currentSession()){viewedSession=null;render();return}
+ const scope=document.getElementById('banaAlphaScope').value,size=Number(document.getElementById('banaAlphaSize').value);
+ const batch=nextBatch(catalog(scope),state.learned,size);if(!batch.length)return;
+ state.scope=scope;state.size=size;
+ const session={date:dateKey(),scope,size,head:batch[0].head,items:batch,checked:[],complete:false};
+ state.sessions.push(session);if(!save()){state.sessions.pop();return}viewedSession=null;render();
+}
+function check(key,checked){const s=getSession();if(!s||s.complete||s.date!==dateKey())return;s.checked=checked?Array.from(new Set(s.checked.concat(key))):s.checked.filter(k=>k!==key);save();updateProgress()}
+function updateProgress(){const s=getSession();if(!s)return;const count=s.items.filter(x=>s.checked.includes(x.key)).length;const label=document.getElementById('banaAlphaProgress');if(label)label.textContent=s.complete?'今日閱讀已完成':`已勾選 ${count}／${s.items.length} 個`;const btn=document.getElementById('banaAlphaFinish');if(btn)btn.disabled=count!==s.items.length||s.complete}
+function finish(){
+ const s=getSession();if(!s||s.complete||s.date!==dateKey()||!s.items.every(x=>s.checked.includes(x.key)))return;
+ const previous=state.learned.slice();s.complete=true;state.learned=Array.from(new Set(state.learned.concat(s.items.map(x=>x.key))));
+ if(!save()){state.learned=previous;s.complete=false;return}render();refreshEntries();
+}
+function refreshEntries(){const s=currentSession();document.querySelectorAll('.bana-alpha-entry').forEach(b=>b.textContent=s?.complete?'✓ 今日單字已完成':s?'ㄱ 繼續今日單字':'ㄱ 每日字首單字')}
+function render(){
+ let modal=document.getElementById('banaAlphaOverlay');if(!modal){modal=document.createElement('div');modal.id='banaAlphaOverlay';modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-labelledby','banaAlphaTitle');document.body.appendChild(modal)}
+ const s=getSession(),all=catalog(state.scope),totalLearned=all.filter(x=>state.learned.includes(x.key)).length;
+ modal.innerHTML=`<div class="ba-shell"><header class="ba-header"><div><small>每天一小段，照字首慢慢累積</small><h2 id="banaAlphaTitle">每日字首單字</h2></div><button type="button" id="baClose">關閉 ×</button></header><div class="ba-content"><div id="baMain"></div></div></div>`;
+ modal.querySelector('#baClose').onclick=close;
+ const main=modal.querySelector('#baMain');
+ if(!s){
+ main.innerHTML=`<section class="ba-setup"><h3>從 ㄱ 開始，每天讀一批</h3><p>同一個字首分批讀完，再接下一個。重複的韓文會合併，漏讀的份量不會累加。</p><div class="ba-fields"><label>學習範圍<select id="banaAlphaScope"><option value="">全部題庫</option>${categories.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('')}</select></label><label>每天單字數<select id="banaAlphaSize">${[20,25,30].map(n=>`<option value="${n}">${n} 個</option>`).join('')}</select></label></div><p id="baPreview"></p><button type="button" class="ba-primary" id="baStart">開始今天的閱讀</button></section>`;
+ const scope=main.querySelector('#banaAlphaScope'),size=main.querySelector('#banaAlphaSize');scope.value=state.scope;if(scope.selectedIndex<0)scope.value='';size.value=state.size;
+ const preview=()=>{const words=catalog(scope.value),batch=nextBatch(words,state.learned,Number(size.value)),learned=words.filter(x=>state.learned.includes(x.key)).length;main.querySelector('#baPreview').textContent=batch.length?`已完成 ${learned}／${words.length} 個 · 今天讀 ${batch[0].head}，共 ${batch.length} 個${batch.length<Number(size.value)?'（此字首剩餘單字）':''}`:words.length?'這個範圍已全部讀完，可以選擇其他範圍或回看紀錄。':'這個範圍目前沒有韓文單字。';main.querySelector('#baStart').disabled=!batch.length};scope.onchange=preview;size.onchange=preview;preview();main.querySelector('#baStart').onclick=start;
+ }else{
+ const historical=s.date!==dateKey();
+ main.innerHTML=`<section class="ba-day"><div class="ba-day-head"><div class="ba-initial">${esc(s.head)}</div><div><h3>${esc(s.date)} · ${s.items.length} 個單字</h3><p>${s.complete?'✓ 已完成，明天接著讀下一批':historical?'這份閱讀尚未完成，可回看內容。':'閱讀、聽發音後，勾選已背的單字。'}</p></div><button type="button" id="baMeaning">${hideMeaning?'顯示中文':'隱藏中文'}</button></div><div class="ba-word-list ${hideMeaning?'ba-hide-meaning':''}">${s.items.map((x,i)=>`<div class="ba-word"><span class="ba-number">${String(i+1).padStart(2,'0')}</span><button type="button" class="ba-term" data-speak="${i}" title="播放韓文發音">${esc(x.term)} <small>♪</small></button><span class="ba-meaning">${esc(x.definitions.join('；')||'尚無翻譯')}</span><input type="checkbox" data-check="${i}" aria-label="已背 ${esc(x.term)}" ${s.checked.includes(x.key)?'checked':''} ${s.complete||historical?'disabled':''}></div>`).join('')}</div><footer class="ba-footer"><span id="banaAlphaProgress" aria-live="polite"></span>${!historical?'<button type="button" class="ba-primary" id="banaAlphaFinish">完成今日閱讀</button>':''}</footer></section>`;
+ main.querySelector('#baMeaning').onclick=()=>{hideMeaning=!hideMeaning;render()};main.querySelectorAll('[data-speak]').forEach(b=>b.onclick=()=>speakKorean(s.items[Number(b.dataset.speak)].term));main.querySelectorAll('[data-check]').forEach(b=>b.onchange=()=>check(s.items[Number(b.dataset.check)].key,b.checked));const btn=main.querySelector('#banaAlphaFinish');if(btn)btn.onclick=finish;updateProgress();
+ }
+ if(state.sessions.length){const history=document.createElement('div');history.className='ba-history';history.innerHTML=`<label>閱讀紀錄 <select id="baHistory"><option value="">今天／設定</option>${state.sessions.map((x,i)=>`<option value="${i}">${esc(x.date)} · ${esc(x.head)} · ${x.items.length} 個 ${x.complete?'✓':''}</option>`).reverse().join('')}</select></label>`;main.appendChild(history);const select=history.querySelector('select');select.value=viewedSession===null?'':String(viewedSession);select.onchange=()=>{viewedSession=select.value===''?null:Number(select.value);render()}}
+ modal.querySelector('#baClose').focus();
+}
+window.banaOpenAlphabetDaily=open;
+// Pure helpers also allow the ordering and batch rules to be checked independently.
+window.banaAlphabetModel={initial,nextBatch};
+const previousRenderFolders=renderFolders;
+renderFolders=function(){const result=previousRenderFolders.apply(this,arguments),bar=document.getElementById('banaExplorerToolbar');if(bar&&!bar.querySelector('.bana-alpha-entry')){const b=document.createElement('button');b.type='button';b.className='bana-alpha-entry';b.onclick=open;bar.insertBefore(b,bar.querySelector('.bana-manage'));refreshEntries()}return result};
+renderFolders();
+})();
+</script>
+</body>
 </html>
