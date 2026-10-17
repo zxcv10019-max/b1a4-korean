@@ -3830,6 +3830,7 @@ body.overlay-open:has(#wordListOverlay.show) #wlAddFab{display:none!important}
 #fabMenu .fab-menu-item{min-width:138px;justify-content:flex-start}
 </style>
 <style id="bana-daily-expression-style">#banaDailyExpressionSearch{width:100%;box-sizing:border-box;background:#fffef9;padding:13px 16px;border:1px solid #dce4d2;border-radius:14px;margin-bottom:20px}#dailyExpressions .bl-count{background:#f5eedc;color:#9b8758}#banaDailyExpressionList{display:grid;gap:15px}#fabMenu .fab-menu-item{min-width:154px}</style>
+<style id="bana-bank-location-style">#banaCreateBankMask .hero-modal{width:min(520px,100%);max-height:88vh;overflow:auto;background:#fffef9;border-radius:22px;padding:24px}#banaCreateBankForm{display:grid;gap:15px}#banaCreateBankForm label{display:grid;gap:7px;color:#66824e;font-size:13px;font-weight:700}#banaCreateBankForm label[hidden]{display:none}#banaCreateBankForm input,#banaCreateBankForm select{box-sizing:border-box;width:100%;min-width:0;padding:12px;border:1px solid #d4e1c9;border-radius:12px;background:white;font:inherit;color:#405b35}#banaBankDestination{padding:12px;background:#edf4e4;border-radius:12px;color:#6f885b;font-size:12px;line-height:1.8;margin:0}#banaCreateBankSubmit:disabled{opacity:.45;cursor:default}</style>
 </head>
 <body>
 <div class="app">
@@ -4606,11 +4607,13 @@ body.overlay-open:has(#wordListOverlay.show) #wlAddFab{display:none!important}
               <input id="folderName" class="cute-input" placeholder="例如：初級單字" oninput="updateEditorCountLabels()">
             </div>
             <div>
-              <label>所屬分組</label>
+              <label for="banaEditorCategory">所屬分類</label>
+              <div class="group-selector"><select id="banaEditorCategory" onchange="banaEditorCategoryChanged()"></select><button type="button" class="ghost" onclick="banaAddEditorCategory()">＋ 新增分類</button></div>
+              <label for="folderGroup">所屬分組</label>
               <div class="group-selector">
                 <select id="folderGroup" onchange="syncSubfolderSelector()">
                   <option value="">── 未分組 ──</option>
-                </select>
+                </select><button type="button" class="ghost" onclick="banaAddEditorGroup()">＋ 新增分組</button>
               </div>
             </div>
           </div>
@@ -15545,6 +15548,11 @@ function draw(){
  const crumbs=document.createElement('nav');crumbs.className='bana-crumbs';crumbs.setAttribute('aria-label','題庫分類路徑');crumbs.appendChild(crumb('所有分類',()=>go([])));
  path.forEach((x,i)=>{const sep=document.createElement('span');sep.textContent='›';crumbs.appendChild(sep);const obj=(x.kind==='cat'?categories:x.kind==='grp'?groups:subfolders).find(v=>v.id===x.id);crumbs.appendChild(crumb(obj?.name||'分類',()=>go(path.slice(0,i+1))));});bar.appendChild(crumbs);
  const m=crumb(manage?'✓ 完成管理':'⚙ 管理',()=>{manage=!manage;renderFolders()});m.className='bana-manage';m.setAttribute('aria-pressed',String(manage));bar.appendChild(m); const currentNode=path[path.length-1];
+ if(manage){
+  const addCat=crumb('＋ 新增分類',()=>newCategory());bar.appendChild(addCat);
+  const addGrp=crumb('＋ 新增分組',()=>{const catNode=path.find(x=>x.kind==='cat');const name=prompt('請輸入新分組名稱：');if(!name?.trim())return;groups.push({id:uid(),name:name.trim(),categoryId:catNode?.id||''});saveStorage();renderFolders()});bar.appendChild(addGrp);
+ }
+
  if(!currentNode||currentNode.kind!=='cat'){
   const add=crumb('＋ 新增題庫',()=>{
    if(currentNode?.kind==='sub')return newFolderInSubfolder(currentNode.id,currentNode.groupId);
@@ -15907,5 +15915,49 @@ const oldSave=saveSentenceEntry;saveSentenceEntry=function(){const r=oldSave.app
 const oldDelete=deleteSentenceEntry;deleteSentenceEntry=function(){const r=oldDelete.apply(this,arguments);renderDailyExpressions();renderFolders();return r};
 const oldGo=goPage;goPage=function(id){const r=oldGo.apply(this,arguments);if(id==='dailyExpressions')renderDailyExpressions();return r};
 })();</script>
+<script id="bana-bank-location-script">(function(){
+function resolveTarget(){
+ const wordOpen=document.getElementById('wordListOverlay')?.classList.contains('show');
+ if(wordOpen&&wlCurrentFolder!==null&&folders[wlCurrentFolder])return fromBank(folders[wlCurrentFolder]);
+ const lang=document.querySelector('#grammar.active,#dialogue.active,#dailyExpressions.active');
+ if(lang&&window.banaLanguageFolderForSave){const loc=banaLanguageFolderForSave();if(loc){if(loc.kind==='bank'){const f=folders.find(x=>x.languageFolderId===loc.id);if(f)return fromBank(f)}return fromNode(loc)}}
+ if(document.getElementById('library')?.classList.contains('active')){const v=document.querySelector('#folderGrid .bana-explorer');if(v?.dataset.banaLanguageKind)return fromNode({kind:v.dataset.banaLanguageKind,id:v.dataset.banaLanguageId})}
+ return {cat:'',grp:'',sub:''};
+}
+function fromBank(f){const g=groups.find(x=>x.id===f.groupId),sf=subfolders.find(x=>x.id===f.subfolderId&&x.groupId===g?.id);return {cat:categories.some(x=>x.id===g?.categoryId)?g.categoryId:'',grp:g?.id||'',sub:sf?.id||''}}
+function fromNode(node){if(node.kind==='sub'){const sf=subfolders.find(x=>x.id===node.id),g=groups.find(x=>x.id===sf?.groupId);return {cat:categories.some(x=>x.id===g?.categoryId)?g.categoryId:'',grp:g?.id||'',sub:sf?.id||''}}if(node.kind==='grp'){const g=groups.find(x=>x.id===node.id);return {cat:categories.some(x=>x.id===g?.categoryId)?g.categoryId:'',grp:g?.id||'',sub:''}}return {cat:node.kind==='cat'?node.id:'',grp:'',sub:''}}
+function chooseLocation(){
+ const target=resolveTarget();closeFab();document.getElementById('banaCreateBankMask')?.remove();
+ const mask=document.createElement('div');mask.id='banaCreateBankMask';mask.className='hero-modal-mask show';mask.innerHTML='<div class="hero-modal" role="dialog" aria-modal="true" aria-labelledby="banaCreateBankTitle"><div class="hero-modal-head"><div class="hero-modal-title" id="banaCreateBankTitle">新增題庫</div><button type="button" class="hero-modal-close" data-close>取消</button></div><form id="banaCreateBankForm"><label>題庫名稱<input id="banaNewBankName" type="text" value="新增題庫" required></label><label>分類<select id="banaNewBankCat"></select></label><label>分組<select id="banaNewBankGroup"></select></label><label id="banaNewGroupLabel" hidden>新分組名稱<input id="banaNewGroupName" type="text" placeholder="輸入分組名稱"></label><label>資料夾<select id="banaNewBankSub"></select></label><p id="banaBankDestination" aria-live="polite"></p><button type="submit" class="primary" id="banaCreateBankSubmit">建立並編輯</button></form></div>';
+ document.body.appendChild(mask);mask.querySelector('[data-close]').onclick=()=>mask.remove();
+ const cat=mask.querySelector('#banaNewBankCat'),grp=mask.querySelector('#banaNewBankGroup'),sub=mask.querySelector('#banaNewBankSub'),newGroup=mask.querySelector('#banaNewGroupName'),name=mask.querySelector('#banaNewBankName'),submit=mask.querySelector('#banaCreateBankSubmit');
+ function option(value,text){const o=document.createElement('option');o.value=value;o.textContent=text;return o}
+ cat.appendChild(option('','未分類'));categories.forEach(c=>cat.appendChild(option(c.id,c.name)));cat.value=target.cat;
+ function groupOptions(value){grp.replaceChildren(option('',cat.value?'請選擇分組':'未分組（最外層）'));groups.filter(g=>cat.value?g.categoryId===cat.value:!categories.some(c=>c.id===g.categoryId)).forEach(g=>grp.appendChild(option(g.id,g.name)));grp.appendChild(option('__new','＋ 建立新分組'));grp.value=value;if(grp.selectedIndex<0)grp.value='';subOptions('')}
+ function subOptions(value){sub.replaceChildren(option('','不放資料夾'));subfolders.filter(x=>x.groupId===grp.value).forEach(sf=>sub.appendChild(option(sf.id,sf.name)));sub.value=value;if(sub.selectedIndex<0)sub.value='';sub.disabled=!grp.value||grp.value==='__new';update()}
+ function update(){const isNew=grp.value==='__new';mask.querySelector('#banaNewGroupLabel').hidden=!isNew;newGroup.required=isNew;submit.disabled=!!cat.value&&!grp.value||isNew&&!newGroup.value.trim();const gName=isNew?newGroup.value.trim():groups.find(g=>g.id===grp.value)?.name,sfName=subfolders.find(x=>x.id===sub.value&&x.groupId===grp.value)?.name;mask.querySelector('#banaBankDestination').textContent='存放位置：'+[categories.find(c=>c.id===cat.value)?.name,gName,sfName].filter(Boolean).join(' › ')||'存放位置：最外層';if(!cat.value&&!gName&&!sfName)mask.querySelector('#banaBankDestination').textContent='存放位置：最外層（未分組）'}
+ const addCat=document.createElement('button');addCat.type='button';addCat.className='ghost';addCat.textContent='＋ 新增分類';cat.after(addCat);addCat.onclick=()=>{const label=prompt('請輸入新分類名稱：');if(!label?.trim())return;const id=uid();categories.push({id,name:label.trim()});saveStorage();cat.appendChild(option(id,label.trim()));cat.value=id;groupOptions('');renderFolders()};
+ cat.onchange=()=>groupOptions('');grp.onchange=()=>subOptions('');sub.onchange=update;newGroup.oninput=update;
+ groupOptions(target.grp);subOptions(target.sub);
+ mask.querySelector('form').onsubmit=e=>{e.preventDefault();if(submit.disabled||!name.value.trim())return;let groupId=grp.value;
+ if(groupId==='__new'){if(!newGroup.value.trim())return;groupId=uid();groups.push({id:groupId,name:newGroup.value.trim(),categoryId:cat.value||''})}
+ const subfolderId=subfolders.some(sf=>sf.id===sub.value&&sf.groupId===groupId)?sub.value:'';
+ folders.push({name:name.value.trim(),direction:'termToDefinition',color:'#c6e09c',content:'',updated:today(),practice:0,groupId:groupId||'',subfolderId});const i=folders.length-1;current=i;lastActiveGroupId=groupId||null;saveStorage();mask.remove();if(document.getElementById('wordListOverlay')?.classList.contains('show'))closeWordList();goPage('library');editFolderFromCard(i);syncGroupSelector();
+ };
+ name.focus();name.select();
+}
+newFolder=chooseLocation;fabNewFolder=chooseLocation;
+function opt(value,label){const o=document.createElement('option');o.value=value;o.textContent=label;return o}
+function categoryOptions(selected){const sel=document.getElementById('banaEditorCategory');sel.replaceChildren(opt('','未分類'));categories.forEach(c=>sel.appendChild(opt(c.id,c.name)));sel.value=selected||''}
+function editorGroups(catId,selected){const sel=document.getElementById('folderGroup');sel.replaceChildren(opt('',catId?'請選擇或新增分組':'── 未分組 ──'));groups.filter(g=>catId?g.categoryId===catId:!categories.some(c=>c.id===g.categoryId)).forEach(g=>sel.appendChild(opt(g.id,g.name)));sel.value=selected||'';if(sel.selectedIndex<0)sel.value='';syncSubfolderSelector()}
+syncGroupSelector=function(){const sel=document.getElementById('folderGroup');if(!sel)return;const loc=fromBank(folders[current]||{});categoryOptions(loc.cat);editorGroups(loc.cat,loc.grp)};
+window.banaEditorCategoryChanged=function(){editorGroups(document.getElementById('banaEditorCategory').value,'')};
+window.banaAddEditorCategory=function(){const name=prompt('請輸入新分類名稱：');if(!name?.trim())return;const id=uid();categories.push({id,name:name.trim()});saveStorage();categoryOptions(id);editorGroups(id,'');renderFolders()};
+window.banaAddEditorGroup=function(){const name=prompt('請輸入新分組名稱：');if(!name?.trim())return;const categoryId=document.getElementById('banaEditorCategory').value;const id=uid();groups.push({id,name:name.trim(),categoryId});saveStorage();editorGroups(categoryId,id);renderFolders()};
+const oldSave=saveFolder;saveFolder=function(){const cat=document.getElementById('banaEditorCategory'),grp=document.getElementById('folderGroup');if(cat?.value&&!grp?.value){alert('請選擇或新增此分類底下的分組，再儲存題庫。');grp?.focus();return}return oldSave.apply(this,arguments)};
+const oldLoad=loadFolder;loadFolder=function(){const r=oldLoad.apply(this,arguments);syncGroupSelector();return r};
+window.banaBankLocationModel={fromBank,fromNode};
+})();
+</script>
 </body>
 </html>
