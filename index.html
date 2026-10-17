@@ -3829,6 +3829,7 @@ body.overlay-open:has(#wordListOverlay.show) #fabWrap{display:flex!important;rig
 body.overlay-open:has(#wordListOverlay.show) #wlAddFab{display:none!important}
 #fabMenu .fab-menu-item{min-width:138px;justify-content:flex-start}
 </style>
+<style id="bana-daily-expression-style">#banaDailyExpressionSearch{width:100%;box-sizing:border-box;background:#fffef9;padding:13px 16px;border:1px solid #dce4d2;border-radius:14px;margin-bottom:20px}#dailyExpressions .bl-count{background:#f5eedc;color:#9b8758}#banaDailyExpressionList{display:grid;gap:15px}#fabMenu .fab-menu-item{min-width:154px}</style>
 </head>
 <body>
 <div class="app">
@@ -4007,6 +4008,13 @@ body.overlay-open:has(#wordListOverlay.show) #wlAddFab{display:none!important}
         <input id="sentenceSearchInput" class="folder-search-input" type="text" placeholder="🔍 搜尋短句..." oninput="renderSentenceList()">
         <div id="sentenceListWrap"></div>
       </section>
+
+      <section id="dailyExpressions" class="page">
+<header class="bl-page-heading"><button type="button" class="ghost" onclick="goPage('library')">← 返回題庫</button><div class="studio-eyebrow">BANA FOREST / EVERYDAY KOREAN</div><h1 id="banaDailyExpressionTitle">日常用語</h1><p>收藏生活中想說的韓文，對照中文、聽發音，也能補上使用情境。</p><span class="bl-count" id="banaDailyExpressionCount">0 句</span></header>
+<div class="topbar bl-page-actions"><h2>常用表達</h2><button type="button" class="primary" onclick="banaOpenDailyExpressionEditor(null)">＋ 新增日常用語</button></div>
+<input id="banaDailyExpressionSearch" class="folder-search-input" type="search" placeholder="搜尋韓文、中文或標籤…" oninput="renderDailyExpressions()">
+<div id="banaDailyExpressionList"></div>
+</section>
 
       <section id="reading" class="page">
         <div id="readingHomeView">
@@ -4732,6 +4740,7 @@ body.overlay-open:has(#wordListOverlay.show) #wlAddFab{display:none!important}
       <button type="button" class="fab-menu-item" onclick="fabNewWord()"><span>🍀</span>新增單字</button>
       <button type="button" class="fab-menu-item" onclick="banaFabNewLanguage('grammar')"><span>📖</span>新增文法</button>
       <button type="button" class="fab-menu-item" onclick="banaFabNewLanguage('dialogue')"><span>💬</span>新增對話</button>
+      <button type="button" class="fab-menu-item" onclick="banaFabNewLanguage('dailyExpressions')"><span>☀️</span>新增日常用語</button>
     </div>
     <button type="button" id="fabMainBtn" class="fab-main-btn" onclick="toggleFab()" aria-label="新增內容" aria-controls="fabMenu" aria-expanded="false">＋</button>
   </div>
@@ -12976,7 +12985,7 @@ let collapsedSentenceTags = JSON.parse(localStorage.getItem("b1a4_collapsed_sen_
 function renderSentenceList() {
   const wrap = document.getElementById("sentenceListWrap");
   if (!wrap) return;
-  const standalone = sentenceEntries.filter(s => !s.chapterId);
+  const standalone = sentenceEntries.filter(s => !s.chapterId && !s.isDailyExpression);
   if (!standalone.length) {
     wrap.innerHTML = `<div class="empty-fox"><span class="ef-icon">📝</span>還沒有任何短句解析哦～<div class="ef-sub">按右上角「＋ 新增短句」開始建立吧！</div></div>`;
     return;
@@ -13892,6 +13901,7 @@ function saveSentenceEntry() {
     };
     sentenceEntries.push(s);
   }
+  if(s&&sentenceEditorContext?.dailyExpression){s.isDailyExpression=true;s.libraryFolder=sentenceEditorContext.libraryFolder||s.libraryFolder;}
   saveSentenceEntries();
   if (typeof logActivity === "function") logActivity(sentenceEditorContext && sentenceEditorContext.chapterId ? "reading" : "sentence", 2);
   closeSentenceEditor();
@@ -15842,29 +15852,31 @@ function matches(item){return !!location&&item.libraryFolder?.kind===location.ki
 function bankLocation(index){const f=folders[index];if(!f)return null;if(!f.languageFolderId){f.languageFolderId=uid();saveStorage()}return {kind:'bank',id:f.languageFolderId,name:f.name}}
 window.banaLanguageFolderForSave=function(existing){return location?{kind:location.kind,id:location.id}:existing};
 window.banaFilterGrammarScope=function(items){return location?items.filter(matches):items};
-window.banaOpenFolderLanguage=function(kind,id,name,type){location={kind,id,name};if(type==='dialogue'){goPage('dialogue');closeDialogueReader();renderDialogueList()}else{goPage('grammar');closeGrammarQuiz();renderGrammarList()}};
+window.banaOpenFolderLanguage=function(kind,id,name,type){location={kind,id,name};if(type==='dailyExpressions'){goPage('dailyExpressions');renderDailyExpressions()}else if(type==='dialogue'){goPage('dialogue');closeDialogueReader();renderDialogueList()}else{goPage('grammar');closeGrammarQuiz();renderGrammarList()}};
 function openBank(i,type){const loc=bankLocation(i);if(loc)banaOpenFolderLanguage(loc.kind,loc.id,loc.name,type)}
 window.banaOpenBankLanguage=openBank;
-function heading(type){const page=document.getElementById(type),h=page.querySelector('.bl-page-heading h1'),p=page.querySelector('.bl-page-heading p');h.textContent=location?location.name+' · '+(type==='grammar'?'文法':'對話'):originals[type+'Title'];p.textContent=location?'內容會直接存放在這個題庫資料夾內。':originals[type+'Desc'];page.classList.toggle('bana-folder-bound',!!location)}
+function heading(type){const page=document.getElementById(type),h=page.querySelector('.bl-page-heading h1'),p=page.querySelector('.bl-page-heading p');h.textContent=location?location.name+' · '+(type==='grammar'?'文法':type==='dialogue'?'對話':'日常用語'):originals[type+'Title'];p.textContent=location?'內容會直接存放在這個題庫資料夾內。':originals[type+'Desc'];page.classList.toggle('bana-folder-bound',!!location)}
 const oldGrammar=renderGrammarList,oldDialogue=renderDialogueList;
 renderGrammarList=function(){heading('grammar');if(!location)return oldGrammar.apply(this,arguments);const q=(document.getElementById('grammarSearchInput').value||'').trim().toLowerCase(),all=grammarPoints.filter(matches),items=all.filter(g=>!q||[g.title,g.meaning,g.rule,g.note].some(v=>String(v||'').toLowerCase().includes(q)));document.getElementById('grammarCardGrid').innerHTML=items.length?'<div class="bana-folder-grammar-grid">'+items.map(makeGrammarCardHtml).join('')+'</div>':'<div class="bana-folder-language-empty"><p>'+(q?'找不到符合的文法。':'這個資料夾還沒有文法。')+'</p><button type="button" class="primary" onclick="openGrammarEditor(null)">＋ 新增這裡的文法</button></div>';document.getElementById('grammarLevelSummary').innerHTML='';document.getElementById('blGrammarCount').textContent=all.length+' 篇文法 · '+location.name;};
 renderDialogueList=function(){heading('dialogue');if(!location)return oldDialogue.apply(this,arguments);const q=(document.getElementById('dialogueSearchInput').value||'').trim().toLowerCase(),all=dialogues.filter(matches),items=all.filter(d=>!q||[d.title,...(d.lines||[]).flatMap(x=>[x.kr,x.zh])].some(v=>String(v||'').toLowerCase().includes(q)));document.getElementById('dialogueGrid').innerHTML=items.length?'<div class="folder-grid">'+items.map(makeDialogueCardHtml).join('')+'</div>':'<div class="bana-folder-language-empty"><p>'+(q?'找不到符合的對話。':'這個資料夾還沒有對話。')+'</p><button type="button" class="primary" onclick="openDialogueEditor(null)">＋ 新增這裡的對話</button></div>';document.getElementById('blDialogueCount').textContent=all.length+' 段對話 · '+location.name;};
 function editorScope(type){const select=document.getElementById(type==='grammar'?'gramCategory':'dlgCategory');select.parentElement.classList.toggle('bana-hide-book-field',!!location);const mask=document.getElementById(type==='grammar'?'grammarEditorMask':'dialogueEditorMask');let note=mask.querySelector('.bana-save-location');if(!note){note=document.createElement('p');note.className='bana-save-location';mask.querySelector('.hero-modal-head').after(note)}note.hidden=!location;note.textContent=location?'儲存位置：'+location.name:'';}
 const oldGramEditor=openGrammarEditor,oldDlgEditor=openDialogueEditor;openGrammarEditor=function(){const r=oldGramEditor.apply(this,arguments);editorScope('grammar');return r};openDialogueEditor=function(){const r=oldDlgEditor.apply(this,arguments);editorScope('dialogue');return r};
-const oldGo=goPage;goPage=function(id){if(!['grammar','dialogue'].includes(id))location=null;return oldGo.apply(this,arguments)};
-function addActions(parent,kind,id,name){if(parent.querySelector(':scope>.bana-folder-language-actions'))return;const line=document.createElement('div');line.className='bana-folder-language-actions';for(const [type,label,data]of [['grammar','文法',grammarPoints],['dialogue','對話',dialogues]]){const count=data.filter(x=>x.libraryFolder?.kind===kind&&x.libraryFolder?.id===id).length,b=document.createElement('button');b.type='button';b.textContent=label+' '+count;b.onclick=()=>banaOpenFolderLanguage(kind,id,name,type);line.appendChild(b)}parent.appendChild(line)}
+const oldGo=goPage;goPage=function(id){if(!['grammar','dialogue','dailyExpressions'].includes(id))location=null;return oldGo.apply(this,arguments)};
+function addActions(parent,kind,id,name){if(parent.querySelector(':scope>.bana-folder-language-actions'))return;const line=document.createElement('div');line.className='bana-folder-language-actions';for(const [type,label,data]of [['grammar','文法',grammarPoints],['dialogue','對話',dialogues],['dailyExpressions','日常用語',sentenceEntries.filter(x=>x.isDailyExpression)]]){const count=data.filter(x=>x.libraryFolder?.kind===kind&&x.libraryFolder?.id===id).length,b=document.createElement('button');b.type='button';b.textContent=label+' '+count;b.onclick=()=>banaOpenFolderLanguage(kind,id,name,type);line.appendChild(b)}parent.appendChild(line)}
 function decorate(){
  const view=document.querySelector('#folderGrid .bana-explorer');if(!view)return;
- if(view.dataset.banaLanguageKind){const bar=view.querySelector('#banaExplorerToolbar');addActions(bar,view.dataset.banaLanguageKind,view.dataset.banaLanguageId,view.dataset.banaScopeName)}else{const bar=view.querySelector('#banaExplorerToolbar');if(bar&&!bar.querySelector('.bana-all-language')){const line=document.createElement('div');line.className='bana-bank-language-actions bana-all-language';for(const [type,label]of [['grammar','全部文法'],['dialogue','全部對話']]){const b=document.createElement('button');b.type='button';b.textContent=label;b.onclick=()=>{location=null;goPage(type)};line.appendChild(b)}bar.appendChild(line)}}
+ if(view.dataset.banaLanguageKind){const bar=view.querySelector('#banaExplorerToolbar');addActions(bar,view.dataset.banaLanguageKind,view.dataset.banaLanguageId,view.dataset.banaScopeName)}else{const bar=view.querySelector('#banaExplorerToolbar');if(bar&&!bar.querySelector('.bana-all-language')){const line=document.createElement('div');line.className='bana-bank-language-actions bana-all-language';for(const [type,label]of [['grammar','全部文法'],['dialogue','全部對話'],['dailyExpressions','全部日常用語']]){const b=document.createElement('button');b.type='button';b.textContent=label;b.onclick=()=>{location=null;goPage(type)};line.appendChild(b)}bar.appendChild(line)}}
  view.querySelectorAll('.bana-category-tile[data-bana-language-id]').forEach(card=>addActions(card,card.dataset.banaLanguageKind,card.dataset.banaLanguageId,card.dataset.banaScopeName));
- view.querySelectorAll('.forest-folder-card').forEach(card=>{if(card.querySelector('.bana-bank-language-actions'))return;const menu=card.querySelector('[id^="ffcMenu_"]'),i=menu?Number(menu.id.slice(8)):NaN,f=folders[i];if(!f)return;const line=document.createElement('div');line.className='bana-bank-language-actions';for(const type of ['grammar','dialogue']){const b=document.createElement('button');b.type='button';b.textContent=type==='grammar'?'文法':'對話';b.onclick=e=>{e.stopPropagation();openBank(i,type)};line.appendChild(b)}card.appendChild(line)});
+ view.querySelectorAll('.forest-folder-card').forEach(card=>{if(card.querySelector('.bana-bank-language-actions'))return;const menu=card.querySelector('[id^="ffcMenu_"]'),i=menu?Number(menu.id.slice(8)):NaN,f=folders[i];if(!f)return;const line=document.createElement('div');line.className='bana-bank-language-actions';for(const type of ['grammar','dialogue','dailyExpressions']){const b=document.createElement('button');b.type='button';b.textContent=type==='grammar'?'文法':type==='dialogue'?'對話':'日常用語';b.onclick=e=>{e.stopPropagation();openBank(i,type)};line.appendChild(b)}card.appendChild(line)});
 }
 const oldRender=renderFolders;renderFolders=function(){const r=oldRender.apply(this,arguments);decorate();return r};
-const oldWordList=renderWordList;renderWordList=function(){const r=oldWordList.apply(this,arguments);const toolbar=document.getElementById('banaWordToolbar');if(toolbar&&!toolbar.querySelector('.bana-bank-language-actions')){const line=document.createElement('div');line.className='bana-bank-language-actions';for(const type of ['grammar','dialogue']){const b=document.createElement('button');b.type='button';b.textContent=type==='grammar'?'這個題庫的文法':'這個題庫的對話';b.onclick=()=>{const i=wlCurrentFolder;closeWordList();openBank(i,type)};line.appendChild(b)}toolbar.appendChild(line)}return r};
+const oldWordList=renderWordList;renderWordList=function(){const r=oldWordList.apply(this,arguments);const toolbar=document.getElementById('banaWordToolbar');if(toolbar&&!toolbar.querySelector('.bana-bank-language-actions')){const line=document.createElement('div');line.className='bana-bank-language-actions';for(const type of ['grammar','dialogue','dailyExpressions']){const b=document.createElement('button');b.type='button';b.textContent=type==='grammar'?'這個題庫的文法':type==='dialogue'?'這個題庫的對話':'這個題庫的日常用語';b.onclick=()=>{const i=wlCurrentFolder;closeWordList();openBank(i,type)};line.appendChild(b)}toolbar.appendChild(line)}return r};
+window.banaDailyExpressionFolder=function(){return location?{kind:location.kind,id:location.id,name:location.name}:null};
+window.banaDailyExpressionItems=function(){return sentenceEntries.filter(x=>x.isDailyExpression&&(!location||matches(x)))};
 window.banaFabNewLanguage=function(type){
  closeFab();
- const create=()=>type==='grammar'?openGrammarEditor(null):openDialogueEditor(null);
- if(location&&document.querySelector('#grammar.active,#dialogue.active')){create();return;}
+ const create=()=>type==='grammar'?openGrammarEditor(null):type==='dialogue'?openDialogueEditor(null):banaOpenDailyExpressionEditor(null);
+ if(location&&document.querySelector('#grammar.active,#dialogue.active,#dailyExpressions.active')){create();return;}
  if(document.getElementById('wordListOverlay')?.classList.contains('show')&&wlCurrentFolder!==null){const i=wlCurrentFolder;closeWordList();openBank(i,type);create();return;}
  const view=document.getElementById('library')?.classList.contains('active')?document.querySelector('#folderGrid .bana-explorer'):null;
  if(view?.dataset.banaLanguageKind){banaOpenFolderLanguage(view.dataset.banaLanguageKind,view.dataset.banaLanguageId,view.dataset.banaScopeName,type);create();return;}
@@ -15879,6 +15891,21 @@ fabNewWord=function(){if(document.getElementById('wordListOverlay')?.classList.c
 const oldToggle=toggleFab,oldClose=closeFab;
 function updateFab(){document.getElementById('fabMainBtn')?.setAttribute('aria-expanded',String(document.getElementById('fabWrap')?.classList.contains('open')))}
 toggleFab=function(){const r=oldToggle.apply(this,arguments);updateFab();return r};closeFab=function(){const r=oldClose.apply(this,arguments);updateFab();return r};
+})();</script>
+<script id="bana-daily-expression-script">(function(){
+BOTTOM_TAB_MAP.dailyExpressions='libraryHub';
+window.renderDailyExpressions=function(){
+ const wrap=document.getElementById('banaDailyExpressionList');if(!wrap)return;
+ const folder=window.banaDailyExpressionFolder?.(),all=window.banaDailyExpressionItems?banaDailyExpressionItems():sentenceEntries.filter(x=>x.isDailyExpression),q=(document.getElementById('banaDailyExpressionSearch').value||'').trim().toLowerCase(),items=all.filter(x=>!q||[x.kr,x.zh,...(x.tags||[])].some(v=>String(v||'').toLowerCase().includes(q)));
+ document.getElementById('banaDailyExpressionTitle').textContent=folder?folder.name+' · 日常用語':'日常用語';document.getElementById('banaDailyExpressionCount').textContent=all.length+' 句'+(folder?' · '+folder.name:'');
+ wrap.innerHTML=items.length?items.map(makeSentenceCardHtml).join(''):'<div class="bana-folder-language-empty"><p>'+(q?'找不到符合的日常用語。':'還沒有日常用語，先收藏一句生活中想說的韓文。')+'</p><button type="button" class="primary" onclick="banaOpenDailyExpressionEditor(null)">＋ 新增日常用語</button></div>';
+};
+window.banaOpenDailyExpressionEditor=function(id){const item=id?sentenceEntries.find(x=>x.id===id):null,folder=window.banaDailyExpressionFolder?.();openSentenceEditor(id,{dailyExpression:true,libraryFolder:item?.libraryFolder||(folder?{kind:folder.kind,id:folder.id}:undefined)})};
+const oldEditor=openSentenceEditor;openSentenceEditor=function(id,context){const item=id?sentenceEntries.find(x=>x.id===id):null;if(!context?.oo&&item?.isDailyExpression)context={dailyExpression:true,libraryFolder:item.libraryFolder};const r=oldEditor.call(this,id,context);if(context?.dailyExpression){document.getElementById('sentenceEditorTitle').textContent=id?'編輯日常用語':'新增日常用語';document.getElementById('senEditKr').placeholder='韓文用語，例如：잠시만요.';document.getElementById('senEditZh').placeholder='中文意思，例如：請稍等一下。';}else{document.getElementById('senEditKr').placeholder='韓文句子';document.getElementById('senEditZh').placeholder='中文翻譯';}return r};
+const oldList=renderSentenceList;renderSentenceList=function(){const r=oldList.apply(this,arguments);if(document.getElementById('dailyExpressions')?.classList.contains('active'))renderDailyExpressions();return r};
+const oldSave=saveSentenceEntry;saveSentenceEntry=function(){const r=oldSave.apply(this,arguments);renderDailyExpressions();renderFolders();return r};
+const oldDelete=deleteSentenceEntry;deleteSentenceEntry=function(){const r=oldDelete.apply(this,arguments);renderDailyExpressions();renderFolders();return r};
+const oldGo=goPage;goPage=function(id){const r=oldGo.apply(this,arguments);if(id==='dailyExpressions')renderDailyExpressions();return r};
 })();</script>
 </body>
 </html>
