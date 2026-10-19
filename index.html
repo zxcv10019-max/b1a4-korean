@@ -15875,7 +15875,23 @@ renderGrammarList=function(){const r=oldGrammar.apply(this,arguments);refreshCou
 renderDialogueList=function(){const r=oldDialogue.apply(this,arguments);refreshCounts();if(!dialogues.length){const grid=document.getElementById('dialogueGrid');if(grid&&!grid.querySelector('.bl-first-dialogue')){const b=document.createElement('button');b.type='button';b.className='primary bl-first-dialogue';b.textContent='＋ 建立第一段對話';b.onclick=()=>openDialogueEditor(null);grid.appendChild(b)}}return r};
 refreshCounts();
 })();</script>
-<script id="bana-folder-language-script">(function(){
+<script id="bana-daily-scope-script">(function(){
+function contains(scope,target){
+ if(!scope)return true;if(!target)return false;
+ if(scope.kind===target.kind&&scope.id===target.id)return true;
+ if(scope.kind==='bank')return false;
+ let group=null,sub=null;
+ if(target.kind==='bank'){const bank=folders.find(f=>f.languageFolderId===target.id);if(!bank)return false;group=groups.find(g=>g.id===bank.groupId);sub=subfolders.find(s=>s.id===bank.subfolderId&&s.groupId===bank.groupId)}
+ else if(target.kind==='sub'){sub=subfolders.find(s=>s.id===target.id);group=groups.find(g=>g.id===sub?.groupId)}
+ else if(target.kind==='grp')group=groups.find(g=>g.id===target.id);
+ if(scope.kind==='cat')return !!group&&group.categoryId===scope.id;
+ if(scope.kind==='grp')return !!group&&group.id===scope.id;
+ if(scope.kind==='sub')return !!sub&&sub.id===scope.id;
+ return false
+}
+window.banaDailyScopeContains=contains;
+})();
+</script><script id="bana-folder-language-script">(function(){
 let location=null;
 const originals={grammarTitle:document.querySelector('#grammar .bl-page-heading h1').textContent,grammarDesc:document.querySelector('#grammar .bl-page-heading p').textContent,dialogueTitle:document.querySelector('#dialogue .bl-page-heading h1').textContent,dialogueDesc:document.querySelector('#dialogue .bl-page-heading p').textContent};
 function matches(item){return !!location&&item.libraryFolder?.kind===location.kind&&item.libraryFolder?.id===location.id}
@@ -15892,7 +15908,7 @@ renderDialogueList=function(){heading('dialogue');if(!location)return oldDialogu
 function editorScope(type){const select=document.getElementById(type==='grammar'?'gramCategory':'dlgCategory');select.parentElement.classList.toggle('bana-hide-book-field',!!location);const mask=document.getElementById(type==='grammar'?'grammarEditorMask':'dialogueEditorMask');let note=mask.querySelector('.bana-save-location');if(!note){note=document.createElement('p');note.className='bana-save-location';mask.querySelector('.hero-modal-head').after(note)}note.hidden=!location;note.textContent=location?'儲存位置：'+location.name:'';}
 const oldGramEditor=openGrammarEditor,oldDlgEditor=openDialogueEditor;openGrammarEditor=function(){const r=oldGramEditor.apply(this,arguments);editorScope('grammar');return r};openDialogueEditor=function(){const r=oldDlgEditor.apply(this,arguments);editorScope('dialogue');return r};
 const oldGo=goPage;goPage=function(id){if(!['grammar','dialogue','dailyExpressions'].includes(id))location=null;return oldGo.apply(this,arguments)};
-function addActions(parent,kind,id,name){if(parent.querySelector(':scope>.bana-folder-language-actions'))return;const line=document.createElement('div');line.className='bana-folder-language-actions';for(const [type,label,data]of [['grammar','文法',grammarPoints],['dialogue','對話',dialogues],['dailyExpressions','日常用語',sentenceEntries.filter(x=>x.isDailyExpression)]]){const count=data.filter(x=>x.libraryFolder?.kind===kind&&x.libraryFolder?.id===id).length,b=document.createElement('button');b.type='button';b.textContent=label+' '+count;b.onclick=()=>banaOpenFolderLanguage(kind,id,name,type);line.appendChild(b)}parent.appendChild(line)}
+function addActions(parent,kind,id,name){if(parent.querySelector(':scope>.bana-folder-language-actions'))return;const line=document.createElement('div');line.className='bana-folder-language-actions';for(const [type,label,data]of [['grammar','文法',grammarPoints],['dialogue','對話',dialogues],['dailyExpressions','日常用語',sentenceEntries.filter(x=>x.isDailyExpression)]]){const count=data.filter(x=>type==='dailyExpressions'?banaDailyScopeContains({kind,id},x.libraryFolder):x.libraryFolder?.kind===kind&&x.libraryFolder?.id===id).length,b=document.createElement('button');b.type='button';b.textContent=label+' '+count;b.onclick=()=>banaOpenFolderLanguage(kind,id,name,type);line.appendChild(b)}parent.appendChild(line)}
 function decorate(){
  const view=document.querySelector('#folderGrid .bana-explorer');if(!view)return;
  if(view.dataset.banaLanguageKind){const bar=view.querySelector('#banaExplorerToolbar');addActions(bar,view.dataset.banaLanguageKind,view.dataset.banaLanguageId,view.dataset.banaScopeName)}else{const bar=view.querySelector('#banaExplorerToolbar');if(bar&&!bar.querySelector('.bana-all-language')){const line=document.createElement('div');line.className='bana-bank-language-actions bana-all-language';for(const [type,label]of [['grammar','全部文法'],['dialogue','全部對話'],['dailyExpressions','全部日常用語']]){const b=document.createElement('button');b.type='button';b.textContent=label;b.onclick=()=>{location=null;goPage(type)};line.appendChild(b)}bar.appendChild(line)}}
@@ -15902,7 +15918,7 @@ function decorate(){
 const oldRender=renderFolders;renderFolders=function(){const r=oldRender.apply(this,arguments);decorate();return r};
 const oldWordList=renderWordList;renderWordList=function(){const r=oldWordList.apply(this,arguments);const toolbar=document.getElementById('banaWordToolbar');if(toolbar&&!toolbar.querySelector('.bana-bank-language-actions')){const line=document.createElement('div');line.className='bana-bank-language-actions';for(const type of ['grammar','dialogue','dailyExpressions']){const b=document.createElement('button');b.type='button';b.textContent=type==='grammar'?'這個題庫的文法':type==='dialogue'?'這個題庫的對話':'這個題庫的日常用語';b.onclick=()=>{const i=wlCurrentFolder;closeWordList();openBank(i,type)};line.appendChild(b)}toolbar.appendChild(line)}return r};
 window.banaDailyExpressionFolder=function(){return location?{kind:location.kind,id:location.id,name:location.name}:null};
-window.banaDailyExpressionItems=function(){return sentenceEntries.filter(x=>x.isDailyExpression&&(!location||matches(x)))};
+window.banaDailyExpressionItems=function(){return sentenceEntries.filter(x=>x.isDailyExpression&&banaDailyScopeContains(location,x.libraryFolder))};
 window.banaFabNewLanguage=function(type){
  closeFab();
  const create=()=>type==='grammar'?openGrammarEditor(null):type==='dialogue'?openDialogueEditor(null):banaOpenDailyExpressionEditor(null);
