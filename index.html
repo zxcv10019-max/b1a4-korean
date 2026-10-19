@@ -14503,9 +14503,9 @@ function saveGrammarPoint() {
 
   if (grammarEditingId) {
     const g = grammarPoints.find(x => x.id === grammarEditingId);
-    if (g) { Object.assign(g, { title, meaning, categoryId, level, rule, note, examples, patterns, pronunciation, tips, libraryFolder: window.banaLanguageFolderForSave ? window.banaLanguageFolderForSave(g.libraryFolder) : g.libraryFolder }); }
+    if (g) { Object.assign(g, { title, meaning, categoryId, level, rule, note, examples, patterns, pronunciation, tips, libraryFolder: banaEditorFolder('grammar',g.libraryFolder) }); }
   } else {
-    grammarPoints.push({ id: uid(), title, meaning, categoryId, level, rule, note, examples, patterns, pronunciation, tips, libraryFolder: window.banaLanguageFolderForSave?.(), favorite: false, mastery: { correct: 0, wrong: 0 } });
+    grammarPoints.push({ id: uid(), title, meaning, categoryId, level, rule, note, examples, patterns, pronunciation, tips, libraryFolder: banaEditorFolder('grammar'), favorite: false, mastery: { correct: 0, wrong: 0 } });
   }
   saveGrammarPoints();
   closeGrammarEditor();
@@ -15086,9 +15086,9 @@ function saveDialogue() {
 
   if (dialogueEditingId) {
     const d = dialogues.find(x => x.id === dialogueEditingId);
-    if (d) { d.title = title; d.categoryId = categoryId; d.lines = rows; d.patterns = patternGroups; d.libraryFolder = window.banaLanguageFolderForSave ? window.banaLanguageFolderForSave(d.libraryFolder) : d.libraryFolder; }
+    if (d) { d.title = title; d.categoryId = categoryId; d.lines = rows; d.patterns = patternGroups; d.libraryFolder = banaEditorFolder('dialogue',d.libraryFolder); }
   } else {
-    dialogues.push({ id: uid(), title, categoryId, lines: rows, patterns: patternGroups, libraryFolder: window.banaLanguageFolderForSave?.() });
+    dialogues.push({ id: uid(), title, categoryId, lines: rows, patterns: patternGroups, libraryFolder: banaEditorFolder('dialogue') });
   }
   saveDialogues();
   closeDialogueEditor();
@@ -15891,6 +15891,14 @@ function contains(scope,target){
 }
 window.banaDailyScopeContains=contains;
 })();
+</script><script id="bana-storage-location-model">(function(){
+function all(){const list=[],cat=id=>categories.find(c=>c.id===id),grp=id=>groups.find(g=>g.id===id);function add(kind,id,name,path,categoryId,bank){list.push({key:String(list.length),kind,id,name,label:path.join(' › '),categoryId:categoryId||'',bank})}function groupPath(g){return [cat(g?.categoryId)?.name||'未分類',g?.name].filter(Boolean)}
+ categories.forEach(c=>add('cat',c.id,c.name,['分類',c.name],c.id));groups.forEach(g=>add('grp',g.id,g.name,['分組',...groupPath(g)],g.categoryId));subfolders.forEach(sf=>{const g=grp(sf.groupId);add('sub',sf.id,sf.name,['資料夾',...groupPath(g),sf.name],g?.categoryId)});folders.forEach(f=>{const g=grp(f.groupId),sf=subfolders.find(s=>s.id===f.subfolderId&&s.groupId===f.groupId);add('bank',f.languageFolderId||'',f.name,['題庫',...groupPath(g),...(sf?[sf.name]:[]),f.name],g?.categoryId,f)});return list}
+function find(list,loc){return loc&&list.find(x=>loc.bank?x.bank===loc.bank:x.kind===loc.kind&&x.id===loc.id)}
+function options(anchor){const list=all(),selected=find(list,anchor);return selected?list.filter(x=>x.categoryId===selected.categoryId):list}
+function describe(loc){return find(all(),loc)?.label||loc?.name||'尚未指定位置'}
+window.banaStorageLocationModel={all,find,options,describe};
+})();
 </script><script id="bana-folder-language-script">(function(){
 let location=null;
 const originals={grammarTitle:document.querySelector('#grammar .bl-page-heading h1').textContent,grammarDesc:document.querySelector('#grammar .bl-page-heading p').textContent,dialogueTitle:document.querySelector('#dialogue .bl-page-heading h1').textContent,dialogueDesc:document.querySelector('#dialogue .bl-page-heading p').textContent};
@@ -15905,7 +15913,7 @@ function heading(type){const page=document.getElementById(type),h=page.querySele
 const oldGrammar=renderGrammarList,oldDialogue=renderDialogueList;
 renderGrammarList=function(){heading('grammar');if(!location)return oldGrammar.apply(this,arguments);const q=(document.getElementById('grammarSearchInput').value||'').trim().toLowerCase(),all=grammarPoints.filter(matches),items=all.filter(g=>!q||[g.title,g.meaning,g.rule,g.note].some(v=>String(v||'').toLowerCase().includes(q)));document.getElementById('grammarCardGrid').innerHTML=items.length?'<div class="bana-folder-grammar-grid">'+items.map(makeGrammarCardHtml).join('')+'</div>':'<div class="bana-folder-language-empty"><p>'+(q?'找不到符合的文法。':'這個資料夾還沒有文法。')+'</p><button type="button" class="primary" onclick="openGrammarEditor(null)">＋ 新增這裡的文法</button></div>';document.getElementById('grammarLevelSummary').innerHTML='';document.getElementById('blGrammarCount').textContent=all.length+' 篇文法 · '+location.name;};
 renderDialogueList=function(){heading('dialogue');if(!location)return oldDialogue.apply(this,arguments);const q=(document.getElementById('dialogueSearchInput').value||'').trim().toLowerCase(),all=dialogues.filter(matches),items=all.filter(d=>!q||[d.title,...(d.lines||[]).flatMap(x=>[x.kr,x.zh])].some(v=>String(v||'').toLowerCase().includes(q)));document.getElementById('dialogueGrid').innerHTML=items.length?'<div class="folder-grid">'+items.map(makeDialogueCardHtml).join('')+'</div>':'<div class="bana-folder-language-empty"><p>'+(q?'找不到符合的對話。':'這個資料夾還沒有對話。')+'</p><button type="button" class="primary" onclick="openDialogueEditor(null)">＋ 新增這裡的對話</button></div>';document.getElementById('blDialogueCount').textContent=all.length+' 段對話 · '+location.name;};
-function editorScope(type){const select=document.getElementById(type==='grammar'?'gramCategory':'dlgCategory');select.parentElement.classList.toggle('bana-hide-book-field',!!location);const mask=document.getElementById(type==='grammar'?'grammarEditorMask':'dialogueEditorMask');let note=mask.querySelector('.bana-save-location');if(!note){note=document.createElement('p');note.className='bana-save-location';mask.querySelector('.hero-modal-head').after(note)}note.hidden=!location;note.textContent=location?'儲存位置：'+location.name:'';}
+function editorScope(type){const select=document.getElementById(type==='grammar'?'gramCategory':'dlgCategory');select.parentElement.classList.toggle('bana-hide-book-field',!!location);const mask=document.getElementById(type==='grammar'?'grammarEditorMask':'dialogueEditorMask');let note=mask.querySelector('.bana-save-location');if(!note){note=document.createElement('p');note.className='bana-save-location';mask.querySelector('.hero-modal-head').after(note)}note.hidden=!location;note.textContent=location?'儲存位置：'+banaStorageLocationModel.describe(location):'';}
 const oldGramEditor=openGrammarEditor,oldDlgEditor=openDialogueEditor;openGrammarEditor=function(){const r=oldGramEditor.apply(this,arguments);editorScope('grammar');return r};openDialogueEditor=function(){const r=oldDlgEditor.apply(this,arguments);editorScope('dialogue');return r};
 const oldGo=goPage;goPage=function(id){if(!['grammar','dialogue','dailyExpressions'].includes(id))location=null;return oldGo.apply(this,arguments)};
 function addActions(parent,kind,id,name){if(parent.querySelector(':scope>.bana-folder-language-actions'))return;const line=document.createElement('div');line.className='bana-folder-language-actions';for(const [type,label,data]of [['grammar','文法',grammarPoints],['dialogue','對話',dialogues],['dailyExpressions','日常用語',sentenceEntries.filter(x=>x.isDailyExpression)]]){const count=data.filter(x=>type==='dailyExpressions'?banaDailyScopeContains({kind,id},x.libraryFolder):x.libraryFolder?.kind===kind&&x.libraryFolder?.id===id).length,b=document.createElement('button');b.type='button';b.textContent=label+' '+count;b.onclick=()=>banaOpenFolderLanguage(kind,id,name,type);line.appendChild(b)}parent.appendChild(line)}
@@ -16100,15 +16108,7 @@ document.addEventListener('visibilitychange',()=>{if(state.attempt){persist();if
 let editing=null,location=null,returnFocus=null,locations=[];
 const byId=id=>document.getElementById(id);
 function close(){const mask=byId('banaSimpleDailyMask');if(!mask)return;mask.remove();returnFocus?.focus();editing=null;location=null}
-function locationOptions(){
- const result=[],catName=id=>categories.find(c=>c.id===id)?.name||'',groupPath=id=>{const g=groups.find(g=>g.id===id);return g?[catName(g.categoryId),g.name].filter(Boolean):[]};
- function add(kind,id,name,path,bank){result.push({key:String(result.length),kind,id,name,label:path.join(' › '),bank})}
- categories.forEach(c=>add('cat',c.id,c.name,['分類',c.name]));
- groups.forEach(g=>add('grp',g.id,g.name,['分組',...groupPath(g.id)]));
- subfolders.forEach(sf=>add('sub',sf.id,sf.name,['資料夾',...groupPath(sf.groupId),sf.name]));
- folders.forEach(f=>{const sf=subfolders.find(sf=>sf.id===f.subfolderId&&sf.groupId===f.groupId);add('bank',f.languageFolderId||'',f.name,['題庫',...groupPath(f.groupId),...(sf?[sf.name]:[]),f.name],f)});
- return result
-}
+function locationOptions(){return banaStorageLocationModel.options(location||inferLocation())}
 function inferLocation(){
  if(byId('wordListOverlay')?.classList.contains('show')&&typeof wlCurrentFolder!=='undefined'&&folders[wlCurrentFolder])return {kind:'bank',bank:folders[wlCurrentFolder],id:folders[wlCurrentFolder].languageFolderId||''};
  const current=window.banaDailyExpressionFolder?.();if(current&&document.querySelector('#grammar.active,#dialogue.active,#dailyExpressions.active'))return current;
@@ -16284,5 +16284,13 @@ window.banaTranslateGrammarExample=async function(button){
  finally{button.disabled=false;button.textContent='AI 翻譯';button.removeAttribute('aria-busy')}
 };
 })();
-</script><style id="bana-daily-pronunciation-style">.bde-pronunciation{display:flex;align-items:baseline;gap:10px;padding:9px 12px;margin:8px 0 12px;background:#f1f5e9;border-left:3px solid #b6c899;border-radius:0 10px 10px 0}.bde-pronunciation>span{font-size:11px;color:#7c8c68;white-space:nowrap;font-weight:700}.bde-conversation-text .bde-pronunciation>p{font-size:15px;color:#637b4c;margin:0;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}#banaSimpleDailyMask .bde-pronunciation-field{grid-column:1/-1;background:#f1f5e9;border-radius:12px;padding:12px}#banaSimpleDailyMask .bde-pronunciation-field small{font-size:11px;font-weight:400;color:#87927a;margin-left:6px}#banaSimpleDailyMask .bde-line-pronunciation{min-height:54px!important}</style><style id="bana-daily-actions-top-style">.bbd-daily-card .bde-card-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin:0 0 14px}.bbd-daily-card .bbd-daily-topic{margin-top:0}@media(max-width:600px){.bbd-daily-card .bde-card-actions{justify-content:flex-start}}</style><style id="bana-multiple-examples-style">#grammarEditorMask #gramExamplesWrap .bgn-example-number{font-size:12px;font-weight:700;color:#789264;grid-column:1}.bgn-example-number+input{margin-top:0}</style><style id="bana-grammar-multiline-style">#grammarEditorMask #gramExamplesWrap .gram-example-row>textarea{grid-column:1;grid-row:auto;width:100%;min-width:0;min-height:76px!important;height:auto;box-sizing:border-box;border:1px solid #d8e3cc;border-radius:12px;padding:11px 12px;background:white;color:#405a37;font:inherit;font-size:14px;line-height:1.7;resize:vertical;white-space:pre-wrap}#banaGrammarNoteMask .bgn-note-example p,.gram-example-kr,.gram-example-zh{white-space:pre-wrap;overflow-wrap:anywhere}</style></body>
+</script><style id="bana-daily-pronunciation-style">.bde-pronunciation{display:flex;align-items:baseline;gap:10px;padding:9px 12px;margin:8px 0 12px;background:#f1f5e9;border-left:3px solid #b6c899;border-radius:0 10px 10px 0}.bde-pronunciation>span{font-size:11px;color:#7c8c68;white-space:nowrap;font-weight:700}.bde-conversation-text .bde-pronunciation>p{font-size:15px;color:#637b4c;margin:0;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}#banaSimpleDailyMask .bde-pronunciation-field{grid-column:1/-1;background:#f1f5e9;border-radius:12px;padding:12px}#banaSimpleDailyMask .bde-pronunciation-field small{font-size:11px;font-weight:400;color:#87927a;margin-left:6px}#banaSimpleDailyMask .bde-line-pronunciation{min-height:54px!important}</style><style id="bana-daily-actions-top-style">.bbd-daily-card .bde-card-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin:0 0 14px}.bbd-daily-card .bbd-daily-topic{margin-top:0}@media(max-width:600px){.bbd-daily-card .bde-card-actions{justify-content:flex-start}}</style><style id="bana-multiple-examples-style">#grammarEditorMask #gramExamplesWrap .bgn-example-number{font-size:12px;font-weight:700;color:#789264;grid-column:1}.bgn-example-number+input{margin-top:0}</style><style id="bana-grammar-multiline-style">#grammarEditorMask #gramExamplesWrap .gram-example-row>textarea{grid-column:1;grid-row:auto;width:100%;min-width:0;min-height:76px!important;height:auto;box-sizing:border-box;border:1px solid #d8e3cc;border-radius:12px;padding:11px 12px;background:white;color:#405a37;font:inherit;font-size:14px;line-height:1.7;resize:vertical;white-space:pre-wrap}#banaGrammarNoteMask .bgn-note-example p,.gram-example-kr,.gram-example-zh{white-space:pre-wrap;overflow-wrap:anywhere}</style><style id="bana-storage-location-style">.bana-editor-storage{background:#f1f6e9;border:1px solid #dce6ce;border-radius:14px;padding:14px;margin:8px 0 18px}.bana-editor-storage label{font-size:13px;color:#66804e}.bana-editor-storage select{display:block;width:100%;min-width:0;box-sizing:border-box;margin-top:8px;padding:12px;border:1px solid #cfdcbd;border-radius:10px;background:#fff;font:inherit;color:#405a37}.bana-editor-storage-path{font-size:12px;line-height:1.7;overflow-wrap:anywhere;margin:8px 0 0;color:#839270}</style><script id="bana-storage-editor-script">(function(){
+const selected={};
+function decorate(type,id){const grammar=type==='grammar',item=(grammar?grammarPoints:dialogues).find(x=>x.id===id),scope=window.banaLanguageFolderForSave?.(),anchor=item?.libraryFolder||scope||window.banaDailyLocations?.infer?.(),model=banaStorageLocationModel,options=model.options(anchor),mask=document.getElementById(grammar?'grammarEditorMask':'dialogueEditorMask');
+ mask.querySelector('.bana-editor-storage')?.remove();mask.querySelector('.bana-save-location')?.setAttribute('hidden','');const box=document.createElement('div');box.className='bana-editor-storage';const label=document.createElement('label');label.textContent='存放位置';const select=document.createElement('select');select.setAttribute('aria-label','存放位置');select.innerHTML='<option value="">請選擇分類、資料夾或題庫</option>';options.forEach(loc=>{const o=document.createElement('option');o.value=loc.key;o.textContent=loc.label;select.appendChild(o)});const initial=model.find(options,anchor);select.value=initial?.key||'';selected[type]=initial||null;const path=document.createElement('p');path.className='bana-editor-storage-path';function update(){selected[type]=options.find(x=>x.key===select.value)||null;path.textContent=selected[type]?'完整路徑：'+selected[type].label:'選擇內容要存放的位置';}select.onchange=update;label.appendChild(select);box.append(label,path);mask.querySelector('.hero-modal-head').after(box);update();
+}
+window.banaEditorFolder=function(type,existing){const loc=selected[type];if(!loc)return window.banaLanguageFolderForSave?.(existing)||existing;if(loc.kind==='bank'&&!loc.bank.languageFolderId){loc.bank.languageFolderId=uid();saveStorage()}return {kind:loc.kind,id:loc.kind==='bank'?loc.bank.languageFolderId:loc.id}};
+const grammar=openGrammarEditor;openGrammarEditor=function(id){const r=grammar.apply(this,arguments);decorate('grammar',id);return r};const dialogue=openDialogueEditor;openDialogueEditor=function(id){const r=dialogue.apply(this,arguments);decorate('dialogue',id);return r};
+})();
+</script></body>
 </html>
