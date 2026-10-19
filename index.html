@@ -16305,5 +16305,30 @@ function decorate(){const view=document.querySelector('#folderGrid .bana-explore
 }
 const original=renderFolders;renderFolders=function(){const result=original.apply(this,arguments);decorate();return result};window.banaUnifiedLibraryModel={entries};decorate();
 })();
-</script><style id="bana-multiple-pronunciation-style">.bgt-pron-list{display:grid;gap:12px}.bgt-pron-row{background:#f3f5eb;padding:12px;border:1px solid #e1e6d5;border-radius:12px}.bgt-pron-row>.ghost{display:block;margin:8px 0 0 auto;font-size:11px;padding:5px 9px}.bgt-pron-list>[data-pron-add]{width:100%;border:1px dashed #b7c79d;background:#f7f9ef;color:#6c8551;border-radius:12px;padding:12px}.bgt-pron-read-list{display:grid;gap:10px}</style><style id="bana-pronunciation-meaning-style">.bgt-pron-meaning{grid-column:1/-1}.bgt-pron-read-list .bgt-read-pair{border:1px solid #e5e9dd;border-radius:12px;padding:12px}.bgt-pron-read-list .bgt-pron-meaning{border-top:1px solid #e5e9dd;padding-top:10px}</style></body>
+</script><style id="bana-multiple-pronunciation-style">.bgt-pron-list{display:grid;gap:12px}.bgt-pron-row{background:#f3f5eb;padding:12px;border:1px solid #e1e6d5;border-radius:12px}.bgt-pron-row>.ghost{display:block;margin:8px 0 0 auto;font-size:11px;padding:5px 9px}.bgt-pron-list>[data-pron-add]{width:100%;border:1px dashed #b7c79d;background:#f7f9ef;color:#6c8551;border-radius:12px;padding:12px}.bgt-pron-read-list{display:grid;gap:10px}</style><style id="bana-pronunciation-meaning-style">.bgt-pron-meaning{grid-column:1/-1}.bgt-pron-read-list .bgt-read-pair{border:1px solid #e5e9dd;border-radius:12px;padding:12px}.bgt-pron-read-list .bgt-pron-meaning{border-top:1px solid #e5e9dd;padding-top:10px}</style><script id="bana-dialogue-language-detection">(function(){
+const ko=/[\u1100-\u11ff\u3130-\u318f\uac00-\ud7af]/,zh=/[\u3400-\u9fff]/;
+function split(value){const text=String(value||'').trim();if(!text)return {kr:'',zh:''};const k=text.search(ko),c=text.search(zh);if(k<0)return c>=0?{kr:'',zh:text}:{kr:text,zh:''};if(c<0)return {kr:text,zh:''};
+ if(k<c){let boundary=c;const before=text.slice(0,c);const bracket=before.match(/[（(「【]\s*$/);if(bracket)boundary=bracket.index;let chinese=text.slice(boundary).trim();if(/^[（(]/.test(chinese)&&/[）)]$/.test(chinese))chinese=chinese.slice(1,-1).trim();return {kr:text.slice(0,boundary).trim(),zh:chinese}}
+ return {kr:text.slice(k).trim(),zh:text.slice(0,k).trim()}
+}
+function speaker(text){const match=String(text||'').match(/^\s*([ABab]|[가-힣]{2,10}|[\u3400-\u9fff]{2,6})\s*[:：]\s*/);return match?{name:match[1],text:String(text).slice(match[0].length)}:null}
+function roleFor(name,roles){if(/^[ab]$/i.test(name))return name.toUpperCase();if(!roles.has(name))roles.set(name,roles.size%2?'B':'A');return roles.get(name)}
+function normalize(line){const detected=String(line.zh||'').trim()?{kr:String(line.kr||''),zh:line.zh}:split(line.kr);return {...line,...detected}}
+function normalizeLines(lines){const roles=new Map();let last=null;const named=lines.some(line=>speaker(line.kr));return lines.map(line=>{const marked=speaker(line.kr),clean=marked?{...line,kr:marked.text}:line;let value=normalize(clean);if(marked){last=roleFor(marked.name,roles);value.role=last}else if(named&&last)value.role=last;const chineseSpeaker=speaker(value.zh);if(chineseSpeaker)value.zh=chineseSpeaker.text;return value})}
+function parse(raw,lastRole='B'){const result=[],roles=new Map();const texts=String(raw||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);const named=texts.some(text=>speaker(text));let active=null;texts.forEach(text=>{let role=null;const marked=speaker(text);if(marked){role=roleFor(marked.name,roles);text=marked.text}const parts=text.split(/\t|｜|\|/).map(x=>x.trim());if(parts.length>=3&&/^[ab]$/i.test(parts[0]))role=parts.shift().toUpperCase();let pair;if(parts.length>=2){const first=split(parts[0]),rest=parts.slice(1).join(' ');pair=!ko.test(parts[0])&&zh.test(parts[0])&&ko.test(rest)?{kr:rest,zh:parts[0]}:{kr:first.kr||parts[0],zh:rest}}else pair=split(text);
+ if(!pair.kr&&pair.zh&&!role&&result.length&&!result.at(-1).zh){result.at(-1).zh=pair.zh;return}if(!pair.kr&&!pair.zh)return;role=role||(named&&active?active:lastRole==='A'?'B':'A');active=role;lastRole=role;const chineseSpeaker=speaker(pair.zh);if(chineseSpeaker)pair.zh=chineseSpeaker.text;result.push({role,...pair})});return result}
+const originalRender=renderDialogueLineRows;renderDialogueLineRows=function(lines){return originalRender.call(this,normalizeLines(lines))};
+applyDialoguePaste=function(){const area=document.getElementById('dlgPasteArea'),existing=collectDialogueLineRows().filter(l=>l.kr||l.zh),parsed=parse(area.value,existing.at(-1)?.role||'B');if(!parsed.length)return;renderDialogueLineRows(existing.concat(parsed));area.value=''};
+function detectRow(row){const source=row.querySelector('.dlg-kr-input'),target=row.querySelector('.dlg-zh-input');if(!source||!target||target.value.trim())return;const pair=split(source.value);if(pair.zh){source.value=pair.kr;target.value=pair.zh}}
+const wrap=document.getElementById('dlgLinesWrap');wrap.addEventListener('change',event=>{if(event.target.matches('.dlg-kr-input'))detectRow(event.target.closest('.dlg-line-row'))});wrap.addEventListener('paste',event=>{if(event.target.matches('.dlg-kr-input')){const row=event.target.closest('.dlg-line-row');setTimeout(()=>{if(row.isConnected)detectRow(row)},0)}});
+const area=document.getElementById('dlgPasteArea');area.placeholder='可直接貼上韓文＋中文，例如：안녕하세요?（您好）\n也支援韓文一行、中文下一行，或使用 Tab 分隔。人名＋冒號會自動轉成 A／B，同一人維持相同角色。';
+window.banaDialogueLanguageModel={split,normalize,normalizeLines,speaker,parse};
+})();
+</script><script id="bana-dialogue-reader-speakers">(function(){
+function readable(dialogue){return dialogue?{...dialogue,lines:banaDialogueLanguageModel.normalizeLines(dialogue.lines||[])}:dialogue}
+const originalCurrent=getCurrentDialogue;getCurrentDialogue=function(){return readable(originalCurrent.apply(this,arguments))};
+const originalCard=makeDialogueCardHtml;makeDialogueCardHtml=function(dialogue){return originalCard.call(this,readable(dialogue))};
+window.banaReadableDialogue=readable;
+})();
+</script></body>
 </html>
