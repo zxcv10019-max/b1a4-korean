@@ -4356,7 +4356,7 @@ body.overlay-open:has(#wordListOverlay.show) #wlAddFab{display:none!important}
                 </select>
               </div>
 
-              <div>
+              <div hidden aria-hidden="true" style="display:none">
                 <label style="font-weight:900;color:#4e8f24;display:block;margin-bottom:8px;">📖 句型整理（選填，例如課本的句型統整頁）</label>
                 <div id="dlgPatternGroupsWrap"></div>
                 <button type="button" class="ghost" style="width:100%;" onclick="addDialoguePatternGroup()">➕ 新增句型分類</button>
@@ -4376,7 +4376,7 @@ body.overlay-open:has(#wordListOverlay.show) #wlAddFab{display:none!important}
                 <textarea id="dlgPasteArea" rows="4" placeholder="每行一句，用 Tab 或「｜」分隔角色／韓文／中文，例如：&#10;A｜안녕하세요?｜你好。&#10;B｜안녕하세요.｜你好。&#10;（也可以只貼「韓文｜中文」兩欄，角色會自動 A／B 交替）" style="width:100%;border:2px solid var(--line);border-radius:14px;padding:12px;font-size:14px;font-family:inherit;"></textarea>
                 <button type="button" class="ghost" style="width:100%;margin-top:8px;" onclick="applyDialoguePaste()">📥 貼上並加入對話</button>
               </div>
-              <button class="primary cute-btn" type="button" onclick="saveDialogue()">💬 儲存對話</button>
+              <section class="bdt-editor"><h3>💡 小叮嚀 <small>選填，可新增多則</small></h3><div id="dlgTipsWrap"></div><button type="button" class="ghost" id="dlgAddTip">＋ 新增小叮嚀</button></section><button class="primary cute-btn" type="button" onclick="saveDialogue()">💬 儲存對話</button>
             </div>
           </div>
         </div>
@@ -14807,7 +14807,7 @@ function syncDialogueCategorySelector() {
 function makeDialogueCardHtml(d) {
   const total = (d.lines || []).length;
   const preview = (d.lines[0] || {}).kr || "";
-  const hasPatterns = (d.patterns || []).length > 0;
+  const hasPatterns = false;
   return `
     <div class="folder card" onclick="openDialogueReader('${d.id}')">
       <div class="folder-inner">
@@ -15075,20 +15075,15 @@ function saveDialogue() {
   const rows = collectDialogueLineRows()
     .map(r => ({ id: uid(), role: r.role === "B" ? "B" : "A", kr: r.kr.trim(), zh: r.zh.trim() }))
     .filter(l => l.kr);
-  const patternGroups = collectDialoguePatternGroups()
-    .map(g => ({
-      id: uid(),
-      heading: g.heading.trim(),
-      items: g.items.map(it => ({ id: uid(), kr: it.kr.trim(), zh: it.zh.trim(), note: it.note.trim() })).filter(it => it.kr)
-    }))
-    .filter(g => g.heading || g.items.length);
-  if (!rows.length && !patternGroups.length) { alert("請至少輸入一句對話，或一句句型"); return; }
+  const patternGroups = dialogues.find(d=>d.id===dialogueEditingId)?.patterns||[];
+  const tips = banaCollectDialogueTips();
+  if (!rows.length && !patternGroups.length) { alert("請至少輸入一句對話"); return; }
 
   if (dialogueEditingId) {
     const d = dialogues.find(x => x.id === dialogueEditingId);
-    if (d) { d.title = title; d.categoryId = categoryId; d.lines = rows; d.patterns = patternGroups; d.libraryFolder = banaEditorFolder('dialogue',d.libraryFolder); }
+    if (d) { d.title = title; d.categoryId = categoryId; d.lines = rows; d.patterns = patternGroups; d.tips = tips; d.libraryFolder = banaEditorFolder('dialogue',d.libraryFolder); }
   } else {
-    dialogues.push({ id: uid(), title, categoryId, lines: rows, patterns: patternGroups, libraryFolder: banaEditorFolder('dialogue') });
+    dialogues.push({ id: uid(), title, categoryId, lines: rows, patterns: patternGroups, tips, libraryFolder: banaEditorFolder('dialogue') });
   }
   saveDialogues();
   closeDialogueEditor();
@@ -15165,7 +15160,7 @@ function importDialogues(file) {
 function openDialogueReader(id) {
   currentDialogueId = id;
   const d = dialogues.find(x => x.id === id);
-  dialogueSection = (d && d.patterns && d.patterns.length) ? "patterns" : "dialogue";
+  dialogueSection = "dialogue";
   dialogueMode = "full";
   dialogueRoleFilter = "all";
   dialogueStepIndex = 0;
@@ -15207,7 +15202,7 @@ function renderDialogueReader() {
   if (!d) return;
   document.getElementById("dialogueReaderTitle").textContent = "💬 " + d.title;
 
-  const hasPatterns = (d.patterns || []).length > 0;
+  const hasPatterns = false;
   const tabsEl = document.getElementById("dialogueSectionTabs");
   if (hasPatterns) {
     tabsEl.style.display = "flex";
@@ -16261,7 +16256,7 @@ refresh();
 </style><script id="bana-bank-dialogue-display-script">(function(){
 const originalCard=makeDialogueCardHtml;
 function lineHtml(line){return '<div class="bbd-line"><span class="bbd-role">'+(line.role==='B'||line.role==='A'?banaDialogueRoleIcon(line.role)+' '+line.role:esc(line.role||'例'))+'</span><div><p lang="ko">'+esc(line.kr||'')+'</p>'+(line.zh?'<p class="bbd-zh" lang="zh-Hant">'+esc(line.zh)+'</p>':'')+(line.note?'<small>'+esc(line.note)+'</small>':'')+'</div><button type="button" data-bbd="audio" data-text="'+escapeAttr(line.kr||'')+'" aria-label="播放韓文">▶</button></div>'}
-function bankCard(d){const groups=d.patterns||[],has=groups.length>0;return '<article class="bbd-card" data-dialogue-id="'+escapeAttr(d.id)+'"><header><h3>💬 '+esc(d.title||'未命名對話')+'</h3><span>'+((d.lines||[]).length)+' 句對話</span></header><div class="bbd-tabs" role="group" aria-label="顯示內容">'+(has?'<button type="button" data-bbd="tab" data-tab="patterns" aria-pressed="true">📖 句型整理</button>':'')+'<button type="button" data-bbd="tab" data-tab="conversation" aria-pressed="'+!has+'">💬 對話</button></div>'+(has?'<div class="bbd-panel" data-panel="patterns">'+groups.map(g=>'<details class="bbd-topic"><summary><b>'+esc(g.heading||'句型')+'</b><span class="bbd-expand">展開</span><span class="bbd-collapse">收合</span></summary><div class="bbd-topic-body">'+(g.items||[]).map(lineHtml).join('')+'</div></details>').join('')+'</div>':'')+'<div class="bbd-panel" data-panel="conversation" '+(has?'hidden':'')+'>'+((d.lines||[]).length?(d.lines||[]).map(lineHtml).join(''):'<p class="bbd-empty">尚未新增對話句子。</p>')+'</div><footer><button type="button" data-bbd="read">完整閱讀／練習</button><button type="button" data-bbd="edit">✏️ 編輯</button></footer></article>'}
+function bankCard(d){const groups=[],has=false;return '<article class="bbd-card" data-dialogue-id="'+escapeAttr(d.id)+'"><header><h3>💬 '+esc(d.title||'未命名對話')+'</h3><span>'+((d.lines||[]).length)+' 句對話</span></header><div class="bbd-tabs" role="group" aria-label="顯示內容">'+(has?'<button type="button" data-bbd="tab" data-tab="patterns" aria-pressed="true">📖 句型整理</button>':'')+'<button type="button" data-bbd="tab" data-tab="conversation" aria-pressed="'+!has+'">💬 對話</button></div>'+(has?'<div class="bbd-panel" data-panel="patterns">'+groups.map(g=>'<details class="bbd-topic"><summary><b>'+esc(g.heading||'句型')+'</b><span class="bbd-expand">展開</span><span class="bbd-collapse">收合</span></summary><div class="bbd-topic-body">'+(g.items||[]).map(lineHtml).join('')+'</div></details>').join('')+'</div>':'')+'<div class="bbd-panel" data-panel="conversation" '+(has?'hidden':'')+'>'+((d.lines||[]).length?(d.lines||[]).map(lineHtml).join(''):'<p class="bbd-empty">尚未新增對話句子。</p>')+'</div>'+(window.banaDialogueTipsHtml?banaDialogueTipsHtml(d):'')+'<footer><button type="button" data-bbd="read">完整閱讀／練習</button><button type="button" data-bbd="edit">✏️ 編輯</button></footer></article>'}
 makeDialogueCardHtml=function(d){return window.banaLanguageFolderForSave?.()?bankCard(d):originalCard(d)};
 document.addEventListener('click',event=>{const button=event.target.closest('[data-bbd]');if(!button)return;const card=button.closest('.bbd-card');if(!card)return;const d=dialogues.find(x=>String(x.id)===card.dataset.dialogueId);if(!d)return;const action=button.dataset.bbd;
  if(action==='audio')speakKorean(button.dataset.text||'');
@@ -16334,5 +16329,25 @@ window.banaReadableDialogue=readable;
 function decorateEditor(){document.querySelectorAll('#dlgLinesWrap .dlg-role-select').forEach(select=>{const badge=document.createElement('span');badge.className='bana-role-choice-icon';badge.innerHTML=banaDialogueRoleIcon(select.value);select.before(badge);select.addEventListener('change',()=>badge.innerHTML=banaDialogueRoleIcon(select.value))})}
 const oldRows=renderDialogueLineRows;renderDialogueLineRows=function(){const r=oldRows.apply(this,arguments);decorateEditor();return r};
 })();
-</script><style id="bana-role-icons-visible">#dialogueRoleToggle .dlg-toggle-btn{display:inline-flex;align-items:center;gap:6px;min-width:64px}.dlg-bubble-ico{display:flex!important;flex-direction:column;gap:2px;width:40px;flex-basis:40px;height:48px;padding:4px;box-sizing:border-box}.dlg-bubble-ico>small{font-size:10px;line-height:1}.dlg-bubble-ico .bana-role-heart{display:block!important;width:26px!important;height:26px!important;object-fit:contain}.dlg-bubble-ico .bana-role-sprout{font-size:24px}.bde-conversation-role{display:flex;align-items:center;gap:3px}.bde-conversation-role .bana-role-heart{width:24px;height:24px}.bde-conversation-role small{font-size:10px}</style></body>
+</script><style id="bana-role-icons-visible">#dialogueRoleToggle .dlg-toggle-btn{display:inline-flex;align-items:center;gap:6px;min-width:64px}.dlg-bubble-ico{display:flex!important;flex-direction:column;gap:2px;width:40px;flex-basis:40px;height:48px;padding:4px;box-sizing:border-box}.dlg-bubble-ico>small{font-size:10px;line-height:1}.dlg-bubble-ico .bana-role-heart{display:block!important;width:26px!important;height:26px!important;object-fit:contain}.dlg-bubble-ico .bana-role-sprout{font-size:24px}.bde-conversation-role{display:flex;align-items:center;gap:3px}.bde-conversation-role .bana-role-heart{width:24px;height:24px}.bde-conversation-role small{font-size:10px}</style><style id="bana-library-three-layers-style">#folderGrid .bana-explorer .folder-card-grid.bui-layered-library{display:flex!important;flex-direction:column;gap:32px}.bui-layer{min-width:0;width:100%}.bui-layer-heading{display:flex;align-items:center;gap:12px;border-bottom:1px solid #e2e8db;padding:0 0 12px;margin-bottom:16px}.bui-layer-heading h2{font-size:18px;line-height:1.5;color:#42604a;margin:0}.bui-layer-heading>span{font-size:12px;color:#8c9982}.bui-layer-heading h2::before{content:'';display:inline-block;width:5px;height:16px;border-radius:4px;background:#a4bb83;margin-right:10px;vertical-align:-2px}.bui-layer-grammar .bui-layer-heading h2::before{background:#d8c390}.bui-layer-conversation .bui-layer-heading h2::before{background:#c1abc0}.bui-layer-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;align-items:stretch}.bui-layer-empty{grid-column:1/-1;color:#9aa38e;background:#f8faf4;border:1px dashed #e0e6d7;border-radius:14px;padding:20px;margin:0;font-size:13px}.bui-layer-grid .bui-content{width:100%;min-height:180px}.bui-layer-grid .forest-folder-card{height:100%}@media(max-width:1000px){.bui-layer-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:650px){.bui-layer-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}#folderGrid .bana-explorer .folder-card-grid.bui-layered-library{gap:26px}.bui-layer-heading{margin-bottom:12px}.bui-layer-heading h2{font-size:17px}}
+</style><script id="bana-library-three-layers-script">(function(){
+function bucket(card){if(card.classList.contains('forest-folder-card'))return 'words';if(card.classList.contains('bui-grammar'))return 'grammar';if(card.classList.contains('bui-dialogue')||card.classList.contains('bui-dailyExpressions'))return 'conversation';return null}
+function arrange(){const view=document.querySelector('#folderGrid .bana-explorer'),grid=view?.querySelector('.folder-card-grid');if(!grid)return;const cards=[...grid.querySelectorAll('.forest-folder-card,.bui-content')],sections=[['words','單字','個單字題庫'],['grammar','文法','篇文法'],['conversation','會話','組會話']];grid.querySelectorAll('.bui-layer').forEach(section=>section.remove());grid.classList.add('bui-layered-library');
+ sections.forEach(([key,title,unit])=>{const items=cards.filter(card=>bucket(card)===key),section=document.createElement('section');section.className='bui-layer bui-layer-'+key;const head=document.createElement('header');head.className='bui-layer-heading';const heading=document.createElement('h2');heading.textContent=title;const count=document.createElement('span');count.textContent=items.length+' '+unit;head.append(heading,count);section.appendChild(head);const content=document.createElement('div');content.className='bui-layer-grid';items.forEach(card=>content.appendChild(card));if(!items.length){const empty=document.createElement('p');empty.className='bui-layer-empty';empty.textContent='目前沒有'+title+'內容。';content.appendChild(empty)}section.appendChild(content);grid.appendChild(section)});
+}
+const original=renderFolders;renderFolders=function(){const result=original.apply(this,arguments);arrange();return result};window.banaLibraryLayers={bucket,arrange};arrange();
+})();
+</script><style id="bana-dialogue-tips-style">.bdt-editor{border:1px solid #e7dfc5;background:#fffaf0;border-radius:16px;padding:16px}.bdt-editor h3,.bdt-reader h3{font-size:16px;color:#8a794d;margin:0 0 12px}.bdt-editor h3 small,.bdt-reader h3 small{font-weight:400;font-size:12px;margin-left:6px;color:#9d957e}.bdt-edit-card{padding:14px;background:white;border:1px solid #e9e3d3;border-radius:12px;margin-bottom:12px}.bdt-edit-card header{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;color:#8a794d}.bdt-edit-card label{display:block;font-size:12px;color:#8b8c73;margin-top:12px}.bdt-edit-card input,.bdt-edit-card textarea{display:block;width:100%;box-sizing:border-box;margin-top:6px;font:inherit}.bdt-edit-card textarea{min-height:90px!important;resize:vertical}#dlgAddTip{width:100%;margin-top:4px}.bdt-reader{margin-top:24px;border-top:1px solid #e9e4d3;padding-top:18px}.bdt-reader article{background:#fff8e7;border:1px solid #efe5c9;border-radius:13px;padding:14px 16px;margin-top:10px}.bdt-reader h4{font-size:14px;margin:0 0 8px;color:#8a7646}.bdt-reader p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8;margin:0;color:#7f826c;font-size:14px}</style><script id="bana-dialogue-tips-script">(function(){
+function clean(tips){return (Array.isArray(tips)?tips:[]).map(t=>({title:String(t.title||'').trim(),content:String(t.content||'').trim()})).filter(t=>t.title||t.content)}
+function html(dialogue){const tips=clean(dialogue?.tips);return tips.length?'<section class="bdt-reader"><h3>💡 小叮嚀 <small>'+tips.length+' 則</small></h3>'+tips.map(t=>'<article>'+(t.title?'<h4>'+esc(t.title)+'</h4>':'')+(t.content?'<p>'+esc(t.content)+'</p>':'')+'</article>').join('')+'</section>':''}
+function collect(){return [...document.querySelectorAll('#dlgTipsWrap .bdt-edit-card')].map(card=>({title:card.querySelector('[data-dlg-tip-title]').value,content:card.querySelector('[data-dlg-tip-content]').value}))}
+function render(tips){document.getElementById('dlgTipsWrap').innerHTML=tips.map((tip,i)=>'<section class="bdt-edit-card"><header><b>小叮嚀 '+(i+1)+'</b><button type="button" class="ghost" data-dlg-tip-delete="'+i+'">刪除</button></header><label>標題（選填）<input type="text" data-dlg-tip-title value="'+escapeAttr(tip.title||'')+'" placeholder="例如：初次見面的說法"></label><label>提醒內容<textarea rows="3" data-dlg-tip-content placeholder="填寫用法、語氣、發音或容易混淆的地方。">'+esc(tip.content||'')+'</textarea></label></section>').join('')}
+window.banaCollectDialogueTips=function(){return clean(collect())};window.banaDialogueTipsHtml=html;
+const oldOpen=openDialogueEditor;openDialogueEditor=function(id){const r=oldOpen.apply(this,arguments);render(clean(dialogues.find(d=>d.id===id)?.tips));return r};
+document.getElementById('dlgAddTip').onclick=()=>{const tips=collect();tips.push({title:'',content:''});render(tips);document.querySelector('#dlgTipsWrap .bdt-edit-card:last-child [data-dlg-tip-title]')?.focus()};
+document.getElementById('dlgTipsWrap').addEventListener('click',event=>{const button=event.target.closest('[data-dlg-tip-delete]');if(!button)return;const tips=collect();tips.splice(Number(button.dataset.dlgTipDelete),1);render(tips)});
+const oldReader=renderDialogueReader;renderDialogueReader=function(){const r=oldReader.apply(this,arguments);const view=document.getElementById('dialogueConversationView');view.querySelector('.bdt-reader')?.remove();view.insertAdjacentHTML('beforeend',html(getCurrentDialogue()));return r};
+window.banaDialogueTipsModel={clean,html};
+})();
+</script></body>
 </html>
