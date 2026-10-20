@@ -16482,5 +16482,29 @@ function ensure(){let panel=byId('gfeBatchPanel');if(panel)return panel;panel=do
 const oldOpen=openGrammarEditor;openGrammarEditor=function(){const result=oldOpen.apply(this,arguments),panel=ensure();panel.open=false;byId('gfeBatchText').value='';preview();return result};
 window.banaGrammarExampleBatch={parse,ensure};
 })();
-</script></body>
+</script><style id="bana-grammar-reader-compact-type">
+#banaGrammarNoteMask .bgn-reader{font-size:14px;line-height:1.7}
+#banaGrammarNoteMask #bgnReadTitle{font-size:20px;line-height:1.5;font-weight:700;margin:8px 0 5px}
+#banaGrammarNoteMask .bgn-main-meaning{font-size:14px;line-height:1.7;margin:0 0 16px}
+#banaGrammarNoteMask .bgn-note-section{margin:16px 0}
+#banaGrammarNoteMask .bgn-note-section h3{font-size:13px;line-height:1.6;font-weight:600;margin:0 0 8px}
+#banaGrammarNoteMask .bgn-note-section p,#banaGrammarNoteMask .bgn-note-extra p{font-size:14px;line-height:1.75}
+#banaGrammarNoteMask .bgn-patterns{gap:8px;padding:13px 14px;border-radius:12px}
+#banaGrammarNoteMask .bgn-patterns b{font-size:16px;line-height:1.65;font-weight:600}
+#banaGrammarNoteMask .bgn-patterns span{font-size:13px;line-height:1.65}
+#banaGrammarNoteMask .bgn-note-example{padding:9px 12px;margin:8px 0;gap:10px}
+#banaGrammarNoteMask .bgn-note-example p[lang=ko]{font-size:16px;line-height:1.7}
+#banaGrammarNoteMask .bgn-note-example .bgn-example-meaning{font-size:13px;line-height:1.7;margin-top:3px}
+#banaGrammarNoteMask .bgt-reader{margin-top:18px}
+#banaGrammarNoteMask .bgt-reader>h3,#banaGrammarNoteMask .bgn-note-tips h3{font-size:14px}
+#banaGrammarNoteMask .bgt-read-head h4{font-size:14px;line-height:1.6}
+#banaGrammarNoteMask .bgt-read-content,#banaGrammarNoteMask .bgn-note-tips .bgn-note-extra p{font-size:14px;line-height:1.75}
+#banaGrammarNoteMask .bgt-read-pair p{font-size:16px;line-height:1.7}
+#banaGrammarNoteMask .bgt-read-card{padding:13px 14px;margin-top:9px;border-radius:12px}
+#banaGrammarNoteMask .bgn-note-extra summary{font-size:13px}
+#banaGrammarNoteMask button{font-size:12px;line-height:1.5;font-weight:600;padding:8px 12px;min-height:36px}
+#banaGrammarNoteMask .bgn-read-footer{margin-top:16px}
+@media(max-width:650px){#banaGrammarNoteMask #bgnReadTitle{font-size:18px}#banaGrammarNoteMask .bgn-patterns>div{gap:3px}}
+</style>
+</body>
 </html>
