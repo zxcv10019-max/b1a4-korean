@@ -14656,7 +14656,7 @@ function finishGrammarQuiz() {
 /* ===== 💬 會話 Dialogue (對話卡) ===== */
 const DIALOGUE_STORAGE_KEY = "b1a4Dialogues";
 const DIALOGUE_CATEGORY_KEY = "b1a4DialogueCategories";
-const ROLE_ICON = { A: "👩", B: "👦" };
+const ROLE_ICON = { A: "A", B: "B" };
 let dialogues = [];
 let dialogueCategories = [];
 let collapsedDialogueCategories = JSON.parse(localStorage.getItem("b1a4_collapsed_dlg_cat") || "[]");
@@ -14905,8 +14905,8 @@ function renderDialogueLineRows(lines) {
   wrap.innerHTML = lines.map((l, i) => `
     <div class="dlg-line-row" data-idx="${i}">
       <select class="dlg-role-select">
-        <option value="A" ${l.role === "A" ? "selected" : ""}>👩 A</option>
-        <option value="B" ${l.role === "B" ? "selected" : ""}>👦 B</option>
+        <option value="A" ${l.role === "A" ? "selected" : ""}>A</option>
+        <option value="B" ${l.role === "B" ? "selected" : ""}>B</option>
       </select>
       <input type="text" placeholder="韓文" value="${escapeAttr(l.kr || "")}" class="dlg-kr-input">
       <input type="text" placeholder="中文翻譯" value="${escapeAttr(l.zh || "")}" class="dlg-zh-input">
@@ -15239,8 +15239,8 @@ function renderDialogueReader() {
   const roleToggle = document.getElementById("dialogueRoleToggle");
   roleToggle.innerHTML = [
     { id: "all", label: "👥 全部" },
-    { id: "A", label: "👩 A" },
-    { id: "B", label: "👦 B" }
+    { id: "A", label: "A" },
+    { id: "B", label: "B" }
   ].map(r => `<button type="button" class="dlg-toggle-btn ${dialogueRoleFilter === r.id ? "active" : ""}" onclick="setDialogueRoleFilter('${r.id}')">${r.label}</button>`).join("");
 
   if (dialogueMode === "full") {
@@ -16330,5 +16330,5 @@ const originalCurrent=getCurrentDialogue;getCurrentDialogue=function(){return re
 const originalCard=makeDialogueCardHtml;makeDialogueCardHtml=function(dialogue){return originalCard.call(this,readable(dialogue))};
 window.banaReadableDialogue=readable;
 })();
-</script></body>
+</script><style id="bana-neutral-dialogue-roles">.dlg-bubble-ico{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:10px;background:#edf3e5;color:#668052;font-size:13px;font-weight:700;flex:0 0 30px}</style></body>
 </html>
