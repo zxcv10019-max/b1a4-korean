@@ -14493,6 +14493,7 @@ function saveGrammarPoint() {
   const categoryId = document.getElementById("gramCategory")?.value || "";
   const level = document.getElementById("gramLevel").value;
   const rule = document.getElementById("gramRule").value.trim();
+  const ruleHighlights = window.banaGrammarRuleColors ? banaGrammarRuleColors.collect() : [];
   const note = document.getElementById("gramNote").value.trim();
   const tips = window.banaCollectGrammarTips ? banaCollectGrammarTips() : [];
   if(tips===null)return;
@@ -14505,9 +14506,9 @@ function saveGrammarPoint() {
 
   if (grammarEditingId) {
     const g = grammarPoints.find(x => x.id === grammarEditingId);
-    if (g) { Object.assign(g, { title, meaning, categoryId, level, rule, note, examples, patterns, pronunciation, tips, libraryFolder: banaEditorFolder('grammar',g.libraryFolder) }); }
+    if (g) { Object.assign(g, { title, meaning, categoryId, level, rule, ruleHighlights, note, examples, patterns, pronunciation, tips, libraryFolder: banaEditorFolder('grammar',g.libraryFolder) }); }
   } else {
-    grammarPoints.push({ id: uid(), title, meaning, categoryId, level, rule, note, examples, patterns, pronunciation, tips, libraryFolder: banaEditorFolder('grammar'), favorite: false, mastery: { correct: 0, wrong: 0 } });
+    grammarPoints.push({ id: uid(), title, meaning, categoryId, level, rule, ruleHighlights, note, examples, patterns, pronunciation, tips, libraryFolder: banaEditorFolder('grammar'), favorite: false, mastery: { correct: 0, wrong: 0 } });
   }
   saveGrammarPoints();
   closeGrammarEditor();
@@ -16183,7 +16184,7 @@ function section(title,content){return content?'<section class="bgn-note-section
 function optional(title,text){return String(text||'').trim()?'<details class="bgn-note-extra"><summary>'+title+'</summary><p>'+h(text)+'</p></details>':''}
 window.banaOpenGrammarNote=function(id){const g=grammarPoints.find(g=>g.id===id);if(!g)return;if(!byId('banaGrammarNoteMask'))returnFocus=document.activeElement;byId('banaGrammarNoteMask')?.remove();const mask=document.createElement('div');mask.id='banaGrammarNoteMask';mask.className='hero-modal-mask show';mask.dataset.grammarId=id;
  const patterns=(g.patterns||[]).filter(p=>p.kr||p.zh),examples=(g.examples||[]).filter(p=>p.kr||p.zh),lv=grammarLevelMeta(g.level);
- mask.innerHTML='<article class="hero-modal bgn-reader" role="dialog" aria-modal="true" aria-labelledby="bgnReadTitle"><header class="hero-modal-head"><span class="gram-level-badge">'+h(lv.label)+'</span><div class="bgn-head-actions"><button type="button" class="ghost" data-bgn-action="edit">編輯</button><button type="button" class="hero-modal-close" data-bgn-action="close">關閉</button></div></header><h2 id="bgnReadTitle">'+h(g.title)+'</h2>'+(g.meaning?'<p class="bgn-main-meaning">'+h(g.meaning)+'</p>':'')+section('句型',patterns.length?'<div class="bgn-patterns">'+patterns.map(p=>'<div><b lang="ko">'+h(p.kr)+'</b>'+(p.zh?'<span>'+h(p.zh)+'</span>':'')+'</div>').join('')+'</div>':'')+section('文法說明',String(g.rule||'').trim()?'<p>'+h(g.rule)+'</p>':'')+section('例句',examples.map((p,i)=>'<div class="bgn-note-example"><div><p lang="ko">'+h(p.kr)+'</p>'+(p.zh?'<p class="bgn-example-meaning">'+h(p.zh)+'</p>':'')+'</div>'+(p.kr?'<button type="button" class="ghost" data-bgn-action="audio" data-index="'+i+'" aria-label="播放第'+(i+1)+'個例句">▶ 發音</button>':'')+'</div>').join(''))+(window.banaGrammarTipsHtml?banaGrammarTipsHtml(g):'')+'<footer class="bgn-read-footer"><button type="button" class="ghost" data-bgn-action="favorite" aria-pressed="'+!!g.favorite+'">'+(g.favorite?'♥ 已收藏':'♡ 收藏')+'</button>'+'</footer></article>';
+ mask.innerHTML='<article class="hero-modal bgn-reader" role="dialog" aria-modal="true" aria-labelledby="bgnReadTitle"><header class="hero-modal-head"><span class="gram-level-badge">'+h(lv.label)+'</span><div class="bgn-head-actions"><button type="button" class="ghost" data-bgn-action="edit">編輯</button><button type="button" class="hero-modal-close" data-bgn-action="close">關閉</button></div></header><h2 id="bgnReadTitle">'+h(g.title)+'</h2>'+(g.meaning?'<p class="bgn-main-meaning">'+h(g.meaning)+'</p>':'')+section('句型',patterns.length?'<div class="bgn-patterns">'+patterns.map(p=>'<div><b lang="ko">'+h(p.kr)+'</b>'+(p.zh?'<span>'+h(p.zh)+'</span>':'')+'</div>').join('')+'</div>':'')+section('文法說明',String(g.rule||'').trim()?'<p>'+ (window.banaGrammarRuleColors?banaGrammarRuleColors.html(g.rule,g.ruleHighlights):h(g.rule)) +'</p>':'')+section('例句',examples.map((p,i)=>'<div class="bgn-note-example"><div><p lang="ko">'+h(p.kr)+'</p>'+(p.zh?'<p class="bgn-example-meaning">'+h(p.zh)+'</p>':'')+'</div>'+(p.kr?'<button type="button" class="ghost" data-bgn-action="audio" data-index="'+i+'" aria-label="播放第'+(i+1)+'個例句">▶ 發音</button>':'')+'</div>').join(''))+(window.banaGrammarTipsHtml?banaGrammarTipsHtml(g):'')+'<footer class="bgn-read-footer"><button type="button" class="ghost" data-bgn-action="favorite" aria-pressed="'+!!g.favorite+'">'+(g.favorite?'♥ 已收藏':'♡ 收藏')+'</button>'+'</footer></article>';
  document.body.appendChild(mask);mask.addEventListener('click',event=>{const b=event.target.closest('[data-bgn-action]');if(!b)return;const action=b.dataset.bgnAction;if(action==='close')closeReader();if(action==='edit'){closeReader();openGrammarEditor(id)}if(action==='favorite'){toggleGrammarFavorite(id);banaOpenGrammarNote(id)}if(action==='audio')speakKorean(examples[Number(b.dataset.index)].kr);});
  mask.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();closeReader()}if(event.key==='Tab'){const focusable=[...mask.querySelectorAll('button,summary')];if(event.shiftKey&&document.activeElement===focusable[0]){event.preventDefault();focusable.at(-1).focus()}else if(!event.shiftKey&&document.activeElement===focusable.at(-1)){event.preventDefault();focusable[0].focus()}}});mask.querySelector('[data-bgn-action="close"]').focus()
 };
@@ -16506,5 +16507,31 @@ window.banaGrammarExampleBatch={parse,ensure};
 #banaGrammarNoteMask .bgn-read-footer{margin-top:16px}
 @media(max-width:650px){#banaGrammarNoteMask #bgnReadTitle{font-size:18px}#banaGrammarNoteMask .bgn-patterns>div{gap:3px}}
 </style>
+<style id="bana-grammar-rule-color-style">
+#grammarEditorMask .brc-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:3px}
+#grammarEditorMask .brc-toolbar>small:first-child{flex-basis:100%;font-size:11px;color:#849477;line-height:1.6}
+#grammarEditorMask .brc-swatch{width:30px;height:30px;min-height:30px;padding:0;border-radius:50%;border:3px solid #fff;outline:1px solid #dce4d2;background:var(--swatch,#f2f5ec);box-shadow:none;font-size:10px;color:#667a52;cursor:pointer}
+#grammarEditorMask .brc-swatch:focus-visible{outline:2px solid #405b39;outline-offset:2px}
+#grammarEditorMask #banaRuleColorStatus{font-size:11px;color:#839575;line-height:1.6}
+#grammarEditorMask .brc-preview{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.75;font-size:14px;padding:12px 13px;background:#fffdf7;border:1px dashed #dce4d2;border-radius:10px;color:#405a37;max-height:220px;overflow:auto}
+#grammarEditorMask .brc-preview[hidden]{display:none}
+</style><script id="bana-grammar-rule-color-script">(function(){
+const palette=[['#b64e59','莓紅'],['#a96528','暖橘'],['#39769c','湖藍'],['#8056a6','柔紫'],['#3d805d','深綠']];
+const valid=c=>palette.some(p=>p[0]===c);
+const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function colors(text,ranges){const out=Array(text.length).fill('');for(const r of ranges||[])if(valid(r.color)&&Number.isInteger(r.start)&&Number.isInteger(r.end))for(let i=Math.max(0,r.start);i<Math.min(text.length,r.end);i++)out[i]=r.color;return out}
+function pack(a){const out=[];for(let i=0;i<a.length;){let j=i+1;while(j<a.length&&a[j]===a[i])j++;if(a[i])out.push({start:i,end:j,color:a[i]});i=j}return out}
+function html(text,ranges){text=String(text||'');const a=colors(text,ranges);let out='';for(let i=0;i<text.length;){let j=i+1;while(j<text.length&&a[j]===a[i])j++;const t=escape(text.slice(i,j));out+=a[i]?'<span style="color:'+a[i]+'">'+t+'</span>':t;i=j}return out}
+function rebase(oldText,newText,ranges){let p=0;while(p<oldText.length&&p<newText.length&&oldText[p]===newText[p])p++;let end=0;while(end<oldText.length-p&&end<newText.length-p&&oldText[oldText.length-1-end]===newText[newText.length-1-end])end++;const a=colors(oldText,ranges);return pack(a.slice(0,p).concat(Array(newText.length-p-end).fill(''),end?a.slice(-end):[]))}
+let previous='',ranges=[];
+const input=()=>document.getElementById('gramRule');
+function preview(){const el=document.getElementById('banaRuleColorPreview');if(!el)return;el.innerHTML=html(input().value,ranges);el.hidden=!input().value;}
+function ensure(){const t=input();if(!t||document.getElementById('banaRuleColors'))return;const box=document.createElement('div');box.id='banaRuleColors';box.className='brc-toolbar';box.setAttribute('role','group');box.setAttribute('aria-label','文法說明文字顏色');const hint=document.createElement('small');hint.textContent='選取上方文字，再點顏色 · 下方即時預覽';box.append(hint);
+for(const [color,label] of [...palette,['','原色']]){const b=document.createElement('button');b.type='button';b.className='brc-swatch';b.title=label;b.setAttribute('aria-label','選取文字設為'+label);if(color)b.style.setProperty('--swatch',color);else b.textContent='原色';b.addEventListener('pointerdown',e=>e.preventDefault());b.addEventListener('click',()=>{const start=t.selectionStart,end=t.selectionEnd;const status=document.getElementById('banaRuleColorStatus');if(start===end){status.textContent='請先在上方選取要換色的文字';return}const a=colors(t.value,ranges);for(let i=start;i<end;i++)a[i]=color;ranges=pack(a);preview();status.textContent='已將選取文字設為'+label;t.focus({preventScroll:true});t.setSelectionRange(start,end)});box.append(b)}
+const status=document.createElement('small');status.id='banaRuleColorStatus';status.setAttribute('role','status');status.setAttribute('aria-live','polite');box.append(status);const view=document.createElement('div');view.id='banaRuleColorPreview';view.className='brc-preview';view.setAttribute('aria-label','文字顏色預覽');t.after(box);box.after(view);t.addEventListener('input',()=>{ranges=rebase(previous,t.value,ranges);previous=t.value;preview()});}
+const open=openGrammarEditor;openGrammarEditor=function(id){const r=open.apply(this,arguments);ensure();const g=grammarPoints.find(x=>x.id===id);previous=input().value;ranges=pack(colors(previous,g?.ruleHighlights||[]));document.getElementById('banaRuleColorStatus').textContent='';preview();return r};
+window.banaGrammarRuleColors={html,rebase,pack,colors,collect:function(){const t=input(),text=t.value;const first=text.length-text.trimStart().length;return pack(colors(text,ranges).slice(first,first+text.trim().length))}};
+})();
+</script>
 </body>
 </html>
