@@ -16685,5 +16685,19 @@ window.banaWordStories={open,words,partition,sources,findPlan,makePrompt,tokens,
 #grammarEditorMask .btc-preview[hidden]{display:none}
 #grammarEditorMask .btc-toolbar .brc-swatch{width:30px;height:30px;min-height:30px;padding:0;border-radius:50%;font-size:10px;font-weight:500}
 </style>
+<style id="bana-tips-larger-input-style">
+#grammarEditorMask #gramTipCards .bgt-field textarea[data-tip-field="content"]{min-height:240px!important;max-height:none!important;height:240px;resize:vertical!important;line-height:1.85!important;padding:13px 14px!important;scrollbar-gutter:stable}
+#grammarEditorMask .btc-toolbar .brc-swatch{white-space:nowrap;flex-shrink:0}
+</style><script id="bana-tips-larger-input-script">(function(){
+const mask=document.getElementById('grammarEditorMask');if(!mask)return;
+let pending=false;
+function fit(input){if(!input.getClientRects().length||!input.clientWidth)return;const top=input.scrollTop;input.style.setProperty('height','0px','important');const maximum=Math.max(240,Math.min(520,window.innerHeight*.62)),wanted=input.scrollHeight+2,height=Math.max(240,Math.min(maximum,wanted));input.style.setProperty('height',Math.ceil(height)+'px','important');input.style.setProperty('overflow-y',wanted>height?'auto':'hidden','important');input.scrollTop=top}
+function schedule(){if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;mask.querySelectorAll('#gramTipCards textarea[data-tip-field="content"]').forEach(fit)})}
+mask.addEventListener('input',event=>{if(event.target.matches('#gramTipCards textarea[data-tip-field="content"]'))schedule()});
+mask.addEventListener('click',schedule);window.addEventListener('resize',schedule);
+new MutationObserver(schedule).observe(mask,{childList:true,subtree:true,attributes:true,attributeFilter:['class','hidden','open']});
+schedule();
+})();
+</script>
 </body>
 </html>
