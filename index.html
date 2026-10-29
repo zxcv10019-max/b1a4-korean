@@ -16741,5 +16741,12 @@ schedule();
 #grammarEditorMask .bgt-contrast-shared textarea{min-height:60px!important}
 #banaGrammarNoteMask .bgt-contrast-shared-zh{font-size:13px;line-height:1.7;color:#879078;margin:7px 0 0;padding:0 2px;white-space:pre-wrap;overflow-wrap:anywhere}
 </style>
+<style id="bana-wordlist-story-entry-style">#banaWordToolbar [data-bws-wordlist]{background:#edf4e3;border-color:#cbdcba;color:#5d7c48;white-space:nowrap}</style><script id="bana-wordlist-story-entry-script">(function(){
+function bankSource(){const i=wlCurrentFolder;if(i===null||i===undefined||!folders[i])return null;return window.banaWordStories?.sources().find(s=>s.key.startsWith('bank_')&&s.indices.length===1&&s.indices[0]===i)||null}
+function decorate(){const toolbar=document.getElementById('banaWordToolbar');if(!toolbar)return;let line=toolbar.querySelector('.bana-bank-language-actions');if(!line){line=document.createElement('div');line.className='bana-bank-language-actions';toolbar.appendChild(line)}let b=line.querySelector('[data-bws-wordlist]');if(!b){b=document.createElement('button');b.type='button';b.dataset.bwsWordlist='1';b.textContent='🌱 這個題庫的故事';b.addEventListener('click',()=>{const source=bankSource();if(!source){alert('請先開啟一個題庫，再閱讀這個題庫的故事。');return}banaWordStories.open(source.key)});line.appendChild(b)}const source=bankSource();b.disabled=!source;b.title=source?'使用「'+folders[wlCurrentFolder].name+'」的單字產生故事':'請先選擇題庫'}
+const original=renderWordList;renderWordList=function(){const result=original.apply(this,arguments);decorate();return result};
+if(document.getElementById('wordListOverlay')?.classList.contains('show'))decorate();
+})();
+</script>
 </body>
 </html>
