@@ -18884,7 +18884,7 @@ const marks={grammar:['home','狐狸的文法手帳'],dialogue:['practiceHub','�
 function mascot(tab){const el=make('img','wf-section-mascot');let image=$('.bottom-nav [data-tab="'+tab+'"] img');if(!image&&tab==='practiceHub')image=$('.home-action-card.hac-blue img');el.src=image?.src||$('.bottom-nav img')?.src||'';el.alt='';el.setAttribute('aria-hidden','true');return el}
 function pageMark(page,tab,text){let head=page.querySelector(':scope > .bl-page-heading,:scope > .studio-heading,:scope > .bp-heading,:scope > .topbar')||page.querySelector('.topbar');if(!head)return;head.classList.add('wf-diary-heading');if(!head.querySelector('.wf-section-mark')){const mark=make('div','wf-section-mark');mark.append(mascot(tab),make('span','',text+' ♡'));head.prepend(mark)}}
 function favoriteButton(term){const b=make('button','wf-word-heart');b.type='button';b.title='收藏單字';b.setAttribute('aria-label','收藏單字 '+term);const refresh=()=>{const saved=favorites.words.some(x=>x.k===term);b.textContent=saved?'♥':'♡';b.setAttribute('aria-pressed',String(saved))};refresh();b.onclick=e=>{e.stopPropagation();const c=wlCards.find(x=>x.term===term);if(!c)return;const i=favorites.words.findIndex(x=>x.k===term);if(i>=0)favorites.words.splice(i,1);else favorites.words.push({k:c.term,z:c.definition});saveFavorites();document.querySelectorAll('.wf-word-heart').forEach(el=>{if(el.dataset.term===term){const saved=favorites.words.some(x=>x.k===term);el.textContent=saved?'♥':'♡';el.setAttribute('aria-pressed',String(saved))}})};b.dataset.term=term;return b}
-function words(){const body=$('#wlBody');if(!body||typeof wlCards==='undefined')return;body.classList.add('wf-bank-word-grid');body.querySelectorAll(':scope > .word-card').forEach(card=>{if(card.dataset.wfCard)return;card.dataset.wfCard='1';const idx=Number(card.dataset.idx),word=wlCards[idx];if(!word)return;card.classList.add('wf-bank-word');card.prepend(make('small','wf-word-number','WORD ♡ '+String(idx+1).padStart(2,'0')),favoriteButton(word.term));const example=card.querySelector('.wc-example-view');if(example){const fold=make('details','wf-word-examples');fold.append(make('summary','','例句'));example.before(fold);fold.append(example);fold.addEventListener('click',e=>e.stopPropagation())}if(word.note||word.root||word.aiNote){const details=make('details','wf-word-note');details.append(make('summary','','小筆記'));const text=[word.root&&'字根：'+word.root,word.note,word.aiNote].filter(Boolean).join('\n');details.append(make('p','',text));details.addEventListener('click',e=>e.stopPropagation());card.append(details)}})}
+function words(){const body=$('#wlBody');if(!body||typeof wlCards==='undefined')return;body.classList.add('wf-bank-word-grid');body.querySelectorAll(':scope > .word-card').forEach(card=>{if(card.dataset.wfCard)return;card.dataset.wfCard='1';const idx=Number(card.dataset.idx),word=wlCards[idx];if(!word)return;card.classList.add('wf-bank-word');card.prepend(make('small','wf-word-number',String(idx+1).padStart(2,'0')),favoriteButton(word.term));const example=card.querySelector('.wc-example-view');if(example){const fold=make('details','wf-word-examples');fold.append(make('summary','','例句'));example.before(fold);fold.append(example);fold.addEventListener('click',e=>e.stopPropagation())}if(word.note||word.root||word.aiNote){const details=make('details','wf-word-note');details.append(make('summary','','小筆記'));const text=[word.root&&'字根：'+word.root,word.note,word.aiNote].filter(Boolean).join('\n');details.append(make('p','',text));details.addEventListener('click',e=>e.stopPropagation());card.append(details)}})}
 function grammar(){document.querySelectorAll('.bgn-card').forEach(card=>{if(card.dataset.wfGrammar)return;card.dataset.wfGrammar='1';card.classList.add('wf-grammar-paper');const g=grammarPoints.find(x=>String(x.id)===card.dataset.id);if(!g)return;const top=card.querySelector('.bgn-card-top');if(top){const mark=make('span','wf-grammar-tag','文法筆記 ♡');top.prepend(mark)}const count=card.querySelector(':scope > small');if(count&&g.notebookBlocks?.length)count.textContent=g.notebookBlocks.length+' 段筆記';const preview=(g.notebookBlocks||[]).find(x=>x.text)?.text||g.rule||'';const actions=card.querySelector('.bgn-card-actions');if(preview){const text=make('p','wf-grammar-excerpt',preview);if(actions)actions.before(text);else card.append(text)}const example=(g.examples||[]).find(x=>x.kr);if(example){const el=make('div','wf-grammar-example');el.append(make('small','','例句'),make('p','',example.kr));if(example.zh)el.append(make('span','',example.zh));if(actions)actions.before(el);else card.append(el)}})}
 // Reuse the established dialogue renderer and its delegated edit/audio/read actions in every scope.
 const originalDialogueCard=window.makeDialogueCardHtml;
@@ -19396,6 +19396,38 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   titleNotes();
   const mask=document.getElementById('banaGrammarNoteMask');
   if(mask)new MutationObserver(titleNotes).observe(mask,{childList:true,subtree:true});
+})();
+</script><style id="bn-collectible-card-fix">
+#wlBody.wf-bank-word-grid>.word-card.wf-bank-word.bn-compact-word{border:1px solid var(--bn-edge,#eadbd2)!important;border-radius:19px!important;box-shadow:0 3px 0 var(--bn-shadow,#e8dfd4)!important;background:var(--bn-paper,#fff0ed)!important;}
+#wlBody.wf-bank-word-grid>.word-card.wf-bank-word.bn-compact-word:nth-child(4n+1){--bn-paper:#fff0ed;--bn-edge:#f0d7d1;--bn-shadow:#eadbd2}
+#wlBody.wf-bank-word-grid>.word-card.wf-bank-word.bn-compact-word:nth-child(4n+2){--bn-paper:#fff6df;--bn-edge:#eedeb6;--bn-shadow:#e9dfc7}
+#wlBody.wf-bank-word-grid>.word-card.wf-bank-word.bn-compact-word:nth-child(4n+3){--bn-paper:#f1f5e5;--bn-edge:#dce5c8;--bn-shadow:#dfe3d0}
+#wlBody.wf-bank-word-grid>.word-card.wf-bank-word.bn-compact-word:nth-child(4n){--bn-paper:#f5eff8;--bn-edge:#e3d9e9;--bn-shadow:#e4dce8}
+#wlBody .bn-compact-word .wf-word-number{font-size:10px!important;letter-spacing:.08em;color:#a18e79!important}
+</style><style id="bn-fox-tips-reader-final">
+#banaGrammarNoteMask .bgt-reader{margin:8px 0 0!important;padding:10px 12px!important;border:1px solid #dce5d2!important;border-radius:12px!important;background:#fbfcf7!important;box-shadow:none!important}
+#banaGrammarNoteMask .bgt-reader>h3{display:flex!important;align-items:center;gap:6px;margin:0 0 7px!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;transform:none!important;width:100%!important;color:#64785a!important;font-size:11px!important;line-height:1.5!important}
+#banaGrammarNoteMask .bgt-reader>h3::before{content:'🌱';font-size:11px}
+#banaGrammarNoteMask .bgt-reader>h3 small{margin-left:auto!important;color:#a88d98!important;font-size:9px!important;font-weight:500}
+#banaGrammarNoteMask .bgt-read-card{position:relative!important;margin:0!important;padding:8px 0!important;border:0!important;border-top:1px solid #e6eadf!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+#banaGrammarNoteMask .bgt-read-card::before,#banaGrammarNoteMask .bgt-read-card::after{display:none!important}
+#banaGrammarNoteMask .bgt-read-card .bgt-read-head>span{color:#849677!important}
+#banaGrammarNoteMask .bgt-read-card h4{color:#687a5d!important}
+#banaGrammarNoteMask .bgt-read-card p{line-height:1.7}
+</style>
+<script>
+(function(){
+  function renameTips(){
+    document.querySelectorAll('#banaGrammarNoteMask .bgt-reader>h3').forEach(h=>{
+      if(h.dataset.bnFoxTitle==='1')return;
+      const count=h.querySelector('small')?.textContent.trim()||'';
+      h.dataset.bnFoxTitle='1';
+      h.replaceChildren(document.createTextNode('狐狸的補充筆記 ♡'));
+      if(count){const small=document.createElement('small');small.textContent=count;h.append(small)}
+    });
+  }
+  renameTips();
+  new MutationObserver(renameTips).observe(document.body,{childList:true,subtree:true});
 })();
 </script></body>
 </html>
