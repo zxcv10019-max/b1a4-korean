@@ -19446,5 +19446,43 @@ body{font-family:"Cafe24Dongdong","小熊啵啵奶綠","Noto Sans TC","Microsoft
 #wlBody.wf-bank-word-grid>.word-card.bn-compact-word{position:relative!important;padding-top:30px!important}
 #wlBody.wf-bank-word-grid>.word-card.bn-compact-word .wc-sub-row .wc-icon-btn{position:absolute!important;top:4px!important;right:6px!important;z-index:2;flex:0 0 36px!important;width:36px!important;height:36px!important;min-width:36px;min-height:36px;border-radius:50%;padding:0!important}
 #wlBody.wf-bank-word-grid> .word-card.bn-compact-word button.wf-word-heart{left:37px!important;right:auto!important;top:7px!important;width:28px!important;height:28px!important;min-width:28px;min-height:28px;padding:0!important;font-size:20px!important;line-height:28px!important}
+</style><style id="word-library-reference-layout">
+/* Editor page: constrain the full form and keep it centered. */
+#editorWrap>.editor-layout.forest-editor{width:min(100%,900px)!important;margin:0 auto!important;grid-template-columns:minmax(0,1fr)!important;gap:0!important}
+#editorWrap>.editor-layout.forest-editor>.forest-card-editor{min-width:0;width:100%}
+/* Study page: put progress and the primary action into one calm horizontal panel. */
+#wordListOverlay .wl-header{position:relative;isolation:isolate;min-height:62px;padding:6px 18px;border-bottom:1px solid #e5e8d8;background:linear-gradient(180deg,#fffef9,#fbfcf5)}
+#wordListOverlay .wl-header::before,#wordListOverlay .wl-header::after{content:"";position:absolute;z-index:-1;bottom:0;width:27%;height:30px;opacity:.68;pointer-events:none;background:radial-gradient(ellipse at 12% 100%,#cfe2a7 0 18%,transparent 20%),radial-gradient(ellipse at 35% 100%,#d8e9b7 0 25%,transparent 27%),radial-gradient(ellipse at 60% 100%,#c8dfa0 0 22%,transparent 24%),radial-gradient(ellipse at 84% 100%,#d9e9b9 0 19%,transparent 21%)}
+#wordListOverlay .wl-header::before{left:6%}
+#wordListOverlay .wl-header::after{right:6%}
+#wordListOverlay .wl-title{position:relative;z-index:1;font-size:19px;letter-spacing:.04em;color:#344b29}
+#wordListOverlay .wl-title::before,#wordListOverlay .wl-title::after{content:"🌱";font-size:17px;margin:0 12px;vertical-align:1px}
+#wordListOverlay #wlStudyView{position:relative;padding:0 clamp(12px,2vw,34px)}
+#wordListOverlay .wl-start-row{position:absolute;z-index:2;top:40px;right:clamp(24px,3vw,48px);width:190px;padding:0}
+#wordListOverlay .wl-start-btn{width:100%;min-height:58px;border:1px solid #6b993e;border-radius:999px;padding:12px 18px;background:linear-gradient(135deg,#88b947,#66a32f);box-shadow:0 3px 0 #dce7c9;color:#fff;font-size:16px}
+#wordListOverlay .graduation-panel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 18px;align-items:center;margin:14px 0 14px;padding:15px 220px 14px 18px;border:1px solid #dce6ca;border-radius:24px;background:linear-gradient(110deg,#fffef8,#f4f9e9);box-shadow:0 3px 0 #e8eadc}
+#wordListOverlay .graduation-title{grid-column:1/-1;margin:0;font-size:14px;color:#526d3d}
+#wordListOverlay .graduation-row{grid-template-columns:auto minmax(20px,1fr) auto;gap:7px;margin:0;font-size:12px}
+#wordListOverlay .graduation-bar{height:10px;background:#e8eedf}
+#wordListOverlay .graduation-panel>div[style*="margin-top"]{grid-column:1/-1;margin:0!important;font-size:11px!important}
+#wordListOverlay .graduation-badge{grid-column:1/-1}
+#wordListOverlay .bana-word-toolbar{display:flex;align-items:center;gap:10px 14px;margin:14px 0;padding:0 2px;flex-wrap:wrap}
+#wordListOverlay .bana-word-search{gap:9px;flex:0 0 auto}
+#wordListOverlay .bana-word-search input{width:clamp(190px,27vw,320px);border-radius:999px;padding:11px 16px;background:#fffefa}
+#wordListOverlay #bnWordFilters{display:flex;flex:1 1 480px;align-items:center;gap:8px;flex-wrap:wrap;margin:0!important;padding:0!important;border:0!important}
+#wordListOverlay #bnWordFilters button{min-height:38px;padding:8px 16px;border-radius:999px;font-size:13px}
+#wordListOverlay #bnWordFilters button.bn-filter-practice{margin-left:auto}
+#wordListOverlay .bana-bank-language-actions{display:flex;align-items:center;gap:8px;margin:0!important}
+#wordListOverlay .bana-word-pages{margin-left:auto;font-size:13px;white-space:nowrap}
+#wordListOverlay #wlBody.wf-bank-word-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;max-width:1800px;padding:6px 0 100px}
+#wordListOverlay #wlBody .word-card.wf-bank-word.bn-compact-word{min-height:156px!important;padding:34px 26px 22px!important;border-radius:25px!important}
+@media(min-width:700px){#wordListOverlay #wlBody .bn-compact-word .bn-open-word{font-size:clamp(20px,2vw,31px)!important;line-height:1.4!important}#wordListOverlay #wlBody .bn-compact-word .wc-def{font-size:clamp(14px,1.2vw,18px)!important}#wordListOverlay #wlBody .bn-compact-word .wc-sub-row .wc-icon-btn{width:54px!important;height:54px!important;min-width:54px;min-height:54px;flex-basis:54px!important;font-size:20px}}
+@media(max-width:699px){#editorWrap>.editor-layout.forest-editor{width:100%!important}#wordListOverlay .wl-header{min-height:54px;padding:4px 10px}#wordListOverlay .wl-title{font-size:15px}#wordListOverlay .wl-title::before,#wordListOverlay .wl-title::after{font-size:13px;margin:0 5px}#wordListOverlay #wlStudyView{padding:0 12px}#wordListOverlay .wl-start-row{position:static;width:auto;padding:9px 0 0}#wordListOverlay .wl-start-btn{min-height:40px;font-size:13px;padding:9px 14px}#wordListOverlay .graduation-panel{grid-template-columns:1fr;gap:8px;margin:11px 0;padding:12px;border-radius:17px}#wordListOverlay .graduation-title{grid-column:auto;font-size:12px;margin:0 0 2px}#wordListOverlay .graduation-row{grid-template-columns:62px minmax(20px,1fr) 38px;font-size:11px}#wordListOverlay .graduation-panel>div[style*="margin-top"]{grid-column:auto;font-size:10px!important}#wordListOverlay #bnWordFilters{flex:1 1 100%}#wordListOverlay #bnWordFilters button{min-height:34px;padding:7px 11px;font-size:11px}#wordListOverlay .bana-word-search{flex:1 1 100%}#wordListOverlay .bana-word-search input{width:100%}#wordListOverlay .bana-word-pages{margin-left:auto}#wordListOverlay #wlBody.wf-bank-word-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding-top:0}#wordListOverlay #wlBody .word-card.wf-bank-word.bn-compact-word{min-height:116px!important;padding:30px 10px 12px!important;border-radius:19px!important}}
+@media(max-width:330px){#wordListOverlay #wlBody.wf-bank-word-grid{grid-template-columns:1fr}}
+</style><style id="word-toolbar-reference-order">
+#wordListOverlay .bana-word-search{order:1}
+#wordListOverlay #bnWordFilters{order:2}
+#wordListOverlay .bana-bank-language-actions{order:3}
+#wordListOverlay .bana-word-pages{order:4;margin-left:auto}
 </style></body>
 </html>
