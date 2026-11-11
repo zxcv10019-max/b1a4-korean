@@ -15779,22 +15779,31 @@ function applyDialoguePaste() {
   const raw = document.getElementById("dlgPasteArea").value;
   if (!raw.trim()) return;
   const rawLines = raw.split("\n").map(l => l.trim()).filter(Boolean);
-  let lastRole = "B"; // 讓第一句沒標角色時預設為 A
+  let lastRole = "B";
   const parsed = rawLines.map(line => {
-    const parts = line.split(/\t|｜|\|/).map(s => s.trim());
-    let role, kr, zh;
-    if (parts.length >= 3 && /^[ab]$/i.test(parts[0])) {
-      role = parts[0].toUpperCase();
-      kr = parts[1];
-      zh = parts.slice(2).join(" ");
+    let role = null;
+    let content = line;
+    const prefix = content.match(/^\s*([AB])(?:\s*[:：.、)）\]-]\s*|\s+)(.+)$/i);
+    if (prefix) {
+      role = prefix[1].toUpperCase();
+      content = prefix[2].trim();
+    }
+    const parts = content.split(/\t|｜|\|/).map(s => s.trim());
+    if (!role && parts.length >= 2 && /^[ab]$/i.test(parts[0])) {
+      role = parts.shift().toUpperCase();
+    }
+    let kr, zh;
+    if (role) {
+      kr = parts[0] || "";
+      zh = parts.slice(1).join(" ");
     } else if (parts.length === 2) {
       role = lastRole === "A" ? "B" : "A";
       kr = parts[0];
       zh = parts[1];
     } else {
       role = lastRole === "A" ? "B" : "A";
-      kr = parts[0];
-      zh = "";
+      kr = parts[0] || "";
+      zh = parts.slice(1).join(" ");
     }
     lastRole = role;
     return { role, kr, zh };
@@ -16767,7 +16776,7 @@ function banaDailyExpressionCard(s){
  const lines=Array.isArray(s.dailyLines)&&s.dailyLines.length?s.dailyLines:[{role:'A',kr:s.kr,zh:s.zh}],displayLines=lines.map(banaDailyPronunciation.line),blocks=banaDailyReadingBlocks(displayLines);
  function text(line,i,dialogue){return '<div class="'+(dialogue?'dpr-turn':'dpr-single-text')+'">'+(dialogue?'<div class="dpr-turn-speaker">'+banaDialogueRoleIcon(line.role||'A')+'<span>'+esc(line.role||'A')+'</span></div>':'')+'<div class="dpr-turn-content"><p class="dpr-korean" lang="ko">'+esc(line.kr||'')+'</p><p class="dpr-chinese" lang="zh-Hant">'+esc(line.zh||'（尚未填寫中文）')+'</p>'+(String(line.pronunciation||'').trim()?'<div class="dpr-reading"><span>讀音</span><p>'+esc(line.pronunciation)+'</p></div>':'')+'</div>'+(dialogue?audio(i):'')+'</div>'}
  function audio(i){return '<button type="button" class="dpr-audio" data-bde-action="line-audio" data-id="'+esc(s.id)+'" data-line-index="'+i+'" aria-label="播放第'+(i+1)+'句韓文" title="聽發音">▶</button>'}
- return '<article class="card bde-card dpr-collection"><details class="dpr-details" open><summary><span class="dpr-heading">'+esc(s.title||'日常生活用語')+'</span><span class="dpr-total">'+lines.length+' 句<span class="dpr-fold"></span></span></summary><div class="dpr-actions"><button type="button" data-bde-action="speak" data-id="'+esc(s.id)+'">▶ 整組播放</button><button type="button" data-bde-action="favorite" data-id="'+esc(s.id)+'" aria-pressed="'+!!s.favorite+'">'+(s.favorite?'♥ 已收藏':'♡ 收藏')+'</button><button type="button" data-bde-action="edit" data-id="'+esc(s.id)+'">編輯</button><button type="button" class="dpr-delete" data-bde-action="delete" data-id="'+esc(s.id)+'">刪除</button></div><div class="dpr-grid">'+blocks.map(block=>{const dialogue=block.lines.length>1,first=block.lines[0];return '<section class="dpr-phrase'+(dialogue?' dpr-dialogue-block':'')+'"><header><span class="dpr-number">'+String(first.index+1).padStart(2,'0')+(dialogue?'–'+String(block.lines.at(-1).index+1).padStart(2,'0'):'')+'</span>'+(dialogue?'<span class="dpr-dialogue-label">一問一答</span>':audio(first.index))+'</header>'+block.lines.map(({line,index})=>text(line,index,dialogue)).join('')+'</section>'}).join('')+'</div></details></article>'
+ return '<article class="card bde-card dpr-collection"><details class="dpr-details" open><summary><span class="dpr-heading">'+esc(s.title||'日常生活用語')+'</span><span class="dpr-total">'+lines.length+' 句<span class="dpr-fold"></span></span></summary><div class="dpr-actions"><button type="button" data-bde-action="speak" data-id="'+esc(s.id)+'">▶ 整組播放</button><button type="button" data-bde-action="favorite" data-id="'+esc(s.id)+'" aria-pressed="'+!!s.favorite+'">'+(s.favorite?'♥ 已收藏':'♡ 收藏')+'</button><button type="button" data-bde-action="edit" data-id="'+esc(s.id)+'">編輯</button><button type="button" class="dpr-delete" data-bde-action="delete" data-id="'+esc(s.id)+'">刪除</button></div><div class="dpr-grid">'+blocks.map(block=>{const dialogue=block.lines.length>1,first=block.lines[0];if(!dialogue)return '<section class="dpr-phrase dpr-single-phrase"><span class="dpr-number">'+String(first.index+1).padStart(2,'0')+'</span>'+text(first.line,first.index,false)+audio(first.index)+'</section>';return '<section class="dpr-phrase dpr-dialogue-block"><header><span class="dpr-number">'+String(first.index+1).padStart(2,'0')+'–'+String(block.lines.at(-1).index+1).padStart(2,'0')+'</span><span class="dpr-dialogue-label">對話</span></header>'+block.lines.map(({line,index})=>text(line,index,true)).join('')+'</section>'}).join('')+'</div></details></article>'
 }
 window.renderDailyExpressions=function(){
  const wrap=document.getElementById('banaDailyExpressionList');if(!wrap)return;
@@ -19557,5 +19566,260 @@ body{font-family:"Cafe24Dongdong","小熊啵啵奶綠","Noto Sans TC","Microsoft
 .bn-word-edit-actions{gap:8px!important;margin-top:14px!important;padding-top:12px!important;border-top:1px solid #e7eadf!important}
 .bn-word-edit-actions button{min-height:38px!important;border-radius:10px!important}
 @media(max-width:650px){.bn-word-mask{padding:8px!important}.bn-word-mask .bn-word-notebook{max-height:94dvh!important;border-radius:17px!important}.bn-word-reading{padding:15px 15px 20px!important}.bn-word-notebook #bnWordTitle{font-size:25px!important}.bn-word-detail-content>section{padding:10px 11px!important}}
-</style></body>
+</style><style id="bn-fox-notes-style">
+#banaGrammarNoteMask .bn-reference-grammar [data-bn-note-kind="sticky"]{position:relative!important;transform:none!important;margin:8px 0 0!important;padding:10px 12px!important;border:1px solid #dce5d2!important;border-radius:12px!important;background:#fbfcf7!important;box-shadow:none!important;}
+#banaGrammarNoteMask .bn-reference-grammar [data-bn-note-kind="sticky"]::after{display:none!important}
+#banaGrammarNoteMask .bn-reference-grammar [data-bn-note-kind="sticky"]>.bn-ribbon-icon{display:none!important}
+#banaGrammarNoteMask .bn-reference-grammar [data-bn-note-kind="sticky"]>h3{display:flex;align-items:center;gap:6px;margin:0 0 7px!important;padding:0!important;border:0!important;background:transparent!important;color:#64785a!important;font-size:11px!important;font-weight:700;line-height:1.5}
+#banaGrammarNoteMask .bn-reference-grammar [data-bn-note-kind="sticky"]>h3::before{content:'🌱';font-size:11px}
+#banaGrammarNoteMask .bn-reference-grammar [data-bn-note-kind="sticky"]>h3 small{margin-left:auto;color:#a88d98!important;font-size:9px!important;font-weight:500}
+#banaGrammarNoteMask .bn-reference-grammar [data-bn-note-kind="sticky"] .bgn-note-extra{padding:7px 0!important;margin:0!important;border:0!important;border-top:1px solid #e6eadf!important;border-radius:0!important}
+#banaGrammarNoteMask .bn-reference-grammar [data-bn-note-kind="sticky"] .bgn-note-extra+ .bgn-note-extra{margin-top:5px!important}
+#banaGrammarNoteMask .bn-reference-grammar [data-bn-note-kind="sticky"] .bgn-note-extra summary{font-size:10px!important;color:#77866a!important}
+#banaGrammarNoteMask .bn-reference-grammar [data-bn-note-kind="sticky"] .bgn-note-extra p{font-size:11px!important;line-height:1.7!important;color:#687365!important}
+#banaGrammarNoteMask .bn-reference-grammar .bn-note-duo{display:block!important;margin:0!important}
+</style>
+<style id="bn-collectible-card-fix">
+#wlBody.wf-bank-word-grid>.word-card.wf-bank-word.bn-compact-word{border:1px solid var(--bn-edge,#eadbd2)!important;border-radius:19px!important;box-shadow:0 3px 0 var(--bn-shadow,#e8dfd4)!important;background:var(--bn-paper,#fff0ed)!important;}
+#wlBody.wf-bank-word-grid>.word-card.wf-bank-word.bn-compact-word:nth-child(4n+1){--bn-paper:#fff0ed;--bn-edge:#f0d7d1;--bn-shadow:#eadbd2}
+#wlBody.wf-bank-word-grid>.word-card.wf-bank-word.bn-compact-word:nth-child(4n+2){--bn-paper:#fff6df;--bn-edge:#eedeb6;--bn-shadow:#e9dfc7}
+#wlBody.wf-bank-word-grid>.word-card.wf-bank-word.bn-compact-word:nth-child(4n+3){--bn-paper:#f1f5e5;--bn-edge:#dce5c8;--bn-shadow:#dfe3d0}
+#wlBody.wf-bank-word-grid>.word-card.wf-bank-word.bn-compact-word:nth-child(4n){--bn-paper:#f5eff8;--bn-edge:#e3d9e9;--bn-shadow:#e4dce8}
+#wlBody .bn-compact-word .wf-word-number{font-size:10px!important;letter-spacing:.08em;color:#a18e79!important}
+</style>
+<style id="bn-fox-tips-reader-final">
+#banaGrammarNoteMask .bgt-reader{margin:8px 0 0!important;padding:10px 12px!important;border:1px solid #dce5d2!important;border-radius:12px!important;background:#fbfcf7!important;box-shadow:none!important}
+#banaGrammarNoteMask .bgt-reader>h3{display:flex!important;align-items:center;gap:6px;margin:0 0 7px!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;transform:none!important;width:100%!important;color:#64785a!important;font-size:11px!important;line-height:1.5!important}
+#banaGrammarNoteMask .bgt-reader>h3::before{content:'🌱';font-size:11px}
+#banaGrammarNoteMask .bgt-reader>h3 small{margin-left:auto!important;color:#a88d98!important;font-size:9px!important;font-weight:500}
+#banaGrammarNoteMask .bgt-read-card{position:relative!important;margin:0!important;padding:8px 0!important;border:0!important;border-top:1px solid #e6eadf!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+#banaGrammarNoteMask .bgt-read-card::before,#banaGrammarNoteMask .bgt-read-card::after{display:none!important}
+#banaGrammarNoteMask .bgt-read-card .bgt-read-head>span{color:#849677!important}
+#banaGrammarNoteMask .bgt-read-card h4{color:#687a5d!important}
+#banaGrammarNoteMask .bgt-read-card p{line-height:1.7}
+</style>
+<style id="cafe24-korean-font">
+@font-face{font-family:"Cafe24Dongdong";src:url("./Cafe24DongdongRegular.ttf") format("truetype");font-style:normal;font-weight:400;font-display:swap;unicode-range:U+1100-11FF,U+3130-318F,U+AC00-D7A3}
+body{font-family:"Cafe24Dongdong","Noto Sans TC","Microsoft JhengHei",Arial,sans-serif!important}
+</style>
+<style id="local-chinese-font">
+@font-face{font-family:"小熊啵啵奶綠";src:url("./小熊啵啵奶綠.TTF") format("truetype");font-style:normal;font-weight:400;font-display:swap;unicode-range:U+0030-0039,U+3000-303F,U+3400-4DBF,U+4E00-9FFF,U+F900-FAFF,U+FF00-FFEF}
+body{font-family:"Cafe24Dongdong","小熊啵啵奶綠","Noto Sans TC","Microsoft JhengHei",Arial,sans-serif!important}
+</style>
+<style id="bn-word-card-inline-layout">
+#wlBody .word-card.bn-compact-word .wc-main{display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;align-items:center!important;justify-content:center!important;gap:3px 7px!important}
+#wlBody .word-card.bn-compact-word .wc-term-row{display:flex!important;flex:0 1 auto!important;width:auto!important;min-width:0;min-height:0!important}
+#wlBody .word-card.bn-compact-word .bn-open-word{width:auto!important;max-width:100%;min-width:0;min-height:0!important;padding:0 1px!important;font-size:11px!important;line-height:1.45!important;white-space:normal;overflow-wrap:anywhere;word-break:keep-all;text-align:center}
+#wlBody .word-card.bn-compact-word .wc-sub-row{display:flex!important;flex:0 1 auto!important;flex-wrap:nowrap!important;align-items:center!important;justify-content:center!important;gap:4px!important;width:auto!important;min-width:0;min-height:0!important}
+#wlBody .word-card.bn-compact-word .wc-def{min-width:0;font-size:9px!important;line-height:1.4;overflow-wrap:anywhere;word-break:keep-all}
+#wlBody .word-card.bn-compact-word .wc-icon-btn{flex:0 0 36px!important;width:36px!important;height:36px!important;min-width:36px;min-height:36px;padding:0!important}
+</style>
+<style id="bn-word-card-audio-corner">
+#wlBody.wf-bank-word-grid>.word-card.bn-compact-word{position:relative!important;padding-top:30px!important}
+#wlBody.wf-bank-word-grid>.word-card.bn-compact-word .wc-sub-row .wc-icon-btn{position:absolute!important;top:4px!important;right:6px!important;z-index:2;flex:0 0 36px!important;width:36px!important;height:36px!important;min-width:36px;min-height:36px;border-radius:50%;padding:0!important}
+#wlBody.wf-bank-word-grid> .word-card.bn-compact-word button.wf-word-heart{left:37px!important;right:auto!important;top:7px!important;width:28px!important;height:28px!important;min-width:28px;min-height:28px;padding:0!important;font-size:20px!important;line-height:28px!important}
+</style>
+<style id="word-library-reference-layout">
+/* Editor page: constrain the full form and keep it centered. */
+#editorWrap>.editor-layout.forest-editor{width:min(100%,900px)!important;margin:0 auto!important;grid-template-columns:minmax(0,1fr)!important;gap:0!important}
+#editorWrap>.editor-layout.forest-editor>.forest-card-editor{min-width:0;width:100%}
+/* Study page: put progress and the primary action into one calm horizontal panel. */
+#wordListOverlay .wl-header{position:relative;isolation:isolate;min-height:62px;padding:6px 18px;border-bottom:1px solid #e5e8d8;background:linear-gradient(180deg,#fffef9,#fbfcf5)}
+#wordListOverlay .wl-header::before,#wordListOverlay .wl-header::after{content:"";position:absolute;z-index:-1;bottom:0;width:27%;height:30px;opacity:.68;pointer-events:none;background:radial-gradient(ellipse at 12% 100%,#cfe2a7 0 18%,transparent 20%),radial-gradient(ellipse at 35% 100%,#d8e9b7 0 25%,transparent 27%),radial-gradient(ellipse at 60% 100%,#c8dfa0 0 22%,transparent 24%),radial-gradient(ellipse at 84% 100%,#d9e9b9 0 19%,transparent 21%)}
+#wordListOverlay .wl-header::before{left:6%}
+#wordListOverlay .wl-header::after{right:6%}
+#wordListOverlay .wl-title{position:relative;z-index:1;font-size:19px;letter-spacing:.04em;color:#344b29}
+#wordListOverlay .wl-title::before,#wordListOverlay .wl-title::after{content:"🌱";font-size:17px;margin:0 12px;vertical-align:1px}
+#wordListOverlay #wlStudyView{position:relative;padding:0 clamp(12px,2vw,34px)}
+#wordListOverlay .wl-start-row{position:absolute;z-index:2;top:40px;right:clamp(24px,3vw,48px);width:190px;padding:0}
+#wordListOverlay .wl-start-btn{width:100%;min-height:58px;border:1px solid #6b993e;border-radius:999px;padding:12px 18px;background:linear-gradient(135deg,#88b947,#66a32f);box-shadow:0 3px 0 #dce7c9;color:#fff;font-size:16px}
+#wordListOverlay .graduation-panel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 18px;align-items:center;margin:14px 0 14px;padding:15px 220px 14px 18px;border:1px solid #dce6ca;border-radius:24px;background:linear-gradient(110deg,#fffef8,#f4f9e9);box-shadow:0 3px 0 #e8eadc}
+#wordListOverlay .graduation-title{grid-column:1/-1;margin:0;font-size:14px;color:#526d3d}
+#wordListOverlay .graduation-row{grid-template-columns:auto minmax(20px,1fr) auto;gap:7px;margin:0;font-size:12px}
+#wordListOverlay .graduation-bar{height:10px;background:#e8eedf}
+#wordListOverlay .graduation-panel>div[style*="margin-top"]{grid-column:1/-1;margin:0!important;font-size:11px!important}
+#wordListOverlay .graduation-badge{grid-column:1/-1}
+#wordListOverlay .bana-word-toolbar{display:flex;align-items:center;gap:10px 14px;margin:14px 0;padding:0 2px;flex-wrap:wrap}
+#wordListOverlay .bana-word-search{gap:9px;flex:0 0 auto}
+#wordListOverlay .bana-word-search input{width:clamp(190px,27vw,320px);border-radius:999px;padding:11px 16px;background:#fffefa}
+#wordListOverlay #bnWordFilters{display:flex;flex:1 1 480px;align-items:center;gap:8px;flex-wrap:wrap;margin:0!important;padding:0!important;border:0!important}
+#wordListOverlay #bnWordFilters button{min-height:38px;padding:8px 16px;border-radius:999px;font-size:13px}
+#wordListOverlay #bnWordFilters button.bn-filter-practice{margin-left:auto}
+#wordListOverlay .bana-bank-language-actions{display:flex;align-items:center;gap:8px;margin:0!important}
+#wordListOverlay .bana-word-pages{margin-left:auto;font-size:13px;white-space:nowrap}
+#wordListOverlay #wlBody.wf-bank-word-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;max-width:1800px;padding:6px 0 100px}
+#wordListOverlay #wlBody .word-card.wf-bank-word.bn-compact-word{min-height:156px!important;padding:34px 26px 22px!important;border-radius:25px!important}
+@media(min-width:700px){#wordListOverlay #wlBody .bn-compact-word .bn-open-word{font-size:clamp(20px,2vw,31px)!important;line-height:1.4!important}#wordListOverlay #wlBody .bn-compact-word .wc-def{font-size:clamp(14px,1.2vw,18px)!important}#wordListOverlay #wlBody .bn-compact-word .wc-sub-row .wc-icon-btn{width:54px!important;height:54px!important;min-width:54px;min-height:54px;flex-basis:54px!important;font-size:20px}}
+@media(max-width:699px){#editorWrap>.editor-layout.forest-editor{width:100%!important}#wordListOverlay .wl-header{min-height:54px;padding:4px 10px}#wordListOverlay .wl-title{font-size:15px}#wordListOverlay .wl-title::before,#wordListOverlay .wl-title::after{font-size:13px;margin:0 5px}#wordListOverlay #wlStudyView{padding:0 12px}#wordListOverlay .wl-start-row{position:static;width:auto;padding:9px 0 0}#wordListOverlay .wl-start-btn{min-height:40px;font-size:13px;padding:9px 14px}#wordListOverlay .graduation-panel{grid-template-columns:1fr;gap:8px;margin:11px 0;padding:12px;border-radius:17px}#wordListOverlay .graduation-title{grid-column:auto;font-size:12px;margin:0 0 2px}#wordListOverlay .graduation-row{grid-template-columns:62px minmax(20px,1fr) 38px;font-size:11px}#wordListOverlay .graduation-panel>div[style*="margin-top"]{grid-column:auto;font-size:10px!important}#wordListOverlay #bnWordFilters{flex:1 1 100%}#wordListOverlay #bnWordFilters button{min-height:34px;padding:7px 11px;font-size:11px}#wordListOverlay .bana-word-search{flex:1 1 100%}#wordListOverlay .bana-word-search input{width:100%}#wordListOverlay .bana-word-pages{margin-left:auto}#wordListOverlay #wlBody.wf-bank-word-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding-top:0}#wordListOverlay #wlBody .word-card.wf-bank-word.bn-compact-word{min-height:116px!important;padding:30px 10px 12px!important;border-radius:19px!important}}
+@media(max-width:330px){#wordListOverlay #wlBody.wf-bank-word-grid{grid-template-columns:1fr}}
+</style>
+<style id="word-toolbar-reference-order">
+#wordListOverlay .bana-word-search{order:1}
+#wordListOverlay #bnWordFilters{order:2}
+#wordListOverlay .bana-bank-language-actions{order:3}
+#wordListOverlay .bana-word-pages{order:4;margin-left:auto}
+</style>
+<style id="desktop-word-card-compact">
+@media(min-width:700px){
+#wordListOverlay #wlBody.wf-bank-word-grid{gap:14px;max-width:1240px}
+#wordListOverlay #wlBody .word-card.wf-bank-word.bn-compact-word{min-height:120px!important;padding:27px 22px 17px!important;border-radius:22px!important}
+#wordListOverlay #wlBody .bn-compact-word .bn-open-word{font-size:22px!important;line-height:1.35!important}
+#wordListOverlay #wlBody .bn-compact-word .wc-def{font-size:14px!important}
+#wordListOverlay #wlBody .bn-compact-word .wc-sub-row .wc-icon-btn{width:40px!important;height:40px!important;min-width:40px;min-height:40px;flex-basis:40px!important;font-size:15px}
+}
+</style>
+<style id="mobile-word-card-compact">
+@media(max-width:699px){
+#wordListOverlay #wlBody .word-card.wf-bank-word.bn-compact-word{min-height:96px!important;padding:27px 10px 9px!important}
+#wordListOverlay #wlBody .bn-compact-word .wc-main{gap:2px 5px!important}
+#wordListOverlay #wlBody .bn-compact-word .wc-term-row{min-height:0!important}
+#wordListOverlay #wlBody .bn-compact-word .wc-sub-row{min-height:0!important}
+}
+</style>
+<style id="responsive-word-card-columns">
+@media(min-width:1200px){#wordListOverlay #wlBody.wf-bank-word-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}}
+@media(min-width:700px) and (max-width:1199px){#wordListOverlay #wlBody.wf-bank-word-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
+@media(min-width:360px) and (max-width:699px){#wordListOverlay #wlBody.wf-bank-word-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:9px!important}}
+@media(max-width:359px){#wordListOverlay #wlBody.wf-bank-word-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+</style>
+<style id="desktop-word-type-scale">
+@media(min-width:700px){
+#wordListOverlay #wlBody .bn-compact-word .bn-open-word{font-size:26px!important;line-height:1.4!important}
+#wordListOverlay #wlBody .bn-compact-word .wc-def{font-size:16px!important;line-height:1.5!important}
+#wordListOverlay #wlBody .bn-compact-word .wf-word-number{font-size:12px!important}
+}
+</style>
+<style id="mobile-word-type-readable">
+@media(min-width:360px) and (max-width:699px){
+#wordListOverlay #wlBody .bn-compact-word .bn-open-word{font-size:13px!important;line-height:1.4!important}
+#wordListOverlay #wlBody .bn-compact-word .wc-def{font-size:10px!important;line-height:1.45!important}
+}
+</style>
+<style id="desktop-word-type-scale-final">
+@media(min-width:700px){
+#wordListOverlay #wlBody .bn-compact-word .bn-open-word{font-size:30px!important;line-height:1.35!important}
+#wordListOverlay #wlBody .bn-compact-word .wc-def{font-size:18px!important;line-height:1.45!important}
+#wordListOverlay #wlBody .bn-compact-word .wf-word-number{font-size:13px!important}
+}
+</style>
+<style id="word-detail-clean-notebook">
+.bn-word-mask{padding:14px!important;background:rgba(38,51,35,.42)!important;align-items:center!important}
+.bn-word-mask .bn-word-notebook{width:min(680px,100%)!important;max-height:90dvh!important;padding:0!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;border:1px solid #dce5d2!important;border-radius:20px!important;background:#fffdf7!important;box-shadow:0 18px 48px rgba(54,70,43,.18)!important}
+.bn-word-notebook>header{display:flex!important;align-items:center!important;gap:10px!important;padding:11px 17px!important;background:#fffdf7!important;border-bottom:1px solid #e7eadf!important}
+.bn-word-notebook>header .bn-mascot{width:28px!important;height:28px!important;padding:4px!important;background:#eef3e6!important;border-radius:50%!important}
+.bn-word-kicker{flex:1!important;font-size:12px!important;color:#6e8061!important}
+.bn-word-notebook>header button{min-width:44px;min-height:38px;padding:7px 12px!important;border:1px solid #dce5d2!important;border-radius:10px!important;background:#f2f6eb!important;color:#637956!important;font-size:12px!important}
+.bn-word-reading{position:relative!important;min-height:0!important;overflow:auto!important;overscroll-behavior:contain!important;padding:18px 22px 24px!important;background:#fffdf7!important}
+.bn-word-reading::before{display:none!important}
+.bn-word-source{margin:0 0 6px!important;padding-bottom:7px;border-bottom:1px solid #edf0e7;color:#8b987d!important;font-size:10px!important;line-height:1.6!important}
+.bn-word-notebook #bnWordTitle{margin:9px 0 2px!important;color:#405735!important;font-family:"Cafe24Dongdong","Noto Sans TC",sans-serif!important;font-size:30px!important;line-height:1.35!important;font-weight:700!important;overflow-wrap:anywhere}
+.bn-word-meaning{margin:3px 0 12px!important;color:#737d68!important;font-size:15px!important;line-height:1.7!important;white-space:pre-wrap}
+.bn-word-actions{display:flex!important;gap:8px!important;flex-wrap:wrap!important;margin:0 0 14px!important}
+.bn-word-actions button{min-height:38px!important;padding:8px 14px!important;border:1px solid #dce5d2!important;border-radius:999px!important;background:#edf3e5!important;color:#607750!important;font-size:12px!important}
+.bn-word-actions button:nth-child(2){background:#fbefed!important;border-color:#ecdcd8!important;color:#a77c7d!important}
+.bn-word-detail-content{display:grid!important;gap:11px!important;min-width:0}
+.bn-word-detail-content>section{min-width:0;padding:12px 14px!important;border:1px solid #e1e7d8!important;border-radius:14px!important;background:#fbfcf8!important}
+.bn-word-detail-content h3{margin:0 0 7px!important;color:#657a58!important;font-size:13px!important;line-height:1.5!important}
+.bn-word-detail-content p{margin:5px 0!important;color:#667061!important;font-size:13px!important;line-height:1.7!important;white-space:pre-wrap;overflow-wrap:anywhere}
+.bn-word-detail-content .bn-example{margin:7px 0!important;padding:10px 12px!important;border:1px solid #e6eadf!important;border-radius:11px!important;background:#fff!important}
+.bn-word-detail-content .bn-example p[lang=ko]{color:#526b45!important;font-size:15px!important}
+.bn-word-detail-content .bn-example-zh{color:#767d6c!important;font-size:12px!important}
+.bn-word-mastery{padding:11px 13px!important;border-color:#dfe7d5!important;border-radius:13px!important;background:#f6f8f0!important}
+.bn-word-mastery progress{appearance:none!important;-webkit-appearance:none!important;display:block;width:100%;height:8px;margin:8px 0!important;border:0;border-radius:999px;background:#e4eadc!important;accent-color:#8ca875}
+.bn-word-mastery progress::-webkit-progress-bar{border-radius:999px;background:#e4eadc}
+.bn-word-mastery progress::-webkit-progress-value{border-radius:999px;background:#91ad78}
+.bn-word-mastery progress::-moz-progress-bar{border-radius:999px;background:#91ad78}
+.bn-story-sticky,.bn-note-sticky{position:relative!important;padding:12px 14px!important;border:1px solid #dfe7d7!important;border-radius:14px!important;background:#f8faf4!important;box-shadow:none!important}
+.bn-story-sticky::before,.bn-note-sticky::before{display:none!important}
+.bn-story-sticky>h3,.bn-note-sticky>h3{color:#657a58!important}
+.bn-story-sticky details,.bn-note-sticky details{padding:7px 0;border-top:1px solid #e5eadf}
+.bn-story-sticky details>summary,.bn-note-sticky details>summary{color:#6d8060!important;font-size:12px!important}
+.bn-word-detail-content .bn-pronunciation{padding:10px 12px!important;border:1px solid #dfe7d7!important;border-radius:12px!important;background:#f5f8ef!important}
+.bn-word-edit-actions{gap:8px!important;margin-top:14px!important;padding-top:12px!important;border-top:1px solid #e7eadf!important}
+.bn-word-edit-actions button{min-height:38px!important;border-radius:10px!important}
+@media(max-width:650px){.bn-word-mask{padding:8px!important}.bn-word-mask .bn-word-notebook{max-height:94dvh!important;border-radius:17px!important}.bn-word-reading{padding:15px 15px 20px!important}.bn-word-notebook #bnWordTitle{font-size:25px!important}.bn-word-detail-content>section{padding:10px 11px!important}}
+</style>
+<script id="bana-apk-ui-patches">(function(){function update(){document.querySelectorAll('#wlBody .wf-word-number').forEach(function(el){var m=el.textContent.match(/\d+/);if(m&&el.textContent!==m[0])el.textContent=m[0]});document.querySelectorAll('#banaGrammarNoteMask .bgt-reader>h3').forEach(function(h){if(h.dataset.bnFoxTitle==='1')return;var small=h.querySelector('small'),count=small?small.textContent.trim():'';h.dataset.bnFoxTitle='1';h.replaceChildren(document.createTextNode('狐狸的補充筆記 ♡'));if(count){small=document.createElement('small');small.textContent=count;h.append(small)}})}update();new MutationObserver(update).observe(document.body,{childList:true,subtree:true})})();</script>
+<style id="bana-daily-bulk-style">
+#dailyExpressions .bde-bulk-open{margin-left:8px}
+#bdeBulkMask .bde-bulk-modal{width:min(760px,100%);max-height:90vh;max-height:90dvh;overflow:auto}
+#bdeBulkMask .bde-bulk-form{display:grid;gap:14px}
+#bdeBulkMask .bde-bulk-form label{display:grid;gap:6px;font-size:13px;font-weight:800;color:#5e7849}
+#bdeBulkMask .bde-bulk-form select,#bdeBulkMask .bde-bulk-form textarea{box-sizing:border-box;width:100%;border:1px solid #d8e3cc;border-radius:12px;background:#fff;color:#405a37;font:inherit;padding:12px}
+#bdeBulkMask .bde-bulk-form textarea{min-height:220px;resize:vertical;line-height:1.7;font-size:14px}
+#bdeBulkMask .bde-bulk-help,#bdeBulkMask .bde-bulk-status{margin:0;font-size:12px;line-height:1.7;color:#8a9780}
+#bdeBulkMask .bde-bulk-actions{display:flex;gap:9px;justify-content:flex-end;flex-wrap:wrap}
+@media(max-width:600px){#dailyExpressions .bde-bulk-open{margin:7px 0 0}#bdeBulkMask .bde-bulk-modal{padding:17px}}
+</style>
+<script id="bana-daily-bulk-create">(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+function addButton(){
+ const bar=document.querySelector('#dailyExpressions .bl-page-actions');
+ if(!bar||bar.querySelector('.bde-bulk-open'))return;
+ const single=bar.querySelector('button[onclick*="banaOpenDailyExpressionEditor"]');
+ if(!single)return;
+ const button=document.createElement('button');button.type='button';button.className='ghost bde-bulk-open';button.textContent='＋ 批次新增';button.addEventListener('click',open);single.after(button);
+}
+function open(){
+ if($('bdeBulkMask'))$('bdeBulkMask').remove();
+ const locations=window.banaDailyLocations?.options?.()||[];
+ const inferred=window.banaDailyLocations?.infer?.()||null;
+ const mask=document.createElement('div');mask.id='bdeBulkMask';mask.className='hero-modal-mask show';
+ mask.innerHTML='<section class="hero-modal bde-modal bde-bulk-modal" role="dialog" aria-modal="true" aria-labelledby="bdeBulkTitle"><header class="hero-modal-head"><h2 class="hero-modal-title" id="bdeBulkTitle">一次新增多個日常用語</h2><button type="button" class="hero-modal-close" data-close>關閉</button></header><form class="bde-bulk-form" id="bdeBulkForm"><label>存放位置<select id="bdeBulkLocation" required><option value="">請選擇分類或題庫</option></select></label><p class="bde-bulk-help">每行一筆：韓文｜中文。也可加標題：標題｜韓文｜中文。可用「｜」、「|」或 Tab 分隔。</p><label for="bdeBulkText">要新增的內容<textarea id="bdeBulkText" placeholder="잠시만요.｜請稍等一下。&#10;여기요.｜在這裡。&#10;打招呼｜안녕하세요.｜你好。" required></textarea></label><p class="bde-bulk-status" id="bdeBulkStatus" role="status"></p><div class="bde-bulk-actions"><button type="button" class="ghost" data-cancel>取消</button><button type="submit" class="primary">新增全部</button></div></form></section>';
+ document.body.appendChild(mask);
+ const select=$('bdeBulkLocation');
+ locations.forEach(loc=>{const opt=document.createElement('option');opt.value=loc.key;opt.textContent=loc.name;select.appendChild(opt)});
+ const current=locations.find(loc=>inferred&&(inferred.kind==='bank'?(loc.kind==='bank'&&(loc.bank===inferred.bank||loc.id===inferred.id)):(loc.kind===inferred.kind&&loc.id===inferred.id)));
+ if(current)select.value=current.key;
+ const close=()=>mask.remove();mask.querySelector('[data-close]').onclick=close;mask.querySelector('[data-cancel]').onclick=close;
+ mask.addEventListener('click',event=>{if(event.target===mask)close()});mask.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();close()}});
+ $('bdeBulkForm').addEventListener('submit',save);$('bdeBulkText').focus();
+}
+function parse(text){
+ const errors=[],items=[];
+ text.split(/\r?\n/).forEach((line,index)=>{
+  const value=line.trim();if(!value)return;
+  const parts=value.split(/\t|｜|\|/).map(part=>part.trim());
+  let title='',kr='',zh='';
+  if(parts.length===2){[kr,zh]=parts}
+  else if(parts.length>=3){title=parts[0];kr=parts[1];zh=parts.slice(2).join('｜')}
+  else{errors.push('第 '+(index+1)+' 行缺少分隔符');return}
+  if(!kr||!zh){errors.push('第 '+(index+1)+' 行的韓文或中文是空白');return}
+  items.push({title,kr,zh});
+ });
+ return {items,errors};
+}
+function save(event){
+ event.preventDefault();const status=$('bdeBulkStatus');status.textContent='';
+ const parsed=parse($('bdeBulkText').value);
+ if(parsed.errors.length){status.textContent=parsed.errors.join('；');return}
+ if(!parsed.items.length){status.textContent='請先貼上至少一筆日常用語。';return}
+ const locations=window.banaDailyLocations?.options?.()||[],selected=locations.find(loc=>loc.key===$('bdeBulkLocation').value);
+ const valid=selected&&(selected.kind==='bank'?folders.includes(selected.bank):(selected.kind==='cat'?categories:selected.kind==='grp'?groups:subfolders).some(item=>item.id===selected.id));
+ if(!valid){status.textContent='請選擇現有的分類或題庫。';$('bdeBulkLocation').focus();return}
+ const backup=sentenceEntries.slice();let assignedBank=false,folder;
+ if(selected.kind==='bank'&&!selected.bank.languageFolderId){selected.bank.languageFolderId=uid();assignedBank=true}
+ folder={kind:selected.kind,id:selected.kind==='bank'?selected.bank.languageFolderId:selected.id};
+ const added=parsed.items.map(item=>({id:uid(),kr:item.kr,zh:item.zh,title:item.title,dailyLines:[{role:'A',kr:item.kr,zh:item.zh,pronunciation:''}],isDailyExpression:true,libraryFolder:{...folder},favorite:false,items:[],grammar:[],analysis:'',teacherNote:'',tags:[],linkedFolderIdx:null,novelId:'',chapterId:''}));
+ sentenceEntries.push(...added);
+ try{if(assignedBank)saveStorage();saveSentenceEntries()}
+ catch(error){sentenceEntries=backup;if(assignedBank)delete selected.bank.languageFolderId;status.textContent='儲存失敗，原有資料已保留，請再試一次。';return}
+ $('bdeBulkMask').remove();if(typeof renderSentenceList==='function')renderSentenceList();if(typeof renderFolders==='function')renderFolders();if(typeof showSaveToast==='function')showSaveToast();
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addButton,{once:true});else addButton();
+})();</script>
+
+<style id="bana-daily-single-list-style">
+#dailyExpressions .dpr-single-phrase{grid-column:1/-1;display:grid;grid-template-columns:34px minmax(0,1fr) 42px;align-items:center;gap:10px;padding:12px 8px!important;border:0!important;border-bottom:1px solid #e7eadf!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+#dailyExpressions .dpr-single-phrase .dpr-number{align-self:start;padding-top:3px}
+#dailyExpressions .dpr-single-phrase .dpr-single-text{min-width:0}
+#dailyExpressions .dpr-single-phrase .dpr-korean{font-size:18px;line-height:1.55;margin:0 0 2px;color:#486744}
+#dailyExpressions .dpr-single-phrase .dpr-chinese{font-size:13px;line-height:1.5}
+#dailyExpressions .dpr-single-phrase .dpr-reading{margin-top:5px;padding-top:4px;border-top:1px dashed #e2e8d9}
+#dailyExpressions .dpr-single-phrase>.dpr-audio{width:40px;height:40px;min-width:40px;padding:0;border-radius:50%;justify-self:end;display:grid;place-items:center}
+#dailyExpressions .dpr-dialogue-block{grid-column:1/-1}
+@media(max-width:650px){#dailyExpressions .dpr-single-phrase{grid-template-columns:28px minmax(0,1fr) 40px;gap:8px;padding:11px 3px!important}#dailyExpressions .dpr-single-phrase .dpr-korean{font-size:17px}#dailyExpressions .dpr-single-phrase .dpr-audio{width:38px;height:38px;min-width:38px}}
+</style>
+</body>
 </html>
