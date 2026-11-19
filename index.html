@@ -18438,5 +18438,70 @@ html:is(.bana-mobile-device,.bana-android) .cb-read-block :is(p,.cb-text,.cb-par
 
 .cb-editor .cb-item.gram-example-row{grid-template-columns:minmax(0,1fr);min-width:0}.cb-editor .cb-item.gram-example-row textarea{min-height:52px}
 </style>
+<script id="bana-backup-restore">
+(function(){'use strict';
+// File restore replaces the same records used by the application and cloud sync.
+const keys={folders:'b1a4_green_study_empty_v3',groups:'b1a4_groups_v1',categories:'b1a4_categories_v1',stats:'b1a4_green_study_stats_v3',collapsedGroups:'b1a4_collapsed_groups',collapsedCategories:'b1a4_collapsed_categories',subfolders:'b1a4_subfolders_v1',collapsedSubfolders:'b1a4_collapsed_subfolders',masteryData:'b1a4MasteryData',wrongBookData:'b1a4WrongBookData',graduationData:'b1a4GraduationData',folderPracticeStats:'b1a4FolderPracticeStats',flashSeenData:'b1a4FlashSeenData',voiceSpeed:'b1a4VoiceSpeed',activityLog:'b1a4ActivityLog',lyricsSongs:'b1a4LyricsSongs',favorites:'b1a4Favorites',grammarPoints:'b1a4GrammarPoints',grammarCategories:'b1a4GrammarCategories',sentenceEntries:'b1a4SentenceEntries',novels:'b1a4Novels',novelChapters:'b1a4NovelChapters',dialogues:'b1a4Dialogues',dialogueCategories:'b1a4DialogueCategories',oneOnOne:'bana_oneOnOne_v1'};
+function assign(d){folders=d.folders;groups=d.groups;categories=d.categories;stats=d.stats;collapsedGroups=d.collapsedGroups;collapsedCategories=d.collapsedCategories;subfolders=d.subfolders;collapsedSubfolders=d.collapsedSubfolders;masteryData=d.masteryData;wrongBookData=d.wrongBookData;graduationData=d.graduationData;folderPracticeStats=d.folderPracticeStats;flashSeenData=d.flashSeenData;voiceSpeed=d.voiceSpeed;activityLog=d.activityLog;lyricsSongs=d.lyricsSongs;favorites=d.favorites;grammarPoints=d.grammarPoints;grammarCategories=d.grammarCategories;sentenceEntries=d.sentenceEntries;novels=d.novels;novelChapters=d.novelChapters;dialogues=d.dialogues;dialogueCategories=d.dialogueCategories;oneOnOne=d.oneOnOne;}
+function prepare(data){
+ if(!data||typeof data!=='object'||Array.isArray(data)||!['folders','grammarPoints','sentenceEntries','dialogues'].some(k=>Array.isArray(data[k])))throw Error('這不是 BANA Forest 的完整備份檔。');
+ const next=JSON.parse(JSON.stringify(getCloudPayload()));
+ for(const field of Object.keys(keys))if(Object.prototype.hasOwnProperty.call(data,field)){
+  const value=data[field],old=next[field];
+  if(Array.isArray(old)?!Array.isArray(value):field==='voiceSpeed'?!(typeof value==='number'&&Number.isFinite(value)&&value>0):!value||typeof value!=='object'||Array.isArray(value))throw Error('備份欄位格式不正確：'+field+'。原資料未變更。');
+  next[field]=JSON.parse(JSON.stringify(value));
+ }
+ return next;
+}
+function closeStaleViews(){
+ // A completed restore explicitly supersedes all pre-restore editor drafts.
+ const contexts=window.banaContentBlocks?.contexts;
+ if(contexts)for(const kind of Object.keys(contexts)){const ctx=contexts[kind];if(ctx){clearTimeout(ctx.timer);ctx.dirty=false;contexts[kind]=null;}}
+ for(const key of Object.keys(localStorage))if(key.startsWith('bana-content-draft-v1:'))localStorage.removeItem(key);
+ for(const fn of [typeof closeGrammarEditor==='function'&&closeGrammarEditor,typeof closeSentenceEditor==='function'&&closeSentenceEditor,typeof closeDialogueReader==='function'&&closeDialogueReader,typeof closeWordList==='function'&&closeWordList])if(fn)try{fn()}catch(e){console.warn('還原後關閉舊視窗',e)}
+ document.getElementById('banaSimpleDailyMask')?.remove();
+ document.getElementById('banaGrammarNoteMask')?.remove();
+ for(const id of ['grammarEditorMask','sentenceEditorMask','dialogueEditorMask'])document.getElementById(id)?.classList.remove('show');
+}
+function refresh(){
+ current=null;
+ if(typeof goBottomTab==='function')goBottomTab('library');
+ for(const id of ['folderSearchInput','grammarSearch','sentenceSearch','banaDailyExpressionSearch']){const el=document.getElementById(id);if(el)el.value='';}
+ for(const fn of [renderFolders,renderDashboard,renderGrammarList,renderSentenceList,renderDialogueList,typeof renderDailyExpressions==='function'&&renderDailyExpressions,typeof renderFavoritesSummary==='function'&&renderFavoritesSummary,typeof renderFavoritesDetail==='function'&&renderFavoritesDetail,typeof renderLyricsSongGrid==='function'&&renderLyricsSongGrid,typeof ooUpdateEntryCard==='function'&&ooUpdateEntryCard,typeof renderOoHomeCard==='function'&&renderOoHomeCard,typeof ooRender==='function'&&ooRender,typeof renderLearningCalendar==='function'&&renderLearningCalendar])if(fn)try{fn()}catch(e){console.warn('還原後畫面更新',e)}
+ goPage('library');
+}
+function restore(data){
+ const next=prepare(data),before=JSON.parse(JSON.stringify(getCloudPayload())),sync=window.banaSync;
+ if(sync?.applyBusy||sync?.writing)throw Error('同步正在進行中，尚未匯入。請等同步完成後再匯入一次。');
+ const previousLoading=isLoadingCloud,pairs={},raw={};
+ for(const [field,key]of Object.entries(keys))pairs[key]=JSON.stringify(next[field]);
+ pairs.b1a4LastLocalChangeAt=new Date().toISOString();
+ for(const key of Object.keys(pairs))raw[key]=localStorage.getItem(key);
+ isLoadingCloud=true;
+ try{
+  if(window.BanaSyncStorage)BanaSyncStorage.replace(pairs);
+  else{try{for(const key of Object.keys(pairs))localStorage.removeItem(key);for(const [key,value]of Object.entries(pairs))localStorage.setItem(key,value);for(const [key,value]of Object.entries(pairs))if(localStorage.getItem(key)!==value)throw Error('寫入後核對不一致');}catch(e){for(const key of Object.keys(pairs))localStorage.removeItem(key);for(const [key,value]of Object.entries(raw))if(value!==null)localStorage.setItem(key,value);throw e;}}
+  assign(next);
+ }catch(error){assign(before);throw Error('備份沒有還原成功：'+(error.message||error.name)+'。請保留這份 JSON 備份。');}
+ finally{isLoadingCloud=previousLoading;}
+ closeStaleViews();
+ // Mark imported records as a deliberate local edit before processing cloud updates.
+ if(sync)sync.localChange();else if(typeof scheduleCloudSave==='function')scheduleCloudSave();
+ refresh();window.banaFlushLocalState?.();
+ return {folders:next.folders.length,grammar:next.grammarPoints.length,daily:next.sentenceEntries.filter(s=>s.isDailyExpression).length,dialogues:next.dialogues.length};
+}
+applyFullBackupData=restore;
+importFullBackup=function(file){
+ if(!file)return;
+ const input=document.getElementById('fullBackupImportFile');
+ if(!confirm('將以「'+file.name+'」取代這台裝置的備份資料，並清除尚未儲存的編輯草稿。\n建議先匯出目前資料留存。確定匯入？')){if(input)input.value='';return;}
+ const reader=new FileReader();
+ reader.onload=()=>{try{const counts=restore(JSON.parse(reader.result));alert('已匯入：'+file.name+'\n已寫入並核對：'+counts.folders+' 個題庫、'+counts.grammar+' 筆文法、'+counts.daily+' 組日常用語、'+counts.dialogues+' 組對話。\n已切換到匯入後的題庫。'+(window.banaSync?.conflict?'\n雲端有不同版本；本機保留這份匯入資料，請至「我的」選擇「保留本機並上傳」。':''));}catch(e){console.error('備份匯入失敗',e);alert(e instanceof SyntaxError?'JSON 格式錯誤，尚未匯入。':e.message||'備份匯入失敗，請保留 JSON 檔。');}finally{if(input)input.value='';}};
+ reader.onerror=()=>{alert('無法讀取這個檔案，尚未匯入。');if(input)input.value='';};reader.readAsText(file,'utf-8');
+};
+window.banaBackupRestore={restore,prepare,keys};
+})();
+
+</script>
 </body>
 </html>
