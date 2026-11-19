@@ -16988,9 +16988,12 @@ function reading(items,examples=[]){const blocks=normalizeBlocks(items),ex=norma
  let body='';if(b.type==='conjugation'||b.type==='comparison')body='<div class="cb-table-scroll" tabindex="0" aria-label="'+esc(b.title||TYPES[b.type])+'"><table><thead><tr>'+b.columns.map(c=>'<th>'+esc(c.name)+'</th>').join('')+'</tr></thead><tbody>'+b.rows.map(r=>'<tr>'+b.columns.map(c=>'<td>'+rich(r.cells?.[c.id]||'')+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>'+(b.description?'<div class="cb-text">'+rich(b.description)+'</div>':'');
  else if(b.type==='vocab')body='<div class="cb-table-scroll"><table><thead><tr><th>韓文</th><th>中文</th></tr></thead><tbody>'+b.rows.map(r=>'<tr><td lang="ko">'+esc(r.kr)+'</td><td>'+esc(r.zh)+'</td></tr>').join('')+'</tbody></table></div>';
  else if(b.type==='rules')body=b.rows.map(r=>'<div class="cb-rule">'+['part','form','description','example'].filter(k=>r[k]).map(k=>'<p>'+rich(r[k])+'</p>').join('')+'</div>').join('');
- else if(b.type==='examples')body=b.exampleIds.map(key=>ex.find(e=>e.id===key)).filter(Boolean).map((e,i)=>'<article class="cb-example"><header class="cb-example-head"><span class="cb-example-label"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20c0-6 1-10 5-14M12 15C5 15 3 10 4 6c6 0 9 3 8 9Zm1-4c0-6 4-9 8-8 0 5-2 8-8 8Z"/></svg><span>例句 '+String(i+1).padStart(2,'0')+'</span></span><button type="button" class="cb-button cb-example-audio" data-cb-speak="'+esc(e.kr)+'" aria-label="朗讀例句"><span aria-hidden="true">▷</span> 發音</button></header><p class="cb-example-kr" lang="ko">'+esc(e.kr)+'</p>'+(e.zh?'<p class="cb-example-zh" lang="zh-Hant">'+esc(e.zh)+'</p>':'')+(e.pronunciation?'<small class="cb-example-pronunciation">發音提示：'+esc(e.pronunciation)+'</small>':'')+'</article>').join('');
+ else if(b.type==='examples'){
+ const entries=b.exampleIds.map(key=>ex.find(e=>e.id===key)).filter(Boolean);if(!entries.length)return '';
+ body='<div class="cb-example-group" role="group" aria-label="'+esc(b.title||'例句練習')+'"><header class="cb-example-group-head"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20c0-6 1-10 5-14M12 15C5 15 3 10 4 6c6 0 9 3 8 9Zm1-4c0-6 4-9 8-8 0 5-2 8-8 8Z"/></svg><h3>'+esc(b.title||'例句練習')+'</h3><small>共 '+entries.length+' 句</small></header><div class="cb-example-list">'+entries.map((e,i)=>'<article class="cb-example"><span class="cb-example-number">'+String(i+1).padStart(2,'0')+'</span><div class="cb-example-copy"><p class="cb-example-kr" lang="ko">'+esc(e.kr)+'</p>'+(e.zh?'<p class="cb-example-zh" lang="zh-Hant">'+esc(e.zh)+'</p>':'')+(e.pronunciation?'<small class="cb-example-pronunciation">發音提示：'+esc(e.pronunciation)+'</small>':'')+'</div><button type="button" class="cb-button cb-example-audio" data-cb-speak="'+esc(e.kr)+'" aria-label="朗讀例句" title="朗讀第 '+(i+1)+' 句"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Zm4 3c2 2 2 6 0 8m3-11c4 4 4 10 0 14"/></svg></button></article>').join('')+'</div></div>';
+ }
  else body='<div class="cb-text">'+rich(b.text,b.highlights)+'</div>';
- return '<section class="cb-read-block" data-cb-type="'+esc(b.type)+'">'+(b.title?'<h3>'+esc(b.title)+'</h3>':'')+body+'</section>';
+ return '<section class="cb-read-block" data-cb-type="'+esc(b.type)+'">'+(b.title&&b.type!=='examples'?'<h3>'+esc(b.title)+'</h3>':'')+body+'</section>';
  }).join('')+'</div>'}
 function el(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n}
 function button(text,fn){const b=el('button','cb-button',text);b.type='button';b.onclick=fn;return b}
@@ -18510,18 +18513,26 @@ html:is(.bana-mobile-device,.bana-android) .cb-read-block :is(p,.cb-text,.cb-par
 
 .cb-editor .cb-add-after{flex-basis:100%;width:fit-content;max-width:180px;text-align:left;margin-top:3px;background:#edf4e3;border-style:dashed}
 
-/* Paired example cards: compact cream paper, a small hand-drawn sprout. */
-.cb-reading .cb-example{min-width:0;margin:8px 0;padding:10px 13px;border:1px solid #dfe7d2;border-radius:14px;background:#f8faef;box-shadow:0 2px 0 #e6eadb66}
-.cb-reading .cb-example:nth-of-type(even){background:#fff9ed;border-color:#e9e0c8}
-.cb-example-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px}
-.cb-example-label{display:inline-flex;align-items:center;gap:5px;color:#87976c;font-size:11px;line-height:1.4;letter-spacing:.04em}
-.cb-example-label svg{width:19px;height:19px;fill:none;stroke:#8caa73;stroke-width:1.25;stroke-linecap:round;stroke-linejoin:round;flex:none;transform:rotate(-9deg)}
-.cb-reading .cb-example-audio{display:inline-flex;align-items:center;gap:3px;border:1px solid #dbe5cd;border-radius:999px;background:#fffef8;color:#698552;padding:3px 8px;min-height:27px;font:inherit;font-size:11px;line-height:1.5;cursor:pointer;box-shadow:none}
-.cb-example-audio:focus-visible{outline:2px solid #82a166;outline-offset:2px}
-.cb-read-block .cb-example-kr{margin:0;color:#405c3e;line-height:1.8;white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere}
-.cb-read-block .cb-example-zh{margin:5px 0 0;padding-top:5px;border-top:1px dashed #dfe5d0;color:#8b8069;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}
-.cb-example-pronunciation{display:block;margin-top:5px;color:#8b987a;white-space:pre-wrap;overflow-wrap:anywhere}
-@media(max-width:650px){.cb-reading .cb-example{padding:9px 11px;margin:7px 0;border-radius:12px}}
+/* One compact example group, with bilingual rows and quiet speaker controls. */
+.cb-read-block[data-cb-type="examples"]{padding:0;border:0}
+.cb-example-group{min-width:0;padding:9px;border:1px solid #e0e5d7;border-radius:15px;background:#fffdf7}
+.cb-example-group-head{display:flex;align-items:center;gap:6px;margin:0 0 7px;padding:0 2px;color:#617e50}
+.cb-example-group-head>svg{width:17px;height:17px;flex:none;fill:none;stroke:#86a36f;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
+.cb-example-group-head>h3{margin:0;font-size:13px;line-height:1.5;font-weight:600;overflow-wrap:anywhere}
+.cb-example-group-head>small{flex:none;font-size:11px;color:#9a9e88;line-height:1.5}
+.cb-example-list{display:grid;gap:5px;min-width:0}
+.cb-reading .cb-example{display:grid;grid-template-columns:20px minmax(0,1fr) 28px;align-items:center;gap:6px;min-width:0;margin:0;padding:6px 8px;border:0;border-radius:10px;background:#eef3e7;box-shadow:none}
+.cb-reading .cb-example:nth-child(even){background:#f5f0e7}
+.cb-example-number{font-size:10px;line-height:1.4;color:#9ca48e;text-align:left;font-variant-numeric:tabular-nums}
+.cb-example-copy{min-width:0}
+.cb-read-block .cb-example-kr{margin:0;padding:0;color:#405c3e;line-height:1.5;white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere}
+.cb-read-block .cb-example-zh{margin:1px 0 0;padding:0;border:0;color:#8b8069;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+.cb-reading .cb-example-audio{display:flex;align-items:center;justify-content:center;align-self:center;width:28px;height:28px;min-height:28px;min-width:28px;box-sizing:border-box;padding:5px!important;border:0;border-radius:8px;background:transparent;color:#7f8b70;cursor:pointer;box-shadow:none}
+.cb-example-audio svg{flex:none;width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.cb-example-audio:hover{background:#dce8ce80;color:#4f7545}
+.cb-example-audio:focus-visible{outline:2px solid #82a166;outline-offset:1px}
+.cb-example-pronunciation{display:block;margin-top:2px;color:#929a81;font-size:11px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:650px){.cb-example-group{padding:8px;border-radius:12px}.cb-reading .cb-example{padding:6px 7px;gap:5px;grid-template-columns:18px minmax(0,1fr) 28px}.cb-example-group-head>h3{font-size:12px}}
 
 .cb-example-quick{display:flex;gap:7px;align-items:flex-start;flex-wrap:wrap;padding:5px 0}.cb-example-quick>.cb-paste{border:0;padding:0;flex:1;min-width:160px}.cb-example-quick .cb-paste>summary{width:fit-content;border:1px solid #d6e2c9;border-radius:8px;background:#f0f5e7;padding:5px 9px;min-height:28px;box-sizing:border-box}.cb-batch-help{font-size:11px!important;line-height:1.7;margin:6px 0;color:#7e8d6f}.cb-example-quick .cb-paste textarea{margin:5px 0;min-height:100px}
 /* Pronunciation pairs: gentle paper colours and a clear writing-to-sound path. */
@@ -18545,6 +18556,40 @@ html:is(.bana-mobile-device,.bana-android) .cb-read-block :is(p,.cb-text,.cb-par
 #grammarEditorMask .bgt-pron-row-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .cb-change-type{display:inline-flex;align-items:center;gap:4px;margin-left:auto;color:#899577;font-size:10px}.cb-editor .cb-change-type select{width:118px;min-height:28px;padding:2px 5px;font-size:11px;line-height:1.5;background:#f4f8eb}.cb-change-type+ .cb-order{margin-left:0}
 @media(max-width:650px){.cb-change-type span{display:none}.cb-editor .cb-change-type select{width:104px}}
+/* Mini error/correct reference card with its rules kept in the same panel. */
+#banaGrammarNoteMask .bgt-reader.bgt-clean-notes .bgt-read-card.bgt-contrast{padding:10px 11px;border:1px solid #e0e5d7;border-radius:15px;background:#fffdf7;box-shadow:none}
+#banaGrammarNoteMask .bgt-reader.bgt-clean-notes .bgt-contrast .bgt-read-head{gap:4px 8px;margin-bottom:5px}
+#banaGrammarNoteMask .bgt-reader.bgt-clean-notes .bgt-contrast .bgt-read-head h4::before{content:'🌱';display:inline-block;margin-right:5px;font-size:12px;vertical-align:baseline}
+#banaGrammarNoteMask .bgt-reader.bgt-clean-notes .bgt-contrast .bgt-kind-label{display:none}
+#banaGrammarNoteMask .bgt-reader.bgt-clean-notes .bgt-contrast .bgt-read-pair{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px;margin-top:5px}
+#banaGrammarNoteMask .bgt-reader.bgt-clean-notes .bgt-contrast .bgt-read-pair>div{padding:7px 9px;border-radius:10px}
+#banaGrammarNoteMask .bgt-reader.bgt-clean-notes .bgt-contrast .bgt-read-pair>.bgt-wrong{background:#fbf2f1;border-color:#eddbd7}
+#banaGrammarNoteMask .bgt-reader.bgt-clean-notes .bgt-contrast .bgt-read-pair>.bgt-right{background:#eef4e8;border-color:#d9e4cf}
+#banaGrammarNoteMask .bgt-reader.bgt-clean-notes .bgt-contrast .bgt-read-pair p{margin:3px 0 0;word-break:keep-all;overflow-wrap:anywhere}
+#banaGrammarNoteMask .bgt-reader.bgt-clean-notes .bgt-contrast .bgt-contrast-shared-zh{margin:5px 1px 0;color:#8b8069}
+#banaGrammarNoteMask .bgt-reader.bgt-clean-notes .bgt-contrast .bgt-read-content{margin:8px 1px 0;padding:7px 0 0;border-top:1px dashed #e0e5d7}
+#banaGrammarNoteMask .bgt-reader.bgt-clean-notes .bgt-contrast .bgt-read-content::before{content:'小規則';display:block;margin-bottom:3px;font-size:11px;line-height:1.4;color:#8b987a;font-weight:500}
+@media(max-width:650px){#banaGrammarNoteMask .bgt-reader.bgt-clean-notes .bgt-read-card.bgt-contrast{padding:9px;border-radius:12px}#banaGrammarNoteMask .bgt-reader.bgt-clean-notes .bgt-contrast .bgt-read-pair>div{padding:6px 7px}}
+/* Mini knowledge notes: paragraph-based presentation of existing tip content. */
+#banaGrammarNoteMask .bgt-reader.bgt-clean-notes .bgt-read-card.bkt-panel{padding:10px;border:1px solid #e0e5d7;border-radius:15px;background:#fffdf7;box-shadow:none}
+#banaGrammarNoteMask .bkt-panel .bgt-read-head{display:flex;align-items:center;justify-content:flex-start;gap:7px;margin-bottom:7px}
+#banaGrammarNoteMask .bkt-panel .bgt-read-head h4::before{content:'🌱';margin-right:5px;font-size:12px}
+#banaGrammarNoteMask .bkt-count{font-size:11px;color:#98a08b;line-height:1.5;flex:none}
+#banaGrammarNoteMask .bkt-list{display:grid;gap:8px;min-width:0}
+#banaGrammarNoteMask .bkt-item{display:grid;grid-template-columns:22px minmax(0,1fr);gap:6px;padding:9px;border:0;border-radius:11px;background:#eff4e9;min-width:0}
+#banaGrammarNoteMask .bkt-item:nth-child(even){background:#f7f1e8}
+#banaGrammarNoteMask .bkt-number{color:#9ca68c;font-size:10px;line-height:1.7;padding-top:3px;font-variant-numeric:tabular-nums}
+#banaGrammarNoteMask .bkt-main{min-width:0}
+#banaGrammarNoteMask .bkt-rule{margin:0;color:#64745b;font-size:18px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}
+#banaGrammarNoteMask .bkt-rule+.bkt-rule{margin-top:3px}
+#banaGrammarNoteMask .bkt-examples{display:grid;gap:5px;margin-top:6px;padding-top:6px;border-top:1px solid #dfe6d7;min-width:0}
+#banaGrammarNoteMask .bkt-examples.bkt-compact-pairs{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 10px}
+#banaGrammarNoteMask .bkt-example{min-width:0}
+#banaGrammarNoteMask .bkt-kr,#banaGrammarNoteMask .bkt-zh{margin:0;font-size:18px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+#banaGrammarNoteMask .bkt-kr{color:#456445;word-break:keep-all}
+#banaGrammarNoteMask .bkt-zh{color:#8a806d;margin-top:1px}
+html:is(.bana-mobile-device,.bana-android) #banaGrammarNoteMask :is(.bkt-rule,.bkt-kr,.bkt-zh){font-size:12px}
+@media(max-width:650px){#banaGrammarNoteMask .bgt-reader.bgt-clean-notes .bgt-read-card.bkt-panel{padding:8px;border-radius:12px}#banaGrammarNoteMask .bkt-item{padding:8px;grid-template-columns:18px minmax(0,1fr);gap:5px}#banaGrammarNoteMask .bkt-list{gap:7px}}
 </style>
 <script id="bana-backup-restore">
 (function(){'use strict';
@@ -18608,6 +18653,52 @@ importFullBackup=function(file){
  reader.onerror=()=>{alert('無法讀取這個檔案，尚未匯入。');if(input)input.value='';};reader.readAsText(file,'utf-8');
 };
 window.banaBackupRestore={restore,prepare,keys};
+})();
+
+</script>
+<script id="bana-knowledge-notes">
+(function(){'use strict';
+const original=window.banaGrammarTipsHtml;if(typeof original!=='function')return;
+const marker=text=>/^\s*[\[【(（]?\s*例\s*[\]】)）]?\s*[:：]?\s*$/.test(text);
+function parseNotes(text){const groups=[];let group=null,blank=false;
+ let at=0;
+ for(const raw of String(text||'').split('\n')){
+  const line=raw.trim(),offset=at+raw.indexOf(line);at+=raw.length+1;
+  if(!line){blank=true;continue;}
+  if(!group||blank&&!marker(line)){group={rules:[],examples:[],inExamples:false};groups.push(group);}
+  blank=false;
+  if(marker(line)){group.inExamples=true;continue;}
+  (group.inExamples?group.examples:group.rules).push({text:line,offset});
+ }
+ return groups.filter(g=>g.rules.length||g.examples.length);
+}
+function element(tag,cls,text){const node=document.createElement(tag);if(cls)node.className=cls;if(text!==undefined)node.textContent=text;return node;}
+function examplePairs(lines){const text=lines.map(x=>x.text).join('\n');
+ if(window.banaGrammarExampleBatch?.parse)return banaGrammarExampleBatch.parse(text).map(e=>({kr:String(e.kr||''),zh:String(e.zh||'')}));
+ return lines.map(({text})=>{const m=text.match(/^([가-힣ㄱ-ㅎㅏ-ㅣ].*?)\s+([\u3400-\u9fff].*)$/);return m?{kr:m[1],zh:m[2]}:{kr:text,zh:''};});
+}
+function ruleLine(item,source,highlights){const p=element('p','bkt-rule');const colors=window.banaGrammarRuleColors;
+ if(colors&&highlights?.length){const range=colors.pack(colors.colors(source,highlights).slice(item.offset,item.offset+item.text.length));p.innerHTML=colors.html(item.text,range);}else p.textContent=item.text;
+ return p;
+}
+function renderNotes(note){const groups=parseNotes(note.content),list=element('div','bkt-list');
+ groups.forEach((group,i)=>{const item=element('section','bkt-item'),main=element('div','bkt-main');item.append(element('span','bkt-number',String(i+1).padStart(2,'0')),main);
+  for(const line of group.rules)main.append(ruleLine(line,note.content,note.contentHighlights));
+  const examples=examplePairs(group.examples);
+  if(examples.length){const examplesBox=element('div','bkt-examples');if(examples.length>1&&examples.length<=4&&examples.every(e=>!e.zh&&e.kr.length<=35))examplesBox.classList.add('bkt-compact-pairs');
+   for(const e of examples){const pair=element('div','bkt-example');if(e.kr)pair.append(element('p','bkt-kr',e.kr.replace(/\s*[=＝]\s*/g,' → ')));if(e.zh)pair.append(element('p','bkt-zh',e.zh));examplesBox.append(pair);}main.append(examplesBox);
+  }
+  list.append(item);
+ });return {list,count:groups.length};
+}
+window.banaGrammarTipsHtml=function(g){const html=original(g);if(!html)return html;const template=document.createElement('template');template.innerHTML=html;
+ const notes=window.banaGrammarTipModel.clean(window.banaGrammarTipModel.fromLegacy(g));
+ [...template.content.querySelectorAll('.bgt-read-card')].forEach((card,i)=>{const note=notes[i];if(!note||!['usage','extra'].includes(note.kind)||!note.content?.trim())return;
+  const content=card.querySelector('.bgt-read-content');if(!content)return;const {list,count}=renderNotes(note);if(!count)return;
+  card.classList.add('bkt-panel');content.replaceWith(list);const head=card.querySelector('.bgt-read-head');head?.querySelector('.bgt-kind-label')?.remove();head?.append(element('small','bkt-count','共 '+count+' 則'));
+ });return template.innerHTML;
+};
+window.banaKnowledgeNotes={parse:parseNotes,examplePairs};
 })();
 
 </script>
