@@ -18293,5 +18293,18 @@ html:is(.bana-mobile-device,.bana-android) #grammarEditorMask#grammarEditorMask 
 html:is(.bana-mobile-device,.bana-android) #grammarEditorMask#grammarEditorMask .bn-direct-color-input,
 html:is(.bana-mobile-device,.bana-android) #grammarEditorMask#grammarEditorMask .bn-direct-color-input *{font-size:16px!important;line-height:1.8!important}
 </style>
+<style id="bana-dialogue-editor-type">
+/* Match the chosen editor sizes; device routing also covers a narrow desktop window. */
+html:not(.bana-mobile-device):not(.bana-android) #dialogueEditorMask#dialogueEditorMask :is(input,textarea,select,[contenteditable="true"]),
+html:not(.bana-mobile-device):not(.bana-android) #dialogueEditorMask#dialogueEditorMask [contenteditable="true"] * {
+  font-size:18px!important;
+  line-height:1.8!important;
+}
+html:is(.bana-mobile-device,.bana-android) #dialogueEditorMask#dialogueEditorMask :is(input,textarea,select,[contenteditable="true"]),
+html:is(.bana-mobile-device,.bana-android) #dialogueEditorMask#dialogueEditorMask [contenteditable="true"] * {
+  font-size:16px!important;
+  line-height:1.8!important;
+}
+</style>
 </body>
 </html>
