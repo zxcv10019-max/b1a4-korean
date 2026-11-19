@@ -16988,6 +16988,7 @@ function batch(ctx,b){const isTable=['conjugation','comparison'].includes(b.type
  })}));return details;
 }
 function tableEditor(ctx,b,body){const scroll=el('div','cb-table-scroll'),table=el('table'),head=el('thead'),tr=el('tr');
+ table.className='cb-edit-table';table.style.minWidth=(b.columns.length*112+84)+'px';const cols=el('colgroup');for(const c of b.columns)cols.append(el('col'));const actions=el('col');actions.style.width='84px';cols.append(actions);table.append(cols);
  b.columns.forEach((c,i)=>{const th=el('th');th.append(input(ctx,c.name,v=>c.name=v,{label:'欄位名稱 '+(i+1)}));const ops=el('div','cb-order');for(const [text,delta]of[['←',-1],['→',1]]){const move=button(text,()=>structural(ctx,()=>reorder(b.columns,i,delta)));move.disabled=i+delta<0||i+delta>=b.columns.length;move.setAttribute('aria-label',delta<0?'欄位左移':'欄位右移');ops.append(move)}ops.append(button('刪欄',()=>{if(confirm('刪除此欄及其儲存格內容？'))structural(ctx,()=>{b.columns.splice(i,1);b.rows.forEach(r=>delete r.cells[c.id])})}));th.append(ops);tr.append(th)});tr.append(el('th','','列操作'));head.append(tr);table.append(head);const rows=el('tbody');b.rows.forEach((r,i)=>{const tr=el('tr');for(const c of b.columns){const td=el('td');td.append(input(ctx,r.cells?.[c.id]||'',v=>{r.cells??={};r.cells[c.id]=v},{multi:true,label:'第 '+(i+1)+' 列 '+c.name}));tr.append(td)}const ops=el('td');ops.append(controls(ctx,b.rows,i,()=>{if(confirm('刪除此列？'))structural(ctx,()=>b.rows.splice(i,1))}));tr.append(ops);rows.append(tr)});table.append(rows);scroll.append(table);body.append(scroll);
  const ops=el('div','cb-toolbar');ops.append(button('＋新增列',()=>structural(ctx,()=>b.rows.push({id:id(),cells:Object.fromEntries(b.columns.map(c=>[c.id,'']))}))),button('＋新增欄',()=>structural(ctx,()=>{const c={id:id(),name:'新欄位'};b.columns.push(c);b.rows.forEach(r=>{r.cells??={};r.cells[c.id]=''})})));body.append(ops,labeled('補充說明（選填）',input(ctx,b.description,v=>b.description=v,{multi:true,label:'表格補充說明'})),batch(ctx,b));
 }
@@ -18459,6 +18460,16 @@ html:is(.bana-mobile-device,.bana-android) .cb-read-block :is(p,.cb-text,.cb-par
 @media(max-width:650px){.cb-editor-block{padding:8px}.cb-table-scroll th,.cb-table-scroll td{padding:4px 6px}.cb-fields{grid-template-columns:minmax(0,1fr)}.cb-block-head{gap:5px}.cb-block-head .cb-order{gap:3px}.cb-editor .cb-button{padding:4px 6px;min-height:27px}.cb-editor .cb-table-scroll :is(input,textarea){min-width:105px;width:125px}}
 
 .cb-editor .cb-item.gram-example-row{grid-template-columns:minmax(0,1fr);min-width:0}.cb-editor .cb-item.gram-example-row textarea{min-height:52px}
+
+/* Compact editable tables; reader tables retain their own layout. */
+.cb-editor .cb-table-scroll .cb-edit-table{width:100%;table-layout:fixed}
+.cb-editor .cb-table-scroll .cb-edit-table :is(th,td){padding:4px;max-width:none}
+.cb-editor .cb-table-scroll .cb-edit-table :is(input,textarea){width:100%;min-width:0;max-width:100%;padding:4px 6px;line-height:1.5}
+#grammarEditorMask .cb-editor .cb-edit-table textarea,#banaSimpleDailyMask .cb-editor .cb-edit-table textarea{height:56px!important;min-height:44px!important}
+.cb-editor .cb-edit-table .cb-order{gap:2px}
+.cb-editor .cb-edit-table .cb-button{padding:2px 4px;min-height:25px;font-size:10px}
+.cb-editor .cb-edit-table th:last-child,.cb-editor .cb-edit-table td:last-child{width:84px}
+@media(max-width:650px){.cb-editor .cb-table-scroll .cb-edit-table :is(th,td){padding:3px}.cb-editor .cb-table-scroll .cb-edit-table :is(input,textarea){padding:4px}}
 </style>
 <script id="bana-backup-restore">
 (function(){'use strict';
