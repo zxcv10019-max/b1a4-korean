@@ -11,7 +11,8 @@ def apply(path):
     if 'id="bana-reader-floating-nav-script"' in html:
         html=re.sub(r'<style id="bana-reader-floating-nav-style">[\s\S]*?</style>\s*<script id="bana-reader-floating-nav-script">[\s\S]*?</script>\s*',lambda m:fragment,html,count=1)
     else:html=html.replace('</body>',fragment+'</body>')
-    if html==previous:return False
-    path.write_text(html,encoding='utf-8');return True
+    encoded=html.encode('utf-8')
+    if path.read_bytes()==encoded:return False
+    path.write_bytes(encoded);return True
 if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('html',type=Path);args=p.parse_args();print('Updated' if apply(args.html) else 'Already current')
