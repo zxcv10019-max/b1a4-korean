@@ -1,0 +1,49 @@
+name: Publish APK signing kit download
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/publish-signing-kit.yml']
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: BANA-Forest-0.6.0-signing-kit
+          run-id: 44685747068
+          github-token: ${{ github.token }}
+          path: signing-kit
+      - name: Prepare direct download
+        run: |
+          mkdir -p downloads
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,json,zipfile
+          source=Path('signing-kit')
+          expected={'BANA-Forest-0.6.0-unsigned.apk','apksigner.jar','SIGN-LOCALLY.md'}
+          actual={p.relative_to(source).as_posix() for p in source.rglob('*') if p.is_file()}
+          assert actual==expected, 'Unexpected files: refuse to publish'
+          apk=source/'BANA-Forest-0.6.0-unsigned.apk'
+          with zipfile.ZipFile(apk) as z:
+              assert not any(n.lower().endswith(('.jks','.keystore','password.txt')) for n in z.namelist()), 'Credential file detected'
+          output=Path('downloads/BANA-Forest-0.6.0-build.zip')
+          # Publish only the two explicit public build files. No key archive, password, or private key is uploaded.
+          with zipfile.ZipFile(output,'w',zipfile.ZIP_DEFLATED) as z:
+              for name in ('BANA-Forest-0.6.0-unsigned.apk','apksigner.jar'):
+                  z.write(source/name,name)
+          metadata={'containsSigningKey':False,'files':['BANA-Forest-0.6.0-unsigned.apk','apksigner.jar'],'bytes':output.stat().st_size,'sha256':hashlib.sha256(output.read_bytes()).hexdigest()}
+          Path('downloads/BANA-Forest-0.6.0-build.json').write_text(json.dumps(metadata,indent=2)+'\n')
+          PY
+      - name: Publish download
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add downloads
+          git commit -m 'Publish directly downloadable APK signing kit [skip ci]'
+          git pull --rebase origin main
+          git push origin HEAD:main
