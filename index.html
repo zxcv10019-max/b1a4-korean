@@ -17134,7 +17134,8 @@ function textEditor(ctx,b,body){const text=input(ctx,b.text,value=>{b.highlights
  if(window.banaInlineColorEditor){const mode=button('彩色編輯',()=>{const existed=!!text.banaColorEditor,controller=text.banaColorEditor||banaInlineColorEditor(text,()=>b.highlights,r=>{b.highlights=r;changed(ctx)});const show=!existed||controller.editor.hidden;controller.editor.hidden=!show;text.hidden=show;mode.textContent=show?'純文字編輯':'彩色編輯';if(show)controller.focus();else text.focus({preventScroll:true})});tools.append(mode);}
  if(window.banaGrammarRuleColors)for(const [color,label]of [['#b64e59','莓紅'],['#39769c','湖藍'],['#8056a6','柔紫'],['','原色']]){const swatch=button(label,()=>{const start=text.selectionStart,end=text.selectionEnd;if(start===end)return;const api=window.banaGrammarRuleColors,a=api.colors(b.text,b.highlights);for(let i=start;i<end;i++)a[i]=color;b.highlights=api.pack(a);changed(ctx);text.banaColorEditor?.refresh();ctx.status.textContent='文字顏色已保留。';if(text.hidden)text.banaColorEditor?.focus();else text.focus({preventScroll:true})});swatch.onpointerdown=e=>e.preventDefault();tools.append(swatch)}body.append(tools,text);
 }
-function ruleExamplesHTML(b){const entries=(b.ruleExamples||[]).filter(e=>e.kr||e.zh);return entries.length?'<div class="cb-rule-examples-read"><small>例句</small>'+entries.map(e=>'<div class="cb-rule-example-read"><div lang="ko">'+rich(e.kr,e.krHighlights||[])+'</div>'+(e.zh?'<div class="cb-formula-translation" lang="zh-Hant">'+rich(e.zh,e.zhHighlights||[])+'</div>':'')+'</div>').join('')+'</div>':''}
+function compactRuleExample(text,ranges){const source=str(text),trimmed=source.trim(),start=source.length-source.trimStart().length,colors=window.banaGrammarRuleColors;return rich(trimmed,colors?colors.pack(colors.colors(source,ranges||[]).slice(start,start+trimmed.length)):ranges||[])}
+function ruleExamplesHTML(b){const entries=(b.ruleExamples||[]).filter(e=>str(e.kr).trim()||str(e.zh).trim());return entries.length?'<div class="cb-rule-examples-read"><small>例句</small>'+entries.map(e=>'<div class="cb-rule-example-read">'+(str(e.kr).trim()?'<div class="cb-rule-example-kr" lang="ko">'+compactRuleExample(e.kr,e.krHighlights||[])+'</div>':'')+(str(e.zh).trim()?'<div class="cb-formula-translation cb-rule-example-zh" lang="zh-Hant">'+compactRuleExample(e.zh,e.zhHighlights||[])+'</div>':'')+'</div>').join('')+'</div>':''}
 function ruleExamplesEditor(ctx,b,body){
  const host=el('section','cb-rule-examples-editor');host.append(el('b','','③ 例句'));
  const rows=b.ruleExamples||[];
@@ -19066,6 +19067,18 @@ window.banaPhoneticNotes={mount,saved(){for(const key of Object.keys(banaContent
 .cb-hierarchy-reader .cb-rule-legacy-read .cb-rule{border:0;padding:3px 0;background:transparent}
 .cb-hierarchy-reader .cb-paragraph{line-height:1.6;margin:0}
 @media(max-width:650px){.cb-hierarchy-section{padding:8px}.cb-rule-use-editor{padding:8px}.cb-rule-use-editor .cb-formula-fields{grid-template-columns:minmax(0,1fr)}}
+</style>
+
+<style id="bana-compact-bilingual-examples">
+#banaGrammarNoteMask .cb-rule-examples-read{height:auto!important;min-height:0!important;white-space:normal;align-content:start}
+#banaGrammarNoteMask .cb-rule-examples-read .cb-rule-example-read{display:block!important;box-sizing:border-box;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;white-space:normal}
+#banaGrammarNoteMask .cb-rule-examples-read .cb-rule-example-read+.cb-rule-example-read{margin-top:8px!important}
+#banaGrammarNoteMask .cb-rule-example-read :is(.cb-rule-example-kr,.cb-rule-example-zh){display:block!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;white-space:normal;line-height:1.55!important}
+#banaGrammarNoteMask .cb-rule-example-read .cb-rule-example-kr+.cb-rule-example-zh{margin-top:2px!important}
+#banaGrammarNoteMask .cb-rule-example-read .cb-paragraph{min-height:0!important;height:auto!important;margin:0!important;padding:0!important;line-height:1.55!important;white-space:pre-wrap;overflow-wrap:anywhere}
+#grammarEditorMask .cb-rule-example-editor .cb-fields{align-items:start!important}
+#grammarEditorMask .cb-rule-example-editor .cb-field{align-self:start!important;align-content:start!important;margin-top:0!important}
+#grammarEditorMask .cb-rule-example-editor .bn-direct-color-input{height:auto!important;min-height:40px!important;max-height:220px;overflow:auto}
 </style>
 </body>
 </html>
