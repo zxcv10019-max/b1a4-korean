@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "versionCode": 1002,
-  "version": "2026.11.20.2",
+  "versionCode": 1003,
+  "version": "2026.11.20.1003",
   "minShellVersion": 58,
-  "bundleUrl": "bana-web-1002-2026.11.20.2.zip",
-  "bytes": 15103183,
-  "sha256": "4f204d26d91559b424b749413d5933113ae3c64a49b5976652454f3d7c069202",
-  "notes": "同步最新 BANA Forest 頁面與功能"
+  "bundleUrl": "bana-web-1003-2026.11.20.1003.zip",
+  "bytes": 15105577,
+  "sha256": "5a12296fb071f93ad353ff56e00c6612bac1b06d293a354b2ea34472a58c7f55",
+  "notes": "新增口語變化：完整說法 → 口語說法，保留原筆記並支援帶入對照。"
 }
