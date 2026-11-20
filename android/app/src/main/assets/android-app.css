@@ -1,0 +1,17 @@
+@import url("/assets/_devicefont/current.css");
+/* Android uses the supplied Korean font, with device/system Chinese as before.
+   Keep weights, colours, highlights and font sizes authored by the user. */
+html.bana-android,html.bana-android body,html.bana-android body *{font-family:BanaProvidedKorean,var(--bana-device-font,system-ui),sans-serif!important}
+.bana-android body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
+.bana-android .bottom-nav{padding-bottom:10px;gap:0}.bana-android .bottom-nav button{min-height:56px;flex:1 1 20%;min-width:0;font-size:11px}
+.bana-android .bottom-nav [data-tab=practiceHub]{display:none!important}
+.bana-android .fab-wrap{bottom:calc(var(--bana-nav-height,84px) + 18px)!important}.bana-android .main{padding-bottom:calc(var(--bana-nav-height,84px) + 30px)}
+.bana-android input,.bana-android textarea{scroll-margin-bottom:120px}
+.bana-android .bana-app-study{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 17px;border:1px solid #e1e9d6;border-radius:17px;background:#f1f6e7;margin-bottom:17px;color:#577447}
+.bana-app-study div{display:flex;flex-direction:column;gap:3px}.bana-app-study small{font-size:10px;color:#94a481}.bana-app-study b{font-size:14px;font-weight:600}
+.bana-android .bana-app-study button,.bana-android .bana-app-storage button{font-family:inherit;border:1px solid #d8e4ca;border-radius:10px;color:#5a7c47;background:#fffef9;font-size:12px;padding:9px 12px;white-space:nowrap}
+.bana-app-storage{padding:18px;border:1px solid #e0e7d8;border-radius:18px;background:#fafbf5;margin-bottom:17px}.bana-app-storage>small{font-size:10px;color:#92a07f}.bana-app-storage h3{font-size:17px;color:#526e46;margin:7px 0}.bana-app-storage p{font-size:12px;line-height:1.9;color:#8c997d}.bana-app-storage>div{display:flex;gap:9px}
+#banaAppWelcome{position:fixed;inset:0;background:#2b432d70;backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:24px;z-index:40000}
+#banaAppWelcome section{max-width:380px;width:100%;background:#fffef8;border:1px solid #e2e9d5;border-radius:24px;padding:26px 23px;color:#627953;box-shadow:0 15px 70px #28412730;text-align:center}
+#banaAppWelcome .bana-app-sprout{display:block;font-size:37px;margin-bottom:13px}#banaAppWelcome small{font-size:11px;color:#98a58a}#banaAppWelcome h2{font-size:21px;margin:8px 0 15px;color:#4d6a40}#banaAppWelcome p{font-size:13px;line-height:1.9;text-align:left}#banaAppWelcome p.bana-app-caption{font-size:11px;color:#96a188}
+#banaAppWelcome button{display:block;width:100%;border-radius:12px;border:0;background:#84a46d;color:white;font-family:inherit;font-size:14px;padding:12px;margin-top:15px}#banaAppWelcome button[data-skip]{background:transparent;color:#8a9d76;margin-top:4px;font-size:12px}

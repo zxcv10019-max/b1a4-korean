@@ -1,0 +1,6 @@
+#bana-update-panel{box-sizing:border-box;width:100%;margin:12px 0;padding:12px;border:1px solid #dce5d2;border-radius:13px;background:#fffef9;color:#5b7350}
+#bana-update-panel h3{margin:0 0 6px;font-size:14px}#bana-update-panel small{font-size:11px;color:#88947b}#bana-update-panel p{font-size:12px;line-height:1.6;white-space:pre-wrap;margin:6px 0}
+#bana-update-panel .bana-update-actions,#bana-update-panel .bana-update-settings{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+#bana-update-panel button{font:inherit;font-size:12px;min-height:32px;padding:5px 10px;border:1px solid #d5e0c8;border-radius:8px;background:#eff4e8;color:#5b7549;cursor:pointer}#bana-update-panel button:disabled{opacity:.5;cursor:default}
+#bana-update-panel [data-update-release]{font-size:12px}#bana-update-panel [data-update-release]:empty{display:none}#bana-update-panel progress{width:100%;height:8px;accent-color:#8ea776}
+#bana-update-panel details{margin-top:8px}#bana-update-panel summary{font-size:11px;color:#8b967d;cursor:pointer}#bana-update-panel [hidden]{display:none!important}

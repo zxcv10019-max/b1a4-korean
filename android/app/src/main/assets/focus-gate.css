@@ -1,0 +1,5 @@
+.bana-focus-card{display:flex;align-items:center;gap:12px;justify-content:space-between;padding:12px 14px;margin:10px 0 14px;background:#f1f5e8;border:1px solid #dce5cc;border-radius:15px;color:#536c43}
+.bana-focus-card>div{display:grid;gap:5px}.bana-focus-card b{font-size:13px;font-weight:600}.bana-focus-card .bana-focus-value{font-size:17px;font-variant-numeric:tabular-nums}.bana-focus-card small{font-size:11px;line-height:1.6;color:#7b8e68}
+.bana-focus-card button{border:1px solid #cddcbb;border-radius:10px;background:#fffef9;color:#597743;font-size:12px;padding:8px 12px}
+/* Korean uses the supplied Ownglyph SUNGEUNSSAM font; Chinese keeps the native system-font bridge. */
+html.bana-android,html.bana-android body,html.bana-android body *{font-family:BanaProvidedKorean,var(--bana-device-font,system-ui),sans-serif!important}
