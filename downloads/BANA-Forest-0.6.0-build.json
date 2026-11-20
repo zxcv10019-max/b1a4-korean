@@ -1,0 +1,9 @@
+{
+  "containsSigningKey": false,
+  "files": [
+    "BANA-Forest-0.6.0-unsigned.apk",
+    "apksigner.jar"
+  ],
+  "bytes": 16172586,
+  "sha256": "f2dbaa340a1a7d67468a30fa3df83c019c5a1b35048570f36ef42567ab76ce48"
+}
