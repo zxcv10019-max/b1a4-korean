@@ -1,0 +1,51 @@
+name: Publish web content updates
+on:
+  push:
+    branches: [main]
+    paths: ['web-patches/**', '.github/workflows/web-content.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: android-content-release
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply web changes
+        run: python3 web-patches/apply-colloquial.py index.html
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify editor and saved content
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
+        run: |
+          mkdir -p work
+          npm install --no-save playwright
+          node web-patches/test-colloquial.cjs
+      - name: Prepare offline content
+        run: python3 android/prepare-ci-assets.py
+      - name: Package app content update
+        run: |
+          python3 - <<'PY'
+          import json,sys
+          from pathlib import Path
+          sys.path.insert(0,'android')
+          from importlib import import_module
+          release=import_module('make-web-release')
+          latest=json.loads(Path('updates/latest.json').read_text())
+          code=latest['versionCode']+1
+          release.create_release('android/app/src/main/assets','updates',code,'2026.11.20.'+str(code),'新增口語變化：完整說法 → 口語說法，保留原筆記並支援帶入對照。')
+          PY
+      - name: Publish website and app update
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html updates
+          git commit -m 'Publish colloquial grammar editor and app content [skip ci]'
+          git pull --rebase origin main
+          git push origin HEAD:main
