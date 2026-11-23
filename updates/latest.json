@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "versionCode": 1008,
-  "version": "2026.11.23.1008",
+  "versionCode": 1009,
+  "version": "2026.11.23.1009",
   "minShellVersion": 58,
-  "bundleUrl": "bana-web-1008-2026.11.23.1008.zip",
-  "bytes": 15108285,
-  "sha256": "fce6eace1ec4270581507ca2d9628710427af452b93dd0be48ac3567d275a760",
-  "notes": "例句的原形與變化後形式改為上下排列及向下箭頭，同義說法仍並排。"
+  "bundleUrl": "bana-web-1009-2026.11.23.1009.zip",
+  "bytes": 15108728,
+  "sha256": "21c2c711520cb1d12339541ba584552e4d2a547d17c69da566b104f7b7645e9d",
+  "notes": "句型例句可選正式說法、口語說法或不標註，閱讀時顯示類型。"
 }
