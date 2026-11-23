@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "versionCode": 1006,
-  "version": "2026.11.23.1006",
+  "versionCode": 1007,
+  "version": "2026.11.23.1007",
   "minShellVersion": 58,
-  "bundleUrl": "bana-web-1006-2026.11.23.1006.zip",
-  "bytes": 15107433,
-  "sha256": "9643d207504e776ccd0595a495b43dfa3d74c4415508290a2586d5824a0ebceb",
-  "notes": "句型加入變化說明，簡化條件欄位，保留既有資料與例句。"
+  "bundleUrl": "bana-web-1007-2026.11.23.1007.zip",
+  "bytes": 15108158,
+  "sha256": "5189494318e16994e007681630d5ebbdc76c819f7dc2fc4f16a678e9ee19182a",
+  "notes": "句型例句支援原形 → 變化後形式 ＝ 多種同義說法，中文只填一次。"
 }
