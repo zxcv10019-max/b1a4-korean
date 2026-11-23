@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "versionCode": 1003,
-  "version": "2026.11.20.1003",
+  "versionCode": 1004,
+  "version": "2026.11.23.1004",
   "minShellVersion": 58,
-  "bundleUrl": "bana-web-1003-2026.11.20.1003.zip",
-  "bytes": 15105577,
-  "sha256": "5a12296fb071f93ad353ff56e00c6612bac1b06d293a354b2ea34472a58c7f55",
-  "notes": "新增口語變化：完整說法 → 口語說法，保留原筆記並支援帶入對照。"
+  "bundleUrl": "bana-web-1004-2026.11.23.1004.zip",
+  "bytes": 15106206,
+  "sha256": "1b6751e6144d3bf8cbe1643c9d2968aeb7d2df5024564ea942ab4c1dbf49df01",
+  "notes": "口語變化新增多組韓中例句、排序及文字改色。"
 }
