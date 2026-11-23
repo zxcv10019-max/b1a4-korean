@@ -16,7 +16,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Apply web changes
-        run: python3 web-patches/apply-colloquial.py index.html
+        run: |
+          python3 web-patches/apply-colloquial.py index.html
+          python3 web-patches/apply-pattern-explanation.py index.html
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -39,7 +41,7 @@ jobs:
           release=import_module('make-web-release')
           latest=json.loads(Path('updates/latest.json').read_text())
           code=latest['versionCode']+1
-          release.create_release('android/app/src/main/assets','updates',code,'2026.11.23.'+str(code),'口語變化新增整則共用例句：正式說法、多種口語說法及中文翻譯。')
+          release.create_release('android/app/src/main/assets','updates',code,'2026.11.23.'+str(code),'句型加入變化說明，簡化條件欄位，保留既有資料與例句。')
           PY
       - name: Publish website and app update
         run: |
