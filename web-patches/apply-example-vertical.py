@@ -5,6 +5,7 @@ READER=r'''function ruleExamplesHTML(b){const entries=(b.ruleExamples||[]).filte
 
 def apply(path):
  p=Path(path);s=p.read_text(encoding='utf-8')
+ if 'bana-example-vertical-style' in s:return
  start=s.index('function ruleExamplesHTML(');end=s.index('\nfunction ',start+1);s=s[:start]+READER+s[end:]
  if 'bana-example-vertical-style' not in s:
   css='''<style id="bana-example-vertical-style">
