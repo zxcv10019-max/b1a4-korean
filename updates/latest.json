@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "versionCode": 1005,
-  "version": "2026.11.23.1005",
+  "versionCode": 1006,
+  "version": "2026.11.23.1006",
   "minShellVersion": 58,
-  "bundleUrl": "bana-web-1005-2026.11.23.1005.zip",
-  "bytes": 15107213,
-  "sha256": "6a23425542ceafe74aa96a49b95a1265b8193122ddef1d451afd0e08a10d80e8",
-  "notes": "口語變化新增整則共用例句：正式說法、多種口語說法及中文翻譯。"
+  "bundleUrl": "bana-web-1006-2026.11.23.1006.zip",
+  "bytes": 15107433,
+  "sha256": "9643d207504e776ccd0595a495b43dfa3d74c4415508290a2586d5824a0ebceb",
+  "notes": "句型加入變化說明，簡化條件欄位，保留既有資料與例句。"
 }
