@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "versionCode": 1007,
-  "version": "2026.11.23.1007",
+  "versionCode": 1008,
+  "version": "2026.11.23.1008",
   "minShellVersion": 58,
-  "bundleUrl": "bana-web-1007-2026.11.23.1007.zip",
-  "bytes": 15108158,
-  "sha256": "5189494318e16994e007681630d5ebbdc76c819f7dc2fc4f16a678e9ee19182a",
-  "notes": "句型例句支援原形 → 變化後形式 ＝ 多種同義說法，中文只填一次。"
+  "bundleUrl": "bana-web-1008-2026.11.23.1008.zip",
+  "bytes": 15108285,
+  "sha256": "fce6eace1ec4270581507ca2d9628710427af452b93dd0be48ac3567d275a760",
+  "notes": "例句的原形與變化後形式改為上下排列及向下箭頭，同義說法仍並排。"
 }
