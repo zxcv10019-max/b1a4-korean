@@ -39,7 +39,7 @@ jobs:
           release=import_module('make-web-release')
           latest=json.loads(Path('updates/latest.json').read_text())
           code=latest['versionCode']+1
-          release.create_release('android/app/src/main/assets','updates',code,'2026.11.23.'+str(code),'口語變化新增多組韓中例句、排序及文字改色。')
+          release.create_release('android/app/src/main/assets','updates',code,'2026.11.23.'+str(code),'口語變化新增整則共用例句：正式說法、多種口語說法及中文翻譯。')
           PY
       - name: Publish website and app update
         run: |
