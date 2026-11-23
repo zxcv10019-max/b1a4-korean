@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "versionCode": 1004,
-  "version": "2026.11.23.1004",
+  "versionCode": 1005,
+  "version": "2026.11.23.1005",
   "minShellVersion": 58,
-  "bundleUrl": "bana-web-1004-2026.11.23.1004.zip",
-  "bytes": 15106206,
-  "sha256": "1b6751e6144d3bf8cbe1643c9d2968aeb7d2df5024564ea942ab4c1dbf49df01",
-  "notes": "口語變化新增多組韓中例句、排序及文字改色。"
+  "bundleUrl": "bana-web-1005-2026.11.23.1005.zip",
+  "bytes": 15107213,
+  "sha256": "6a23425542ceafe74aa96a49b95a1265b8193122ddef1d451afd0e08a10d80e8",
+  "notes": "口語變化新增整則共用例句：正式說法、多種口語說法及中文翻譯。"
 }
