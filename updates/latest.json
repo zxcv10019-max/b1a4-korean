@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "versionCode": 1010,
-  "version": "2026.11.24.1010",
+  "versionCode": 1011,
+  "version": "2026.11.24.1011",
   "minShellVersion": 58,
-  "bundleUrl": "bana-web-1010-2026.11.24.1010.zip",
-  "bytes": 15110611,
-  "sha256": "539ddaf660682aa61be7e8bfb5008e2494adbbbdcaa70d48f44bd189191a5a1f",
-  "notes": "小叮嚀新增肯定／否定對照：多組句型、韓中例句與補充提醒。"
+  "bundleUrl": "bana-web-1011-2026.11.24.1011.zip",
+  "bytes": 15111217,
+  "sha256": "2c4d8f82da39ebf249a692bba6a1358432fc0d9e8ea66c43ed2528c09fa4cafb",
+  "notes": "例句選不標註時顯示純韓中例句，收起變化欄位並保留既有資料。"
 }
