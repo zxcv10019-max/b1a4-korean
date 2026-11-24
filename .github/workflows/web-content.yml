@@ -22,6 +22,7 @@ jobs:
           python3 web-patches/apply-example-equivalents.py index.html
           python3 web-patches/apply-example-vertical.py index.html
           python3 web-patches/apply-example-register.py index.html
+          python3 web-patches/apply-polarity-tips.py index.html
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -44,7 +45,7 @@ jobs:
           release=import_module('make-web-release')
           latest=json.loads(Path('updates/latest.json').read_text())
           code=latest['versionCode']+1
-          release.create_release('android/app/src/main/assets','updates',code,'2026.11.23.'+str(code),'句型例句可選正式說法、口語說法或不標註，閱讀時顯示類型。')
+          release.create_release('android/app/src/main/assets','updates',code,'2026.11.24.'+str(code),'小叮嚀新增肯定／否定對照：多組句型、韓中例句與補充提醒。')
           PY
       - name: Publish website and app update
         run: |
