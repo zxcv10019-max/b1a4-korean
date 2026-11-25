@@ -25,6 +25,7 @@ jobs:
           python3 web-patches/apply-polarity-tips.py index.html
           python3 web-patches/apply-plain-examples.py index.html
           python3 web-patches/apply-vocab-notes.py index.html
+          python3 web-patches/apply-qa-examples.py index.html
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -47,7 +48,7 @@ jobs:
           release=import_module('make-web-release')
           latest=json.loads(Path('updates/latest.json').read_text())
           code=latest['versionCode']+1
-          release.create_release('android/app/src/main/assets','updates',code,'2026.11.25.'+str(code),'補充單字下方新增可改色的補充說明與多組韓中例句。')
+          release.create_release('android/app/src/main/assets','updates',code,'2026.11.25.'+str(code),'句型新增問答例句：一個問題可配多種回答並共用中文翻譯。')
           PY
       - name: Publish website and app update
         run: |
