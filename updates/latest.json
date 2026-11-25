@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "versionCode": 1013,
-  "version": "2026.11.25.1013",
+  "versionCode": 1014,
+  "version": "2026.11.25.1014",
   "minShellVersion": 58,
-  "bundleUrl": "bana-web-1013-2026.11.25.1013.zip",
-  "bytes": 15112886,
-  "sha256": "5a3c918af8ef06c4a78e8fd3ebb9f9aca842715ba0c79a0f2524ff20aa6fffd9",
-  "notes": "句型新增問答例句：一個問題可配多種回答並共用中文翻譯。"
+  "bundleUrl": "bana-web-1014-2026.11.25.1014.zip",
+  "bytes": 15113099,
+  "sha256": "aeeeef67752aaba90bcd6599712d35e016b38f8ebe08436336d20c9a9ca15715",
+  "notes": "問答例句的每種回答可個別標註正式或口語，共用中文翻譯。"
 }
