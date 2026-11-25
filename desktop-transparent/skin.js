@@ -22,6 +22,7 @@ body{padding-top:32px!important}
 document.head.append(style);
 const tools=document.createElement('div');tools.id='bana-desktop-tools';
 tools.innerHTML='<button id="bana-desktop-drag" title="拖曳移動視窗">⠿ 移動</button><button data-action="toggle" title="切換清楚／自動">◐</button><button data-action="minimize" title="最小化">−</button><button data-action="close" title="關閉">×</button>';
+const version=document.createElement('span');version.textContent='v0.2.3';version.style.cssText='font:11px sans-serif;padding:6px 2px';tools.prepend(version);
 document.body.append(tools);
 tools.addEventListener('click',event=>{const action=event.target.dataset.action;if(action&&window.banaDesktop)window.banaDesktop[action]();});
 let faded=false,initialized=false,timer=null,surfaces=new WeakSet();
