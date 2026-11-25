@@ -52,6 +52,7 @@ else{
     win.webContents.setWindowOpenHandler(({url})=>{if(url.startsWith('https://'))shell.openExternal(url);return {action:'deny'};});
     win.webContents.on('will-navigate',(event,url)=>{if(!url.startsWith(SITE)){event.preventDefault();if(url.startsWith('https://'))shell.openExternal(url);}});
     win.webContents.on('did-fail-load',(_event,code,description,_url,mainFrame)=>{if(mainFrame&&code!==-3){win.show();require('electron').dialog.showErrorBox('BANA Forest 載入失敗',description+'\n請確認網路後，從右下角圖示重新載入。');}});
+    if(smoke){win.webContents.on('preload-error',(_event,file,error)=>console.error('Preload error:',file,error.message));win.webContents.on('console-message',(event,_level,message)=>console.error('Renderer:',message||event.message||''));}
     win.webContents.on('dom-ready',async()=>{try{await win.webContents.executeJavaScript(fs.readFileSync(path.join(__dirname,'skin.js'),'utf8'));if(!smoke)await win.webContents.executeJavaScript(fs.readFileSync(path.join(__dirname,'login.js'),'utf8'));windowControls.publish();win.webContents.send('bana-opacity',opacityControls.current());if(!smoke)win.show();}catch(error){console.error(error);if(smoke)app.exit(1);}});
     if(smoke){await runSmoke();return;}
     tray=new Tray(nativeImage.createFromPath(path.join(__dirname,'logo.png')).resize({width:24,height:24}));tray.on('double-click',()=>{windowControls.expand();win.show();win.focus();});renderTray();
@@ -62,16 +63,17 @@ else{
 }
 async function runSmoke(){
   const wait=ms=>new Promise(r=>setTimeout(r,ms));
+  const evaluate=async source=>{const result=await win.webContents.executeJavaScript('(async()=>{try{return {ok:true,value:await eval('+JSON.stringify(source)+')}}catch(error){return {ok:false,error:error.stack}}})()');if(!result.ok)throw Error(result.error);return result.value;};
   try{
-    await win.loadFile(path.join(__dirname,'fixture.html'));await win.webContents.executeJavaScript(fs.readFileSync(path.join(__dirname,'skin.js'),'utf8'));await wait(150);
+    await win.loadFile(path.join(__dirname,'fixture.html'));await evaluate(fs.readFileSync(path.join(__dirname,'skin.js'),'utf8'));await wait(150);
     if(opacityControls.current()!==100||Math.abs(win.getOpacity()-1)>.01)throw Error('Default must be 100%');
-    const original=await win.webContents.executeJavaScript(`(()=>{const card=document.getElementById('card'),nested=document.getElementById('nested');const result={text:getComputedStyle(document.getElementById('text')).color,card:getComputedStyle(card).backgroundColor,nested:getComputedStyle(nested).backgroundColor,outline:getComputedStyle(card).outlineWidth};if(result.text!=='rgb(30, 70, 40)'||result.card!=='rgb(230, 240, 220)'||result.nested!=='rgb(250, 240, 220)'||result.outline!=='0px')throw Error(JSON.stringify(result));return result})()`);
+    const original=await evaluate(`(()=>{const card=document.getElementById('card'),nested=document.getElementById('nested');const result={text:getComputedStyle(document.getElementById('text')).color,card:getComputedStyle(card).backgroundColor,nested:getComputedStyle(nested).backgroundColor,outline:getComputedStyle(card).outlineWidth};if(result.text!=='rgb(30, 70, 40)'||result.card!=='rgb(230, 240, 220)'||result.nested!=='rgb(250, 240, 220)'||result.outline!=='0px')throw Error(JSON.stringify(result));return result})()`);
     opacityControls.setPercent(45);await wait(80);if(Math.abs(win.getOpacity()-.45)>.01)throw Error('Whole window opacity');
-    await win.webContents.executeJavaScript("const range=document.querySelector('#bana-desktop-tools input');range.value='70';range.dispatchEvent(new Event('input',{bubbles:true}));");
+    await evaluate("const range=document.querySelector('#bana-desktop-tools input');range.value='70';range.dispatchEvent(new Event('input',{bubbles:true}));");
     for(let i=0;i<20&&opacityControls.current()!==70;i++)await wait(50);
     if(opacityControls.current()!==70||Math.abs(win.getOpacity()-.7)>.01)throw Error('Slider must control native opacity');
     const expanded=win.getBounds();windowControls.toggleCollapse();await wait(150);
-    if(win.getBounds().height!==40||!await win.webContents.executeJavaScript("document.documentElement.classList.contains('bana-desktop-collapsed')&&getComputedStyle(document.getElementById('card')).visibility==='hidden'&&document.getElementById('bana-desktop-tools').getBoundingClientRect().left>=0"))throw Error('Toolbar collapse');
+    if(win.getBounds().height!==40||!await evaluate("document.documentElement.classList.contains('bana-desktop-collapsed')&&getComputedStyle(document.getElementById('card')).visibility==='hidden'&&document.getElementById('bana-desktop-tools').getBoundingClientRect().left>=0"))throw Error('Toolbar collapse');
     windowControls.togglePin();if(!win.isAlwaysOnTop())throw Error('Always on top');
     fs.writeFileSync(path.join(__dirname,'smoke-toolbar.png'),(await win.webContents.capturePage()).toPNG());
     windowControls.expand();await wait(100);if(win.getBounds().width!==Math.min(expanded.width,screen.getDisplayMatching(win.getBounds()).workArea.width))throw Error('Restore size');windowControls.togglePin();
