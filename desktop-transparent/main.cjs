@@ -58,9 +58,9 @@ async function runSmoke(){
     for(let i=0;i<20;i++){
       await new Promise(r=>setTimeout(r,50));
       collapsedState=await win.webContents.executeJavaScript("({collapsed:document.documentElement.classList.contains('bana-desktop-collapsed'),cardVisibility:getComputedStyle(document.getElementById('card')).visibility,toolbarVisibility:getComputedStyle(document.getElementById('bana-desktop-tools')).visibility,toolbarBounds:document.getElementById('bana-desktop-tools').getBoundingClientRect().toJSON()})");
-      if(win.getBounds().height===36&&collapsedState.collapsed&&collapsedState.cardVisibility==='hidden')break;
+      if(win.getBounds().height===40&&collapsedState.collapsed&&collapsedState.cardVisibility==='hidden')break;
     }
-    if(win.getBounds().height!==36||!collapsedState.collapsed||collapsedState.cardVisibility!=='hidden')throw Error('Collapse must hide body and leave toolbar: '+JSON.stringify({bounds:win.getBounds(),...collapsedState}));
+    if(win.getBounds().height!==40||!collapsedState.collapsed||collapsedState.cardVisibility!=='hidden')throw Error('Collapse must hide body and leave toolbar: '+JSON.stringify({bounds:win.getBounds(),...collapsedState}));
     windowControls.togglePin();if(!win.isAlwaysOnTop())throw Error('Pin must set native always-on-top');
     const collapsedImage=await win.webContents.capturePage();fs.writeFileSync(path.join(__dirname,'smoke-toolbar.png'),collapsedImage.toPNG());
     windowControls.expand();await new Promise(r=>setTimeout(r,100));

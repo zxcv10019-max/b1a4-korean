@@ -14,8 +14,8 @@ function createWindowControls({win,screen,onChange=()=>{}}){
     if(collapsed)return expand();
     if(win.isMaximized())win.unmaximize();
     const bounds=win.getBounds();expanded={bounds,minimum:win.getMinimumSize(),resizable:win.isResizable()};
-    win.setMinimumSize(300,36);win.setResizable(false);
-    win.setBounds({x:bounds.x+bounds.width-300,y:bounds.y,width:300,height:36});
+    win.setMinimumSize(300,40);win.setResizable(false);
+    win.setBounds({x:bounds.x+bounds.width-300,y:bounds.y,width:300,height:40});
     collapsed=true;return publish();
   }
   function togglePin(){win.setAlwaysOnTop(!win.isAlwaysOnTop());return publish();}
