@@ -53,8 +53,14 @@ async function runSmoke(){
     for(const [date,value]of dates)if(workTime(new Date(date))!==value)throw Error('Schedule '+date);
     await win.loadFile(path.join(__dirname,'fixture.html'));
     await win.webContents.executeJavaScript(fs.readFileSync(path.join(__dirname,'skin.js'),'utf8'));
-    const expanded=win.getBounds();windowControls.toggleCollapse();await new Promise(r=>setTimeout(r,100));
-    if(win.getBounds().height!==36||!await win.webContents.executeJavaScript("document.documentElement.classList.contains('bana-desktop-collapsed')&&getComputedStyle(document.getElementById('card')).visibility==='hidden'"))throw Error('Collapse must hide body and leave toolbar');
+    await new Promise(r=>setTimeout(r,150));
+    const expanded=win.getBounds();windowControls.toggleCollapse();let collapsedState;
+    for(let i=0;i<20;i++){
+      await new Promise(r=>setTimeout(r,50));
+      collapsedState=await win.webContents.executeJavaScript("({collapsed:document.documentElement.classList.contains('bana-desktop-collapsed'),cardVisibility:getComputedStyle(document.getElementById('card')).visibility,toolbarVisibility:getComputedStyle(document.getElementById('bana-desktop-tools')).visibility,toolbarBounds:document.getElementById('bana-desktop-tools').getBoundingClientRect().toJSON()})");
+      if(win.getBounds().height===36&&collapsedState.collapsed&&collapsedState.cardVisibility==='hidden')break;
+    }
+    if(win.getBounds().height!==36||!collapsedState.collapsed||collapsedState.cardVisibility!=='hidden')throw Error('Collapse must hide body and leave toolbar: '+JSON.stringify({bounds:win.getBounds(),...collapsedState}));
     windowControls.togglePin();if(!win.isAlwaysOnTop())throw Error('Pin must set native always-on-top');
     const collapsedImage=await win.webContents.capturePage();fs.writeFileSync(path.join(__dirname,'smoke-toolbar.png'),collapsedImage.toPNG());
     windowControls.expand();await new Promise(r=>setTimeout(r,100));
