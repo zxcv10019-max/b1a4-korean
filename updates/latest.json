@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "versionCode": 1017,
-  "version": "2026.11.25.1017",
+  "versionCode": 1018,
+  "version": "2026.11.25.1018",
   "minShellVersion": 58,
-  "bundleUrl": "bana-web-1017-2026.11.25.1017.zip",
-  "bytes": 15114983,
-  "sha256": "aac8f55af60adfe37dcf66493f8fb63a7546bba8765330f567acb6890681f363",
-  "notes": "透明電腦版沿用Google雲端同步，新增瀏覽器登入連接。"
+  "bundleUrl": "bana-web-1018-2026.11.25.1018.zip",
+  "bytes": 15114162,
+  "sha256": "80f0a94a8c108649c7357cc8157e5813917d50453375b59c97e0bd147918fccb",
+  "notes": "一般網站恢復正常顯示，移除上班時段自動淡化；電腦版透明效果保留。"
 }

@@ -4003,33 +4003,8 @@ html:not(.bana-android),html:not(.bana-android) body,html:not(.bana-android) bod
 <style id="bana-qa-answer-register-style">
 .cb-qa-answer-item+.cb-qa-answer-item{margin-top:6px}.cb-qa-answer-item .cb-example-register-label{margin-bottom:2px!important}.cb-qa-variant-editor>label:first-child{margin:0 0 5px}.cb-qa-variant-editor .cb-example-register{max-width:220px}
 </style>
-<style id="bana-worktime-fade-style">
-html.bana-worktime-faded{background:#fff!important}
-html.bana-worktime-faded body{opacity:.2!important}
-</style>
-<script id="bana-worktime-fade-script">
-(function(){
-  'use strict';
-  const clock=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Taipei',weekday:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
-  function isWorkTime(date){
-    const parts=Object.fromEntries(clock.formatToParts(date).map(p=>[p.type,p.value]));
-    const minutes=Number(parts.hour)*60+Number(parts.minute);
-    return ['Mon','Tue','Wed','Thu','Fri'].includes(parts.weekday)&&minutes>=510&&minutes<1080;
-  }
-  function isNative(){return location.hostname==='appassets.androidplatform.net'||typeof window.BanaAndroid!=='undefined';}
-  function refresh(date){
-    const active=!isNative()&&!new URLSearchParams(location.search).has('desktopOpacity')&&isWorkTime(date||new Date()); // bana-desktop-opacity-mode
-    document.documentElement.classList.toggle('bana-worktime-faded',active);
-    return active;
-  }
-  window.banaWorktimeFade=Object.freeze({isWorkTime,refresh});
-  refresh();
-  setInterval(()=>refresh(),1000);
-  document.addEventListener('visibilitychange',()=>refresh());
-  window.addEventListener('pageshow',()=>refresh());
-  window.addEventListener('focus',()=>refresh());
-})();
-</script>
+
+
 </head>
 <body>
 <div class="app">
