@@ -23,6 +23,8 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Verify native transparent window
         run: |
+          node test-auth.cjs
+          if ($LASTEXITCODE -ne 0) { throw 'Desktop login test failed' }
           & ./node_modules/.bin/electron.cmd . --smoke-test
           if ($LASTEXITCODE -ne 0) { throw 'Transparent desktop verification failed' }
           Get-Content smoke-result.json
@@ -31,11 +33,11 @@ jobs:
           & ./node_modules/.bin/electron-packager.cmd . BANA-Forest-Desktop --platform=win32 --arch=x64 --out=dist --overwrite --icon=app.ico --ignore='smoke-.*|fixture.html|README.md'
           if ($LASTEXITCODE -ne 0) { throw 'Desktop package failed' }
           Copy-Item -LiteralPath README.md -Destination dist/BANA-Forest-Desktop-win32-x64/README.txt
-          Compress-Archive -Path dist/BANA-Forest-Desktop-win32-x64 -DestinationPath BANA-Forest-Desktop-0.2.0.zip
+          Compress-Archive -Path dist/BANA-Forest-Desktop-win32-x64 -DestinationPath BANA-Forest-Desktop-0.2.1.zip
       - uses: actions/upload-artifact@v4
         with:
-          name: BANA-Forest-Desktop-0.2.0
-          path: desktop-transparent/BANA-Forest-Desktop-0.2.0.zip
+          name: BANA-Forest-Desktop-0.2.1
+          path: desktop-transparent/BANA-Forest-Desktop-0.2.1.zip
           retention-days: 30
       - uses: actions/upload-artifact@v4
         if: always()
@@ -48,4 +50,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create desktop-0.2.0 BANA-Forest-Desktop-0.2.0.zip --title 'BANA Forest 透明電腦版 0.2.0' --notes-file README.md --target $env:GITHUB_SHA
+          gh release create desktop-0.2.1 BANA-Forest-Desktop-0.2.1.zip --title 'BANA Forest 透明電腦版 0.2.1' --notes-file README.md --target $env:GITHUB_SHA

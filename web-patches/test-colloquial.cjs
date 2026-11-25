@@ -20,4 +20,16 @@ assert(api.refresh(new Date('2026-11-23T01:00:00Z'))===true,'normal website stil
 assert(getComputedStyle(document.body).opacity==='0.2','normal website 20%');
 return{passed:true,desktopSkipsDoubleFade:true,normalWebsiteUnchanged:true};
 }finally{history.replaceState(null,'',original);api.refresh();}
-})());console.log(JSON.stringify({desktop,fade,qaRegister,qa,vocab,plain,polarity,register,equivalent,pattern,shared,examples,...result,html:undefined}));await page.evaluate(html=>{document.body.innerHTML='<main style="padding:15px;background:#fffdf7;color:#405b3c">'+html+'</main>'},result.html);await page.screenshot({path:'work/colloquial-mobile.png'});await browser.close()})().catch(e=>{console.error(e);process.exit(1)});
+})());const desktopLogin=await page.evaluate(()=>(async()=>{
+const check=(v,m)=>{if(!v)throw Error(m)},url=location.href,oldAuth=firebaseAuth,oldFirebase=window.firebase,oldSubmit=HTMLFormElement.prototype.submit;let sent;
+try{
+history.replaceState(null,'',location.pathname+'?desktopOpacity=1&desktopAuthPort=12345&desktopAuthState='+'b'.repeat(64));
+window.firebase={auth:{GoogleAuthProvider:class{setCustomParameters(value){check(value.prompt==='select_account','choose account')}}}};
+firebaseAuth={signInWithPopup:async()=>({credential:{idToken:'fake-id',accessToken:'fake-access'}})};
+HTMLFormElement.prototype.submit=function(){sent={action:this.action,method:this.method,values:Object.fromEntries(new FormData(this))}};
+new Function(document.getElementById('bana-desktop-google-handoff').textContent)();
+const panel=document.querySelector('[aria-label="連接電腦版"]');check(panel,'handoff panel');panel.querySelector('button').click();await new Promise(r=>setTimeout(r,50));
+check(sent.action==='http://127.0.0.1:12345/auth'&&sent.method==='post','local callback');check(sent.values.state==='b'.repeat(64)&&sent.values.idToken==='fake-id'&&sent.values.accessToken==='fake-access','Google credential payload');
+return{passed:true,browserGoogleLogin:true,loopbackPost:true,stateValidation:true,noExportImportRequired:true};
+}finally{firebaseAuth=oldAuth;window.firebase=oldFirebase;HTMLFormElement.prototype.submit=oldSubmit;history.replaceState(null,'',url);}
+})());console.log(JSON.stringify({desktopLogin,desktop,fade,qaRegister,qa,vocab,plain,polarity,register,equivalent,pattern,shared,examples,...result,html:undefined}));await page.evaluate(html=>{document.body.innerHTML='<main style="padding:15px;background:#fffdf7;color:#405b3c">'+html+'</main>'},result.html);await page.screenshot({path:'work/colloquial-mobile.png'});await browser.close()})().catch(e=>{console.error(e);process.exit(1)});

@@ -2,7 +2,7 @@ const {app,BrowserWindow,Tray,Menu,ipcMain,shell,nativeImage}=require('electron'
 const fs=require('fs'),path=require('path');
 const SITE='https://zxcv10019-max.github.io/b1a4-korean/';
 const smoke=process.argv.includes('--smoke-test');
-let win,tray,forceClear=false,lastMode,timer;
+let win,tray,forceClear=false,lastMode,timer,pendingLogin;
 const clock=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Taipei',weekday:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
 function workTime(date=new Date()){const p=Object.fromEntries(clock.formatToParts(date).map(p=>[p.type,p.value])),minutes=Number(p.hour)*60+Number(p.minute);return ['Mon','Tue','Wed','Thu','Fri'].includes(p.weekday)&&minutes>=510&&minutes<1080;}
 function mode(){return !forceClear&&workTime();}
@@ -12,6 +12,17 @@ ipcMain.on('bana-close',event=>{if(fromWindow(event))app.quit();});
 ipcMain.on('bana-minimize',event=>{if(fromWindow(event))win.minimize();});
 ipcMain.on('bana-toggle',event=>{if(fromWindow(event)){forceClear=!forceClear;refresh(true);}});
 ipcMain.handle('bana-current',event=>fromWindow(event)&&mode());
+ipcMain.handle('bana-login',async event=>{
+  if(!fromWindow(event)||!event.senderFrame.url.startsWith(SITE))throw Error('Untrusted login request');
+  if(pendingLogin)throw Error('Google 登入已在進行中，請先完成瀏覽器的登入。');
+  const handoff=require('./auth-handoff.cjs').createHandoff({origin:new URL(SITE).origin});pendingLogin=handoff;
+  handoff.result.catch(()=>{});
+  try{
+    const {port,state}=await handoff.ready;
+    await shell.openExternal(SITE+'?desktopOpacity=1&desktopAuthPort='+port+'&desktopAuthState='+state);
+    return await handoff.result;
+  }catch(error){handoff.cancel();throw error;}finally{pendingLogin=null;}
+});
 if(!app.requestSingleInstanceLock())app.quit();
 else{
 app.on('second-instance',()=>{if(win){win.show();win.focus();}});
@@ -21,14 +32,14 @@ app.whenReady().then(async()=>{
   win.webContents.setWindowOpenHandler(({url})=>{if(url.startsWith('https://'))shell.openExternal(url);return {action:'deny'};});
   win.webContents.on('will-navigate',(event,url)=>{if(!url.startsWith(SITE)){event.preventDefault();if(url.startsWith('https://'))shell.openExternal(url);}});
   win.webContents.on('did-fail-load',(_event,code,description,_url,mainFrame)=>{if(mainFrame&&code!==-3){win.show();require('electron').dialog.showErrorBox('BANA Forest 載入失敗',description+'\n請確認網路後，從右下角圖示重新載入。');}});
-  win.webContents.on('dom-ready',async()=>{try{await win.webContents.executeJavaScript(fs.readFileSync(path.join(__dirname,'skin.js'),'utf8'));refresh(true);if(!smoke)win.show();}catch(error){console.error(error);if(smoke)app.exit(1);}});
+  win.webContents.on('dom-ready',async()=>{try{await win.webContents.executeJavaScript(fs.readFileSync(path.join(__dirname,'skin.js'),'utf8'));if(!smoke)await win.webContents.executeJavaScript(fs.readFileSync(path.join(__dirname,'login.js'),'utf8'));refresh(true);if(!smoke)win.show();}catch(error){console.error(error);if(smoke)app.exit(1);}});
   if(smoke){await runSmoke();return;}
   const icon=nativeImage.createFromPath(path.join(__dirname,'logo.png')).resize({width:24,height:24});tray=new Tray(icon);tray.on('double-click',()=>{forceClear=!forceClear;refresh(true);});
   timer=setInterval(()=>refresh(),1000);refresh(true);
   win.on('closed',()=>app.quit());
   await win.loadURL(SITE+'?desktopOpacity=1');
 });
-app.on('before-quit',()=>{clearInterval(timer);if(tray)tray.destroy();});
+app.on('before-quit',()=>{clearInterval(timer);if(tray)tray.destroy();if(pendingLogin)pendingLogin.cancel();});
 app.on('window-all-closed',()=>app.quit());
 }
 async function runSmoke(){

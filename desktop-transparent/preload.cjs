@@ -4,5 +4,6 @@ contextBridge.exposeInMainWorld('banaDesktop',Object.freeze({
   minimize:()=>ipcRenderer.send('bana-minimize'),
   toggle:()=>ipcRenderer.send('bana-toggle'),
   current:()=>ipcRenderer.invoke('bana-current'),
+  login:()=>ipcRenderer.invoke('bana-login'),
   onMode:callback=>{if(typeof callback==='function')ipcRenderer.on('bana-mode',(_event,value)=>callback(value));}
 }));
