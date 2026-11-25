@@ -1,10 +1,14 @@
 const assert=require('node:assert/strict'),{createWindowControls}=require('./window-controls.cjs');
-let bounds={x:100,y:80,width:560,height:800},minimum=[360,400],resizable=true,pinned=false;
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+(async()=>{
+let bounds={x:100,y:80,width:560,height:800},minimum=[400,400],resizable=true,pinned=false;
 const win={getBounds:()=>({...bounds}),setBounds:v=>bounds={...v},getMinimumSize:()=>[...minimum],setMinimumSize:(...v)=>minimum=v,isResizable:()=>resizable,setResizable:v=>resizable=v,isAlwaysOnTop:()=>pinned,setAlwaysOnTop:v=>pinned=v,isMaximized:()=>false};
-const updates=[],controls=createWindowControls({win,screen:{getDisplayMatching:()=>({workArea:{x:0,y:0,width:1920,height:1080}})},onChange:s=>updates.push(s)});
-assert.equal(controls.toggleCollapse().collapsed,true);assert.deepEqual(bounds,{x:360,y:80,width:300,height:40});assert.equal(resizable,false);
-assert.equal(controls.togglePin().pinned,true);assert.equal(controls.state().collapsed,true);
-bounds.x=500;bounds.y=140;controls.expand();assert.deepEqual(bounds,{x:240,y:140,width:560,height:800});assert.deepEqual(minimum,[360,400]);assert.equal(resizable,true);assert.equal(pinned,true);
-controls.toggleCollapse();bounds.x=-200;bounds.y=1000;controls.expand();assert.equal(bounds.x,0);assert.equal(bounds.y,280);
-assert.equal(controls.togglePin().pinned,false);assert.equal(updates.length,6);
-console.log('PASS: toolbar-only bounds, expand after drag, screen limits, size constraints, pin toggle');
+const controls=createWindowControls({win,screen:{getDisplayMatching:()=>({workArea:{x:0,y:0,width:1920,height:1080}})},hideDelay:10});
+controls.leave();await wait(25);assert.equal(controls.state().collapsed,false);
+controls.toggleCollapse();assert.deepEqual(bounds,{x:260,y:80,width:400,height:40});controls.togglePin();assert.equal(pinned,true);
+bounds.x=500;bounds.y=140;controls.expand();assert.deepEqual(bounds,{x:340,y:140,width:560,height:800});assert.deepEqual(minimum,[400,400]);assert.equal(resizable,true);assert.equal(pinned,true);
+controls.toggleAutoHide();controls.leave();controls.enter();await wait(25);assert.equal(controls.state().collapsed,false);
+controls.leave();await wait(25);assert.equal(controls.state().collapsed,true);assert.equal(pinned,true);
+controls.enter();assert.equal(controls.state().collapsed,false);controls.leave();controls.toggleAutoHide();await wait(25);assert.equal(controls.state().collapsed,false);
+controls.togglePin();assert.equal(pinned,false);controls.dispose();console.log('PASS: collapse/restore, pin, optional mouse-leave hide, hover restore, cancelled hide');
+})().catch(error=>{console.error(error);process.exit(1)});

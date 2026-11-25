@@ -23,6 +23,8 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Verify native transparent window
         run: |
+          node test-opacity.cjs
+          if ($LASTEXITCODE -ne 0) { throw 'Desktop opacity control failed' }
           node test-window-controls.cjs
           if ($LASTEXITCODE -ne 0) { throw 'Desktop window controls failed' }
           node test-auth.cjs
@@ -37,7 +39,7 @@ jobs:
           Copy-Item -LiteralPath node_modules/electron/dist -Destination (Join-Path $desktopOutput 'runtime') -Recurse
           $desktopApp = Join-Path $desktopOutput 'runtime/resources/app'
           New-Item -ItemType Directory -Path $desktopApp -Force | Out-Null
-          foreach ($desktopFile in @('main.cjs','preload.cjs','skin.js','login.js','auth-handoff.cjs','package.json','logo.png','perf-check.js','window-controls.cjs')) { Copy-Item -LiteralPath $desktopFile -Destination $desktopApp }
+          foreach ($desktopFile in @('main.cjs','preload.cjs','skin.js','login.js','auth-handoff.cjs','package.json','logo.png','window-controls.cjs','opacity-controls.cjs')) { Copy-Item -LiteralPath $desktopFile -Destination $desktopApp }
           $desktopCompiler = Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'
           & $desktopCompiler /nologo /target:winexe /optimize+ '/reference:System.Windows.Forms.dll' '/win32icon:app.ico' ("/out:" + (Join-Path $desktopOutput 'BANA-Forest-Desktop.exe')) Launcher.cs
           if ($LASTEXITCODE -ne 0) { throw 'Desktop launcher compile failed' }
@@ -47,12 +49,12 @@ jobs:
           if ($desktopCheck.ExitCode -ne 0) { throw 'Packaged desktop verification failed' }
           Get-Content -LiteralPath (Join-Path $desktopApp 'smoke-result.json')
           Remove-Item -LiteralPath (Join-Path $desktopApp 'fixture.html'),(Join-Path $desktopApp 'smoke-result.json'),(Join-Path $desktopApp 'smoke-transparent.png')
-          & 7z a -tzip -mx=3 BANA-Forest-Desktop-0.2.6.zip $desktopOutput
+          & 7z a -tzip -mx=3 BANA-Forest-Desktop-0.2.7.zip $desktopOutput
           if ($LASTEXITCODE -ne 0) { throw 'Desktop archive failed' }
       - uses: actions/upload-artifact@v4
         with:
-          name: BANA-Forest-Desktop-0.2.6
-          path: desktop-transparent/BANA-Forest-Desktop-0.2.6.zip
+          name: BANA-Forest-Desktop-0.2.7
+          path: desktop-transparent/BANA-Forest-Desktop-0.2.7.zip
           retention-days: 30
       - uses: actions/upload-artifact@v4
         if: always()
@@ -66,10 +68,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view desktop-0.2.6
+          gh release view desktop-0.2.7
           if ($LASTEXITCODE -eq 0) {
-            gh release upload desktop-0.2.6 BANA-Forest-Desktop-0.2.6.zip --clobber
+            gh release upload desktop-0.2.7 BANA-Forest-Desktop-0.2.7.zip --clobber
           } else {
-            gh release create desktop-0.2.6 BANA-Forest-Desktop-0.2.6.zip --title 'BANA Forest 透明電腦版 0.2.6' --notes-file README.md --target $env:GITHUB_SHA
+            gh release create desktop-0.2.7 BANA-Forest-Desktop-0.2.7.zip --title 'BANA Forest 透明電腦版 0.2.7' --notes-file README.md --target $env:GITHUB_SHA
           }
           if ($LASTEXITCODE -ne 0) { throw 'Desktop release failed' }
