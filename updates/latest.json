@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "versionCode": 1012,
-  "version": "2026.11.25.1012",
+  "versionCode": 1013,
+  "version": "2026.11.25.1013",
   "minShellVersion": 58,
-  "bundleUrl": "bana-web-1012-2026.11.25.1012.zip",
-  "bytes": 15111734,
-  "sha256": "019b328ed356d77e89ac5d332d0b4a6ac55e55669a8d5777275acdb084000ab6",
-  "notes": "補充單字下方新增可改色的補充說明與多組韓中例句。"
+  "bundleUrl": "bana-web-1013-2026.11.25.1013.zip",
+  "bytes": 15112886,
+  "sha256": "5a3c918af8ef06c4a78e8fd3ebb9f9aca842715ba0c79a0f2524ff20aa6fffd9",
+  "notes": "句型新增問答例句：一個問題可配多種回答並共用中文翻譯。"
 }
