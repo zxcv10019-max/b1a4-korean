@@ -27,9 +27,8 @@ jobs:
           python3 web-patches/apply-vocab-notes.py index.html
           python3 web-patches/apply-qa-examples.py index.html
           python3 web-patches/apply-qa-answer-register.py index.html
-          python3 web-patches/apply-worktime-fade.py index.html
-          python3 web-patches/apply-desktop-opacity.py index.html
           python3 web-patches/apply-desktop-google-login.py index.html
+          python3 web-patches/restore-website-opacity.py index.html
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -52,7 +51,7 @@ jobs:
           release=import_module('make-web-release')
           latest=json.loads(Path('updates/latest.json').read_text())
           code=latest['versionCode']+1
-          release.create_release('android/app/src/main/assets','updates',code,'2026.11.25.'+str(code),'透明電腦版沿用Google雲端同步，新增瀏覽器登入連接。')
+          release.create_release('android/app/src/main/assets','updates',code,'2026.11.25.'+str(code),'一般網站恢復正常顯示，移除上班時段自動淡化；電腦版透明效果保留。')
           PY
       - name: Publish website and app update
         run: |
