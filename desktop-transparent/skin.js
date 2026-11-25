@@ -30,7 +30,7 @@ tools.innerHTML='<button id="bana-desktop-drag" title="拖曳移動視窗">⠿ �
 const collapse=document.createElement('button');collapse.dataset.action='collapse';collapse.title='收合主體，只保留工具列';collapse.textContent='▴';collapse.setAttribute('aria-label','收合主體');collapse.setAttribute('aria-expanded','true');
 const pin=document.createElement('button');pin.dataset.action='pin';pin.title='置頂';pin.textContent='釘';pin.setAttribute('aria-label','置頂');pin.setAttribute('aria-pressed','false');
 tools.insertBefore(collapse,tools.querySelector('[data-action="minimize"]'));tools.insertBefore(pin,collapse);
-const version=document.createElement('span');version.textContent='v0.2.5';version.style.cssText='font:11px sans-serif;padding:6px 2px';tools.prepend(version);
+const version=document.createElement('span');version.textContent='v0.2.6';version.style.cssText='font:11px sans-serif;padding:6px 2px';tools.prepend(version);
 document.body.append(tools);
 function setWindowState(state){
   const folded=!!state.collapsed,pinned=!!state.pinned;
@@ -40,7 +40,7 @@ function setWindowState(state){
 }
 if(window.banaDesktop?.onWindowState){window.banaDesktop.onWindowState(setWindowState);window.banaDesktop.windowState().then(setWindowState);}
 tools.addEventListener('click',event=>{const action=event.target.dataset.action;if(action&&typeof window.banaDesktop?.[action]==='function')window.banaDesktop[action]();});
-let faded=false,initialized=false,timer=null,surfaces=new WeakSet();
+let faded=false,initialized=false,timer=null;
 const pending=new Set(),stats={flushes:0,nodesRead:0,layoutReads:0,lastDurationMs:0};
 const observer=new MutationObserver(records=>{
   if(!faded)return;
@@ -55,6 +55,14 @@ const observer=new MutationObserver(records=>{
 });
 function watch(){observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['style'],attributeOldValue:true});}
 function rgba(value,alpha){if(value==='none')return 'none';const m=String(value).match(/[\d.]+/g);return m&&m.length>=3?'rgba('+m.slice(0,3).join(',')+','+alpha+')':value;}
+function cardTone(value){
+  const channels=String(value).match(/[\d.]+/g)||[],[r,g,b]=channels.map(Number);
+  if(b>g+4&&r>g+3)return 'rgb(129,93,157)';
+  if(b>r+3&&b>g+3)return 'rgb(72,119,164)';
+  if(r>g+6&&b>g+2)return 'rgb(171,87,113)';
+  if(r>=g&&r>b+5&&g>b+3)return 'rgb(184,126,61)';
+  return 'rgb(84,132,68)';
+}
 function collect(roots){
   const nodes=new Set();
   for(const node of roots){if(!node.isConnected)continue;nodes.add(node);for(const child of node.querySelectorAll('*'))nodes.add(child);}
@@ -74,13 +82,11 @@ function paint(nodes){
     });
     stats.nodesRead+=snapshots.length;stats.layoutReads+=snapshots.length;
     for(const {node,bg,ink,fill,stroke,hasBackground,shell,frame} of snapshots){
-      let ancestor=node.parentElement,covered=false;while(ancestor&&ancestor!==document.body){if(surfaces.has(ancestor)){covered=true;break;}ancestor=ancestor.parentElement;}
-      const surface=hasBackground&&!covered&&!shell;
+      const surface=hasBackground&&!shell,tone=frame?cardTone(bg):bg;
       node.style.setProperty('--bana-ink',ink);
-      node.style.setProperty('--bana-surface',surface?rgba(bg,.15):'transparent');
-      node.style.setProperty('--bana-frame',frame&&!shell?'1px solid rgba(104,133,86,.55)':'none');
+      node.style.setProperty('--bana-surface',surface?rgba(tone,.15):'transparent');
+      node.style.setProperty('--bana-frame',frame&&!shell?'2px solid '+rgba(tone,.9):'none');
       node.style.setProperty('--bana-svg-fill',fill);node.style.setProperty('--bana-svg-stroke',stroke);
-      if(surface)surfaces.add(node);else surfaces.delete(node);
     }
   }finally{
     if(faded)root.classList.add('bana-desktop-overlay');
@@ -91,7 +97,7 @@ function flush(){timer=null;if(!faded){pending.clear();return;}const nodes=colle
 function setMode(value){
   value=!!value;if(initialized&&value===faded)return;initialized=true;faded=value;
   if(timer!==null){clearTimeout(timer);timer=null;}pending.clear();
-  if(faded){surfaces=new WeakSet();paint(collect([document.body]));}
+  if(faded){paint(collect([document.body]));}
   else document.documentElement.classList.remove('bana-desktop-overlay');
 }
 window.banaDesktopSkin=Object.freeze({setMode,getStats:()=>({...stats})});
