@@ -4,7 +4,9 @@ function createHandoff({origin,timeoutMs=300000}){
   const result=new Promise((yes,no)=>{resolve=yes;reject=no;});
   const server=http.createServer((req,res)=>{
     res.setHeader('Cache-Control','no-store');res.setHeader('Content-Type','text/plain; charset=utf-8');res.setHeader('Content-Security-Policy',"default-src 'none'");
-    if(req.method!=='POST'||req.url!=='/auth'||req.headers.origin!==origin){res.writeHead(403);res.end('Request rejected');return;}
+    // A secure page posting to loopback may have an opaque (null) Origin.
+    // The per-login cryptographic state below remains mandatory for every POST.
+    if(req.method!=='POST'||req.url!=='/auth'||(req.headers.origin&&req.headers.origin!==origin&&req.headers.origin!=='null')){res.writeHead(403);res.end('登入回傳未完成。請回到電腦版重新按 Google 登入，不要直接重新整理此頁。');return;}
     let body='',bytes=0;req.on('data',chunk=>{bytes+=chunk.length;if(bytes>16384){res.writeHead(413);res.end('Request too large');req.destroy();return;}body+=chunk.toString('utf8');});
     req.on('end',()=>{
       if(res.writableEnded)return;

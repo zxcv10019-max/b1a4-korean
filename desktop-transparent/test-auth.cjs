@@ -10,5 +10,12 @@ const assert=require('node:assert/strict');
   assert.equal((await post({state,idToken:'test-id',accessToken:'test-access'})).status,200);
   assert.deepEqual(await handoff.result,{idToken:'test-id',accessToken:'test-access'});
   const cancelled=createHandoff({origin});cancelled.result.catch(()=>{});await cancelled.ready;cancelled.cancel();await assert.rejects(cancelled.result,/取消/);
-  console.log('PASS: localhost binding, origin and session validation, credential delivery, cancellation');
+  for(const opaqueOrigin of ['null',undefined]){
+    const loopback=createHandoff({origin,timeoutMs:5000}),session=await loopback.ready;
+    const send=stateValue=>fetch('http://127.0.0.1:'+session.port+'/auth',{method:'POST',headers:opaqueOrigin?{Origin:opaqueOrigin}:{},body:new URLSearchParams({state:stateValue,idToken:'test-loopback'})});
+    assert.equal((await send('0'.repeat(64))).status,403);
+    assert.equal((await send(session.state)).status,200);
+    assert.deepEqual(await loopback.result,{idToken:'test-loopback',accessToken:''});
+  }
+  console.log('PASS: localhost binding, origin and session validation, opaque/missing Origin, credential delivery, cancellation');
 })().catch(error=>{console.error(error);process.exit(1)});
