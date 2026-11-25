@@ -27,6 +27,7 @@ jobs:
           python3 web-patches/apply-vocab-notes.py index.html
           python3 web-patches/apply-qa-examples.py index.html
           python3 web-patches/apply-qa-answer-register.py index.html
+          python3 web-patches/apply-worktime-fade.py index.html
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -49,7 +50,7 @@ jobs:
           release=import_module('make-web-release')
           latest=json.loads(Path('updates/latest.json').read_text())
           code=latest['versionCode']+1
-          release.create_release('android/app/src/main/assets','updates',code,'2026.11.25.'+str(code),'問答例句的每種回答可個別標註正式或口語，共用中文翻譯。')
+          release.create_release('android/app/src/main/assets','updates',code,'2026.11.25.'+str(code),'網站平日08:30–18:00自動淡化至20%，APP保持正常。')
           PY
       - name: Publish website and app update
         run: |
