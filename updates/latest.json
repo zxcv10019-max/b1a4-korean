@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "versionCode": 1016,
-  "version": "2026.11.25.1016",
+  "versionCode": 1017,
+  "version": "2026.11.25.1017",
   "minShellVersion": 58,
-  "bundleUrl": "bana-web-1016-2026.11.25.1016.zip",
-  "bytes": 15113932,
-  "sha256": "c98cd527f23cb30de8d7edd6913d4347096e473e91e010aa7cd588a83e78ac97",
-  "notes": "新增Windows獨立視窗啟動器，避免桌面透明度與網頁淡化重複套用。"
+  "bundleUrl": "bana-web-1017-2026.11.25.1017.zip",
+  "bytes": 15114983,
+  "sha256": "aac8f55af60adfe37dcf66493f8fb63a7546bba8765330f567acb6890681f363",
+  "notes": "透明電腦版沿用Google雲端同步，新增瀏覽器登入連接。"
 }
