@@ -1,0 +1,10 @@
+const assert=require('node:assert/strict'),{createWindowControls}=require('./window-controls.cjs');
+let bounds={x:100,y:80,width:560,height:800},minimum=[360,400],resizable=true,pinned=false;
+const win={getBounds:()=>({...bounds}),setBounds:v=>bounds={...v},getMinimumSize:()=>[...minimum],setMinimumSize:(...v)=>minimum=v,isResizable:()=>resizable,setResizable:v=>resizable=v,isAlwaysOnTop:()=>pinned,setAlwaysOnTop:v=>pinned=v,isMaximized:()=>false};
+const updates=[],controls=createWindowControls({win,screen:{getDisplayMatching:()=>({workArea:{x:0,y:0,width:1920,height:1080}})},onChange:s=>updates.push(s)});
+assert.equal(controls.toggleCollapse().collapsed,true);assert.deepEqual(bounds,{x:360,y:80,width:300,height:36});assert.equal(resizable,false);
+assert.equal(controls.togglePin().pinned,true);assert.equal(controls.state().collapsed,true);
+bounds.x=500;bounds.y=140;controls.expand();assert.deepEqual(bounds,{x:240,y:140,width:560,height:800});assert.deepEqual(minimum,[360,400]);assert.equal(resizable,true);assert.equal(pinned,true);
+controls.toggleCollapse();bounds.x=-200;bounds.y=1000;controls.expand();assert.equal(bounds.x,0);assert.equal(bounds.y,280);
+assert.equal(controls.togglePin().pinned,false);assert.equal(updates.length,6);
+console.log('PASS: toolbar-only bounds, expand after drag, screen limits, size constraints, pin toggle');

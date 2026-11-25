@@ -1,1 +1,1 @@
-{"name":"bana-forest-desktop","version":"0.2.4","private":true,"description":"BANA Forest transparent desktop","main":"main.cjs","author":"BANA Forest","license":"UNLICENSED","devDependencies":{"electron":"45.5.0"}}
+{"name":"bana-forest-desktop","version":"0.2.5","private":true,"description":"BANA Forest transparent desktop","main":"main.cjs","author":"BANA Forest","license":"UNLICENSED","devDependencies":{"electron":"45.5.0"}}
