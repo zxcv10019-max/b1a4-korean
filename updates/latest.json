@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "versionCode": 1011,
-  "version": "2026.11.24.1011",
+  "versionCode": 1012,
+  "version": "2026.11.25.1012",
   "minShellVersion": 58,
-  "bundleUrl": "bana-web-1011-2026.11.24.1011.zip",
-  "bytes": 15111217,
-  "sha256": "2c4d8f82da39ebf249a692bba6a1358432fc0d9e8ea66c43ed2528c09fa4cafb",
-  "notes": "例句選不標註時顯示純韓中例句，收起變化欄位並保留既有資料。"
+  "bundleUrl": "bana-web-1012-2026.11.25.1012.zip",
+  "bytes": 15111734,
+  "sha256": "019b328ed356d77e89ac5d332d0b4a6ac55e55669a8d5777275acdb084000ab6",
+  "notes": "補充單字下方新增可改色的補充說明與多組韓中例句。"
 }
