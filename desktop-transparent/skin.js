@@ -6,14 +6,14 @@ style.textContent=`
 html.bana-desktop-overlay,html.bana-desktop-overlay body{background:transparent!important;background-image:none!important;opacity:1!important}
 html.bana-desktop-overlay body *,html.bana-desktop-overlay body *::before,html.bana-desktop-overlay body *::after{border-color:transparent!important;outline-color:transparent!important;box-shadow:none!important;text-shadow:none!important;background-image:none!important;backdrop-filter:none!important}
 html.bana-desktop-overlay body::before,html.bana-desktop-overlay body::after,html.bana-desktop-overlay body *::before,html.bana-desktop-overlay body *::after{background:transparent!important;box-shadow:none!important}
-html.bana-desktop-overlay body *{color:var(--bana-ink,rgba(64,82,52,.25))!important;background-color:var(--bana-surface,transparent)!important;caret-color:var(--bana-ink)!important}
-html.bana-desktop-overlay img,html.bana-desktop-overlay canvas,html.bana-desktop-overlay video{opacity:.25!important}
+html.bana-desktop-overlay body *{color:var(--bana-ink,rgba(64,82,52,.3))!important;background-color:var(--bana-surface,transparent)!important;caret-color:var(--bana-ink)!important}
+html.bana-desktop-overlay img,html.bana-desktop-overlay canvas,html.bana-desktop-overlay video{opacity:.3!important}
 html.bana-desktop-overlay svg{fill:var(--bana-svg-fill)!important;stroke:var(--bana-svg-stroke)!important}
 html.bana-desktop-overlay svg *{fill:var(--bana-svg-fill)!important;stroke:var(--bana-svg-stroke)!important}
 html.bana-desktop-overlay ::placeholder{color:var(--bana-ink)!important;opacity:1!important}
 html.bana-desktop-overlay ::-webkit-scrollbar{width:7px;height:7px;background:transparent}
 html.bana-desktop-overlay ::-webkit-scrollbar-track{background:transparent!important}
-html.bana-desktop-overlay ::-webkit-scrollbar-thumb{background:rgba(108,132,86,.25)!important;border-radius:8px}
+html.bana-desktop-overlay ::-webkit-scrollbar-thumb{background:rgba(108,132,86,.3)!important;border-radius:8px}
 #bana-desktop-tools{position:fixed!important;top:2px!important;right:8px!important;z-index:2147483647!important;display:flex!important;gap:4px;padding:3px;border-radius:10px;-webkit-app-region:no-drag}
 #bana-desktop-tools button{font:12px sans-serif!important;min-width:24px;height:24px;padding:1px 5px;cursor:pointer;line-height:20px;outline:none;border:0}
 #bana-desktop-drag{-webkit-app-region:drag!important;cursor:move!important;min-width:58px!important}
@@ -22,7 +22,7 @@ body{padding-top:32px!important}
 document.head.append(style);
 const tools=document.createElement('div');tools.id='bana-desktop-tools';
 tools.innerHTML='<button id="bana-desktop-drag" title="拖曳移動視窗">⠿ 移動</button><button data-action="toggle" title="切換清楚／自動">◐</button><button data-action="minimize" title="最小化">−</button><button data-action="close" title="關閉">×</button>';
-const version=document.createElement('span');version.textContent='v0.2.3';version.style.cssText='font:11px sans-serif;padding:6px 2px';tools.prepend(version);
+const version=document.createElement('span');version.textContent='v0.2.4';version.style.cssText='font:11px sans-serif;padding:6px 2px';tools.prepend(version);
 document.body.append(tools);
 tools.addEventListener('click',event=>{const action=event.target.dataset.action;if(action&&window.banaDesktop)window.banaDesktop[action]();});
 let faded=false,initialized=false,timer=null,surfaces=new WeakSet();
@@ -54,7 +54,7 @@ function paint(nodes){
     const snapshots=nodes.map(node=>{
       const cs=getComputedStyle(node),bg=cs.backgroundColor,channels=bg.match(/[\d.]+/g),box=node.getBoundingClientRect();
       const hasBackground=channels&&channels.length>=3&&(channels.length<4||Number(channels[3])>0);
-      return {node,bg,ink:rgba(cs.color,.25),fill:rgba(cs.fill,.25),stroke:rgba(cs.stroke,.25),hasBackground,shell:node.tagName==='MAIN'||['app','root'].includes(node.id)||(box.width>=innerWidth*.9&&box.height>=innerHeight*.85)};
+      return {node,bg,ink:rgba(cs.color,.3),fill:rgba(cs.fill,.3),stroke:rgba(cs.stroke,.3),hasBackground,shell:node.tagName==='MAIN'||['app','root'].includes(node.id)||(box.width>=innerWidth*.9&&box.height>=innerHeight*.85)};
     });
     stats.nodesRead+=snapshots.length;stats.layoutReads+=snapshots.length;
     for(const {node,bg,ink,fill,stroke,hasBackground,shell} of snapshots){

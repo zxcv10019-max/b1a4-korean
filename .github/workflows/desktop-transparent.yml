@@ -45,12 +45,12 @@ jobs:
           if ($desktopCheck.ExitCode -ne 0) { throw 'Packaged desktop verification failed' }
           Get-Content -LiteralPath (Join-Path $desktopApp 'smoke-result.json')
           Remove-Item -LiteralPath (Join-Path $desktopApp 'fixture.html'),(Join-Path $desktopApp 'smoke-result.json'),(Join-Path $desktopApp 'smoke-transparent.png')
-          & 7z a -tzip -mx=3 BANA-Forest-Desktop-0.2.3.zip $desktopOutput
+          & 7z a -tzip -mx=3 BANA-Forest-Desktop-0.2.4.zip $desktopOutput
           if ($LASTEXITCODE -ne 0) { throw 'Desktop archive failed' }
       - uses: actions/upload-artifact@v4
         with:
-          name: BANA-Forest-Desktop-0.2.3
-          path: desktop-transparent/BANA-Forest-Desktop-0.2.3.zip
+          name: BANA-Forest-Desktop-0.2.4
+          path: desktop-transparent/BANA-Forest-Desktop-0.2.4.zip
           retention-days: 30
       - uses: actions/upload-artifact@v4
         if: always()
@@ -63,10 +63,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view desktop-0.2.3
+          gh release view desktop-0.2.4
           if ($LASTEXITCODE -eq 0) {
-            gh release upload desktop-0.2.3 BANA-Forest-Desktop-0.2.3.zip --clobber
+            gh release upload desktop-0.2.4 BANA-Forest-Desktop-0.2.4.zip --clobber
           } else {
-            gh release create desktop-0.2.3 BANA-Forest-Desktop-0.2.3.zip --title 'BANA Forest 透明電腦版 0.2.3' --notes-file README.md --target $env:GITHUB_SHA
+            gh release create desktop-0.2.4 BANA-Forest-Desktop-0.2.4.zip --title 'BANA Forest 透明電腦版 0.2.4' --notes-file README.md --target $env:GITHUB_SHA
           }
           if ($LASTEXITCODE -ne 0) { throw 'Desktop release failed' }
