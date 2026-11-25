@@ -57,11 +57,15 @@ function watch(){observer.observe(document.body,{subtree:true,childList:true,att
 function rgba(value,alpha){if(value==='none')return 'none';const m=String(value).match(/[\d.]+/g);return m&&m.length>=3?'rgba('+m.slice(0,3).join(',')+','+alpha+')':value;}
 function cardTone(value){
   const channels=String(value).match(/[\d.]+/g)||[],[r,g,b]=channels.map(Number);
-  if(b>g+4&&r>g+3)return 'rgb(129,93,157)';
-  if(b>r+3&&b>g+3)return 'rgb(72,119,164)';
-  if(r>g+6&&b>g+2)return 'rgb(171,87,113)';
-  if(r>=g&&r>b+5&&g>b+3)return 'rgb(184,126,61)';
-  return 'rgb(84,132,68)';
+  const high=Math.max(r,g,b),low=Math.min(r,g,b),delta=high-low;
+  if(delta<5)return 'rgb(84,132,68)';
+  let hue=high===r?60*((g-b)/delta):high===g?60*((b-r)/delta+2):60*((r-g)/delta+4);
+  hue=(hue+360)%360;
+  if(hue>=20&&hue<80)return 'rgb(184,126,61)';
+  if(hue>=80&&hue<170)return 'rgb(84,132,68)';
+  if(hue>=170&&hue<255)return 'rgb(72,119,164)';
+  if(hue>=255&&hue<310)return 'rgb(129,93,157)';
+  return 'rgb(171,87,113)';
 }
 function collect(roots){
   const nodes=new Set();
