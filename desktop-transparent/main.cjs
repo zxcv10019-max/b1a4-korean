@@ -67,7 +67,7 @@ async function runSmoke(){
   try{
     await win.loadFile(path.join(__dirname,'fixture.html'));await evaluate(fs.readFileSync(path.join(__dirname,'skin.js'),'utf8'));await wait(150);
     if(opacityControls.current()!==100||Math.abs(win.getOpacity()-1)>.01)throw Error('Default must be 100%');
-    const original=await evaluate(`(()=>{const card=document.getElementById('card'),nested=document.getElementById('nested');const result={text:getComputedStyle(document.getElementById('text')).color,card:getComputedStyle(card).backgroundColor,nested:getComputedStyle(nested).backgroundColor,outline:getComputedStyle(card).outlineWidth};if(result.text!=='rgb(30, 70, 40)'||result.card!=='rgb(230, 240, 220)'||result.nested!=='rgb(250, 240, 220)'||result.outline!=='0px')throw Error(JSON.stringify(result));return result})()`);
+    const original=await evaluate(`(()=>{const card=document.getElementById('card'),nested=document.getElementById('nested');const result={text:getComputedStyle(document.getElementById('text')).color,card:getComputedStyle(card).backgroundColor,nested:getComputedStyle(nested).backgroundColor,outline:getComputedStyle(card).outlineWidth,outlineStyle:getComputedStyle(card).outlineStyle};if(result.text!=='rgb(30, 70, 40)'||result.card!=='rgb(230, 240, 220)'||result.nested!=='rgb(250, 240, 220)'||result.outlineStyle!=='none')throw Error(JSON.stringify(result));return result})()`);
     opacityControls.setPercent(45);await wait(80);if(Math.abs(win.getOpacity()-.45)>.01)throw Error('Whole window opacity');
     await evaluate("const range=document.querySelector('#bana-desktop-tools input');range.value='70';range.dispatchEvent(new Event('input',{bubbles:true}));");
     for(let i=0;i<20&&opacityControls.current()!==70;i++)await wait(50);
