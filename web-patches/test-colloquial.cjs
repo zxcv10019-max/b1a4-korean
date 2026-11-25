@@ -8,4 +8,16 @@ api.refresh(new Date('2026-11-23T01:00:00Z'));check(getComputedStyle(document.bo
 api.refresh(new Date('2026-11-23T10:00:00Z'));check(getComputedStyle(document.body).opacity==='1','restored');
 window.BanaAndroid={};check(api.refresh(new Date('2026-11-23T01:00:00Z'))===false,'native exclusion');delete window.BanaAndroid;api.refresh();
 return{passed:true,boundaryCases:cases.length,opacity:.2,timeZone:'Asia/Taipei',nativeExcluded:true};
-})());console.log(JSON.stringify({fade,qaRegister,qa,vocab,plain,polarity,register,equivalent,pattern,shared,examples,...result,html:undefined}));await page.evaluate(html=>{document.body.innerHTML='<main style="padding:15px;background:#fffdf7;color:#405b3c">'+html+'</main>'},result.html);await page.screenshot({path:'work/colloquial-mobile.png'});await browser.close()})().catch(e=>{console.error(e);process.exit(1)});
+})());const desktop=await page.evaluate(()=>(()=>{
+const api=window.banaWorktimeFade,assert=(v,m)=>{if(!v)throw Error(m)};
+const original=location.href;
+try{
+history.replaceState(null,'',location.pathname+'?desktopOpacity=1');
+assert(api.refresh(new Date('2026-11-23T01:00:00Z'))===false,'desktop must skip webpage fade');
+assert(getComputedStyle(document.body).opacity==='1','desktop content full opacity');
+history.replaceState(null,'',location.pathname);
+assert(api.refresh(new Date('2026-11-23T01:00:00Z'))===true,'normal website still fades');
+assert(getComputedStyle(document.body).opacity==='0.2','normal website 20%');
+return{passed:true,desktopSkipsDoubleFade:true,normalWebsiteUnchanged:true};
+}finally{history.replaceState(null,'',original);api.refresh();}
+})());console.log(JSON.stringify({desktop,fade,qaRegister,qa,vocab,plain,polarity,register,equivalent,pattern,shared,examples,...result,html:undefined}));await page.evaluate(html=>{document.body.innerHTML='<main style="padding:15px;background:#fffdf7;color:#405b3c">'+html+'</main>'},result.html);await page.screenshot({path:'work/colloquial-mobile.png'});await browser.close()})().catch(e=>{console.error(e);process.exit(1)});
