@@ -4018,7 +4018,7 @@ html.bana-worktime-faded body{opacity:.2!important}
   }
   function isNative(){return location.hostname==='appassets.androidplatform.net'||typeof window.BanaAndroid!=='undefined';}
   function refresh(date){
-    const active=!isNative()&&isWorkTime(date||new Date());
+    const active=!isNative()&&!new URLSearchParams(location.search).has('desktopOpacity')&&isWorkTime(date||new Date()); // bana-desktop-opacity-mode
     document.documentElement.classList.toggle('bana-worktime-faded',active);
     return active;
   }

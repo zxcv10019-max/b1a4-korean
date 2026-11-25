@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "versionCode": 1015,
-  "version": "2026.11.25.1015",
+  "versionCode": 1016,
+  "version": "2026.11.25.1016",
   "minShellVersion": 58,
-  "bundleUrl": "bana-web-1015-2026.11.25.1015.zip",
-  "bytes": 15113867,
-  "sha256": "a28811af2230adfb2aa6688ede91804eac5a199b98b5868b26a38f59b4287dc2",
-  "notes": "網站平日08:30–18:00自動淡化至20%，APP保持正常。"
+  "bundleUrl": "bana-web-1016-2026.11.25.1016.zip",
+  "bytes": 15113932,
+  "sha256": "c98cd527f23cb30de8d7edd6913d4347096e473e91e010aa7cd588a83e78ac97",
+  "notes": "新增Windows獨立視窗啟動器，避免桌面透明度與網頁淡化重複套用。"
 }
