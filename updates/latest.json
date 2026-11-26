@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "versionCode": 1018,
-  "version": "2026.11.25.1018",
+  "versionCode": 1019,
+  "version": "2026.11.25.1019",
   "minShellVersion": 58,
-  "bundleUrl": "bana-web-1018-2026.11.25.1018.zip",
-  "bytes": 15114162,
-  "sha256": "80f0a94a8c108649c7357cc8157e5813917d50453375b59c97e0bd147918fccb",
-  "notes": "一般網站恢復正常顯示，移除上班時段自動淡化；電腦版透明效果保留。"
+  "bundleUrl": "bana-web-1019-2026.11.25.1019.zip",
+  "bytes": 15115603,
+  "sha256": "75f715f92bc7e02839df9849a306f9e142f235b0e25748a01e2d0f267fd62d95",
+  "notes": "小叮嚀新增補充單字，可設定韓中對照、文字顏色、補充說明與例句。"
 }
