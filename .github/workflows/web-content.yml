@@ -52,7 +52,7 @@ jobs:
           release=import_module('make-web-release')
           latest=json.loads(Path('updates/latest.json').read_text())
           code=latest['versionCode']+1
-          release.create_release('android/app/src/main/assets','updates',code,'2026.11.25.'+str(code),'小叮嚀新增補充單字，可設定韓中對照、文字顏色、補充說明與例句。')
+          release.create_release('android/app/src/main/assets','updates',code,'2026.11.26.'+str(code),'小叮嚀的補充單字支援批次貼上韓中對照，保留原有單字與文字顏色。')
           PY
       - name: Publish website and app update
         run: |
