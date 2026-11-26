@@ -1,4 +1,6 @@
-# BANA Forest 電腦版 0.2.7
+# BANA Forest 電腦版 0.2.8
+
+工具列保留上方40px，固定閱讀視窗、標題和彈出視窗會排在工具列下方，避免遮住返回按鈕或內容。
 
 雙擊資料夾中的 BANA-Forest-Desktop.exe。請保留 runtime 資料夾。
 

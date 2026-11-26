@@ -68,6 +68,7 @@ async function runSmoke(){
     await win.loadFile(path.join(__dirname,'fixture.html'));await evaluate(fs.readFileSync(path.join(__dirname,'skin.js'),'utf8'));await wait(150);
     if(opacityControls.current()!==100||Math.abs(win.getOpacity()-1)>.01)throw Error('Default must be 100%');
     const original=await evaluate(`(()=>{const card=document.getElementById('card'),nested=document.getElementById('nested');const result={text:getComputedStyle(document.getElementById('text')).color,card:getComputedStyle(card).backgroundColor,nested:getComputedStyle(nested).backgroundColor,outline:getComputedStyle(card).outlineWidth,outlineStyle:getComputedStyle(card).outlineStyle};if(result.text!=='rgb(30, 70, 40)'||result.card!=='rgb(230, 240, 220)'||result.nested!=='rgb(250, 240, 220)'||result.outlineStyle!=='none')throw Error(JSON.stringify(result));return result})()`);
+    const layoutCheck=await evaluate(fs.readFileSync(path.join(__dirname,'layout-check.js'),'utf8'));
     opacityControls.setPercent(45);await wait(80);if(Math.abs(win.getOpacity()-.45)>.01)throw Error('Whole window opacity');
     await evaluate("const range=document.querySelector('#bana-desktop-tools input');range.value='70';range.dispatchEvent(new Event('input',{bubbles:true}));");
     for(let i=0;i<20&&opacityControls.current()!==70;i++)await wait(50);
@@ -81,6 +82,6 @@ async function runSmoke(){
     windowControls.enter();await wait(100);if(windowControls.state().collapsed)throw Error('Mouse enter expand');windowControls.toggleAutoHide();
     opacityControls.setPercent(100);await wait(100);if(Math.abs(win.getOpacity()-1)>.01)throw Error('Restore 100%');
     fs.writeFileSync(path.join(__dirname,'smoke-transparent.png'),(await win.webContents.capturePage()).toPNG());
-    fs.writeFileSync(path.join(__dirname,'smoke-result.json'),JSON.stringify({passed:true,defaultOpacity:100,nativeSlider:true,originalColors:original,toolbarCollapse:true,alwaysOnTop:true,mouseLeaveHide:true,mouseEnterExpand:true,noAutomaticSchedule:true},null,2));app.exit(0);
+    fs.writeFileSync(path.join(__dirname,'smoke-result.json'),JSON.stringify({passed:true,defaultOpacity:100,layoutCheck,nativeSlider:true,originalColors:original,toolbarCollapse:true,alwaysOnTop:true,mouseLeaveHide:true,mouseEnterExpand:true,noAutomaticSchedule:true},null,2));app.exit(0);
   }catch(error){console.error(error);fs.writeFileSync(path.join(__dirname,'smoke-result.json'),JSON.stringify({passed:false,error:error.stack}));app.exit(1);}
 }

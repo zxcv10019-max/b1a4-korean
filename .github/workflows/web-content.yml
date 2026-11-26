@@ -29,6 +29,7 @@ jobs:
           python3 web-patches/apply-qa-answer-register.py index.html
           python3 web-patches/apply-desktop-google-login.py index.html
           python3 web-patches/restore-website-opacity.py index.html
+          python3 web-patches/apply-vocab-tips.py index.html
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -51,7 +52,7 @@ jobs:
           release=import_module('make-web-release')
           latest=json.loads(Path('updates/latest.json').read_text())
           code=latest['versionCode']+1
-          release.create_release('android/app/src/main/assets','updates',code,'2026.11.25.'+str(code),'一般網站恢復正常顯示，移除上班時段自動淡化；電腦版透明效果保留。')
+          release.create_release('android/app/src/main/assets','updates',code,'2026.11.25.'+str(code),'小叮嚀新增補充單字，可設定韓中對照、文字顏色、補充說明與例句。')
           PY
       - name: Publish website and app update
         run: |
