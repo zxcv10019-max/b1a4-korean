@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "versionCode": 1019,
-  "version": "2026.11.25.1019",
+  "versionCode": 1020,
+  "version": "2026.11.26.1020",
   "minShellVersion": 58,
-  "bundleUrl": "bana-web-1019-2026.11.25.1019.zip",
-  "bytes": 15115603,
-  "sha256": "75f715f92bc7e02839df9849a306f9e142f235b0e25748a01e2d0f267fd62d95",
-  "notes": "小叮嚀新增補充單字，可設定韓中對照、文字顏色、補充說明與例句。"
+  "bundleUrl": "bana-web-1020-2026.11.26.1020.zip",
+  "bytes": 15116776,
+  "sha256": "1466627cac24e2197ee2f82fec8c407841e0fda654a1b852d784d790b9932ad0",
+  "notes": "小叮嚀的補充單字支援批次貼上韓中對照，保留原有單字與文字顏色。"
 }
