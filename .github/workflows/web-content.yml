@@ -31,6 +31,7 @@ jobs:
           python3 web-patches/restore-website-opacity.py index.html
           python3 web-patches/apply-vocab-tips.py index.html
           python3 web-patches/apply-example-mode.py index.html
+          python3 web-patches/apply-example-condition.py index.html
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -53,7 +54,7 @@ jobs:
           release=import_module('make-web-release')
           latest=json.loads(Path('updates/latest.json').read_text())
           code=latest['versionCode']+1
-          release.create_release('android/app/src/main/assets','updates',code,'2026.11.27.'+str(code),'每筆例句可獨立選擇一般或變化格式，變化例句顯示向下箭頭，並保留正式／口語標註。')
+          release.create_release('android/app/src/main/assets','updates',code,'2026.11.27.'+str(code),'每筆例句新增使用條件與補充說明，可標示有無收尾音及套用規則，支援文字顏色。')
           PY
       - name: Publish website and app update
         run: |
