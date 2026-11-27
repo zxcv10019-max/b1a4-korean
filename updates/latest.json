@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "versionCode": 1021,
-  "version": "2026.11.27.1021",
+  "versionCode": 1022,
+  "version": "2026.11.27.1022",
   "minShellVersion": 58,
-  "bundleUrl": "bana-web-1021-2026.11.27.1021.zip",
-  "bytes": 15117014,
-  "sha256": "23bd9ac95ae86159806a90acbe96444421bfe2652ebcd56ece386b9b9a7780c6",
-  "notes": "每筆例句可獨立選擇一般或變化格式，變化例句顯示向下箭頭，並保留正式／口語標註。"
+  "bundleUrl": "bana-web-1022-2026.11.27.1022.zip",
+  "bytes": 15117194,
+  "sha256": "edc82776d99b834ba107908ba011c04fbcc35212a05f36222febf19465c969a4",
+  "notes": "每筆例句新增使用條件與補充說明，可標示有無收尾音及套用規則，支援文字顏色。"
 }
