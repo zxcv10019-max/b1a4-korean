@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "versionCode": 1023,
-  "version": "2026.11.27.1023",
+  "versionCode": 1024,
+  "version": "2026.11.27.1024",
   "minShellVersion": 58,
-  "bundleUrl": "bana-web-1023-2026.11.27.1023.zip",
-  "bytes": 15117523,
-  "sha256": "c16ade5b381ae37fe6b133f2e34de18f182a917055f710a859e7c4117a5e6bfd",
-  "notes": "使用條件移至用法組，依條件分組顯示句型及多筆例句，並保留原有條件與文字顏色。"
+  "bundleUrl": "bana-web-1024-2026.11.27.1024.zip",
+  "bytes": 15118295,
+  "sha256": "706f86af05f2789c9ce411361b8361b728d9d32d149591c8ca7a61316c2ea0e7",
+  "notes": "小叮嚀的韓中對照可逐筆選擇一般或變化例句，支援原形、向下箭頭與文字顏色。"
 }
