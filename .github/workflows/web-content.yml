@@ -33,6 +33,7 @@ jobs:
           python3 web-patches/apply-example-mode.py index.html
           python3 web-patches/apply-example-condition.py index.html
           python3 web-patches/apply-rule-condition.py index.html
+          python3 web-patches/apply-tip-example-mode.py index.html
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -55,7 +56,7 @@ jobs:
           release=import_module('make-web-release')
           latest=json.loads(Path('updates/latest.json').read_text())
           code=latest['versionCode']+1
-          release.create_release('android/app/src/main/assets','updates',code,'2026.11.27.'+str(code),'使用條件移至用法組，依條件分組顯示句型及多筆例句，並保留原有條件與文字顏色。')
+          release.create_release('android/app/src/main/assets','updates',code,'2026.11.27.'+str(code),'小叮嚀的韓中對照可逐筆選擇一般或變化例句，支援原形、向下箭頭與文字顏色。')
           PY
       - name: Publish website and app update
         run: |
