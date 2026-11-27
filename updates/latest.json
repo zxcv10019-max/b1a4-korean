@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "versionCode": 1020,
-  "version": "2026.11.26.1020",
+  "versionCode": 1021,
+  "version": "2026.11.27.1021",
   "minShellVersion": 58,
-  "bundleUrl": "bana-web-1020-2026.11.26.1020.zip",
-  "bytes": 15116776,
-  "sha256": "1466627cac24e2197ee2f82fec8c407841e0fda654a1b852d784d790b9932ad0",
-  "notes": "小叮嚀的補充單字支援批次貼上韓中對照，保留原有單字與文字顏色。"
+  "bundleUrl": "bana-web-1021-2026.11.27.1021.zip",
+  "bytes": 15117014,
+  "sha256": "23bd9ac95ae86159806a90acbe96444421bfe2652ebcd56ece386b9b9a7780c6",
+  "notes": "每筆例句可獨立選擇一般或變化格式，變化例句顯示向下箭頭，並保留正式／口語標註。"
 }
