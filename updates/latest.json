@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "versionCode": 1024,
-  "version": "2026.11.27.1024",
+  "versionCode": 1025,
+  "version": "2026.11.27.1025",
   "minShellVersion": 58,
-  "bundleUrl": "bana-web-1024-2026.11.27.1024.zip",
-  "bytes": 15118295,
-  "sha256": "706f86af05f2789c9ce411361b8361b728d9d32d149591c8ca7a61316c2ea0e7",
-  "notes": "小叮嚀的韓中對照可逐筆選擇一般或變化例句，支援原形、向下箭頭與文字顏色。"
+  "bundleUrl": "bana-web-1025-2026.11.27.1025.zip",
+  "bytes": 15118673,
+  "sha256": "c9ec183475013cc4404acc89614a8889cc58fa74ae29f1d5d96347df923fb43b",
+  "notes": "小叮嚀批次貼上自動辨識韓文與中文，不需手動加入分隔符號，保留原有批次格式。"
 }
